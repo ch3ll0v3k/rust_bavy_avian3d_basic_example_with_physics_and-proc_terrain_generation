@@ -1,6 +1,12 @@
 use std::{ borrow::BorrowMut, fmt, sync::Mutex };
 // use tracing::instrument;
 
+// use avian3d::prelude::*;
+// use bevy::prelude::*;
+
+use avian3d::collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted };
+
+use avian3d::parry::na;
 use avian3d::prelude::{
   AngularVelocity,
   Collider,
@@ -64,6 +70,7 @@ impl Plugin for CameraPlugin {
       .add_systems(Update, handle_drag)
       .add_systems(Update, cam_track_object)
       .add_systems(Update, cam_track_object_origin)
+      .add_systems(Update, detect_bullet_collision)
       .add_systems(Update, 
         (
           handle_left_click.run_if(input_just_pressed(MouseButton::Left))
@@ -144,10 +151,11 @@ fn startup(
       MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
       // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
       Mass(10.0),
-      CameraParentMarker,
       LockedAxes::ROTATION_LOCKED,
       MaxLinearSpeed(100.0),
       // MaxLinearSpeed()
+      CameraParentMarker,
+      Name::new("player_t"),
     ))
     .with_children(|children| {
       children.spawn((
@@ -167,87 +175,87 @@ fn startup(
 
 // prettier-ignore
 fn cam_track_object(
-  query_big_sphere: Query<&Transform, (With<MEntityBigSphere>, Without<MPointLightMarker>)>,
-  mut query_point_light: Query<&mut Transform, (With<MPointLightMarker>, Without<MEntityBigSphere>)>,
+  // query_big_sphere: Query<&Transform, (With<MEntityBigSphere>, Without<MPointLightMarker>)>,
+  // mut query_point_light: Query<&mut Transform, (With<MPointLightMarker>, Without<MEntityBigSphere>)>,
   // mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<MPointLightMarker>, Without<MEntityBigSphere>)>
-) {
-
-  return;
-
-  let trans_sphere = query_big_sphere.single();
-  let mut trans_light = query_point_light.single_mut();
-  // trans_light.rotate_local_y(0.01);
-  
-  trans_light.translation.x = trans_sphere.translation.x;
-  trans_light.translation.y = trans_sphere.translation.y + 50.0;
-  trans_light.translation.z = trans_sphere.translation.z;
-  trans_light.look_at(trans_sphere.translation, Vec3::Z);
-  // let mut trans_cam = query_camera.single_mut();
-  // trans_cam.look_at(trans_sphere.translation, Vec3::Y);
-  // trans_cam.translation.x = trans_sphere.translation.x + 5.0;
-  // trans_cam.translation.y = trans_sphere.translation.y + 5.0;
-  // trans_cam.translation.z = trans_sphere.translation.z + 5.0;
-}
-
-// prettier-ignore
-fn cam_track_object_origin(
-  query_big_sphere: Query<&Transform, (
-    With<MEntityBigSphere>, 
-    Without<MPointLightMarker>, 
-    Without<MPointLightFromMarker>, 
-    Without<MPointLightToMarker>
-  )>,
-  query_point_light: Query<&Transform, (
-    With<MPointLightMarker>, 
-    Without<MEntityBigSphere>,
-    Without<MPointLightFromMarker>, 
-    Without<MPointLightToMarker>,
-  )>,
-  mut from: Query<&mut Transform, (
-    With<MPointLightFromMarker>, 
-    Without<MEntityBigSphere>, 
-    Without<MPointLightMarker>, 
-    Without<MPointLightToMarker>
-  )>,
-  mut to: Query<&mut Transform, (
-    With<MPointLightToMarker>, 
-    Without<MEntityBigSphere>, 
-    Without<MPointLightMarker>,
-    Without<MPointLightFromMarker>, 
-  )>,
 ) {
 
   // return;
 
-  let trans_sphere = query_big_sphere.single();
-  let trans_light = query_point_light.single();
-
-  // trans_light.rotate_local_y(0.01);
-
-  let mut m_from = from.single_mut();
-  m_from.translation = trans_light.translation.clone();
-  m_from.translation.y -= 2.5;
-
-  let mut m_to = to.single_mut();
-  m_to.translation = trans_sphere.translation.clone();
-  m_to.translation.y += 2.5;
-
-  // MPointLightFromMarker;
-  // MPointLightToMarker;
-
   // let trans_sphere = query_big_sphere.single();
-  //   let mut trans_light = query_point_light.single_mut();
+  // let mut trans_light = query_point_light.single_mut();
   // // trans_light.rotate_local_y(0.01);
   
   // trans_light.translation.x = trans_sphere.translation.x;
-  // trans_light.translation.y = trans_sphere.translation.y + 20.0;
+  // trans_light.translation.y = trans_sphere.translation.y + 50.0;
   // trans_light.translation.z = trans_sphere.translation.z;
-  // trans_light.look_at(trans_sphere.translation, Vec3::ZERO);
+  // trans_light.look_at(trans_sphere.translation, Vec3::Z);
   // // let mut trans_cam = query_camera.single_mut();
   // // trans_cam.look_at(trans_sphere.translation, Vec3::Y);
   // // trans_cam.translation.x = trans_sphere.translation.x + 5.0;
   // // trans_cam.translation.y = trans_sphere.translation.y + 5.0;
   // // trans_cam.translation.z = trans_sphere.translation.z + 5.0;
+}
+
+// prettier-ignore
+fn cam_track_object_origin(
+  // query_big_sphere: Query<&Transform, (
+  //   With<MEntityBigSphere>, 
+  //   Without<MPointLightMarker>, 
+  //   Without<MPointLightFromMarker>, 
+  //   Without<MPointLightToMarker>
+  // )>,
+  // query_point_light: Query<&Transform, (
+  //   With<MPointLightMarker>, 
+  //   Without<MEntityBigSphere>,
+  //   Without<MPointLightFromMarker>, 
+  //   Without<MPointLightToMarker>,
+  // )>,
+  // mut from: Query<&mut Transform, (
+  //   With<MPointLightFromMarker>, 
+  //   Without<MEntityBigSphere>, 
+  //   Without<MPointLightMarker>, 
+  //   Without<MPointLightToMarker>
+  // )>,
+  // mut to: Query<&mut Transform, (
+  //   With<MPointLightToMarker>, 
+  //   Without<MEntityBigSphere>, 
+  //   Without<MPointLightMarker>,
+  //   Without<MPointLightFromMarker>, 
+  // )>,
+) {
+
+  // return;
+
+  // let trans_sphere = query_big_sphere.single();
+  // let trans_light = query_point_light.single();
+
+  // // trans_light.rotate_local_y(0.01);
+
+  // let mut m_from = from.single_mut();
+  // m_from.translation = trans_light.translation.clone();
+  // m_from.translation.y -= 2.5;
+
+  // let mut m_to = to.single_mut();
+  // m_to.translation = trans_sphere.translation.clone();
+  // m_to.translation.y += 2.5;
+
+  // // MPointLightFromMarker;
+  // // MPointLightToMarker;
+
+  // // let trans_sphere = query_big_sphere.single();
+  // //   let mut trans_light = query_point_light.single_mut();
+  // // // trans_light.rotate_local_y(0.01);
+  
+  // // trans_light.translation.x = trans_sphere.translation.x;
+  // // trans_light.translation.y = trans_sphere.translation.y + 20.0;
+  // // trans_light.translation.z = trans_sphere.translation.z;
+  // // trans_light.look_at(trans_sphere.translation, Vec3::ZERO);
+  // // // let mut trans_cam = query_camera.single_mut();
+  // // // trans_cam.look_at(trans_sphere.translation, Vec3::Y);
+  // // // trans_cam.translation.x = trans_sphere.translation.x + 5.0;
+  // // // trans_cam.translation.y = trans_sphere.translation.y + 5.0;
+  // // // trans_cam.translation.z = trans_sphere.translation.z + 5.0;
 }
 
 // #[tracing::instrument]
@@ -326,7 +334,6 @@ fn on_m_left_up() { set_global_state(false); }
 //   // commands.entity(cam_parent)
 // }
 
-/// XXX
 // prettier-ignore
 fn mk_jump(
   mut commands: Commands,
@@ -526,6 +533,91 @@ fn control_cam(
   }
 }
 
+// fn process_bullets(
+//   mut commands: Commands,
+//   // query: Query<(Entity, &RigidBody, &Transform), With<CameraParentMarker>>
+//   q_bullet: Query<(Entity, &RigidBody), With<BulletMarker>>
+// ) {
+//   for (entity, rb_bullet) in q_bullet.iter() {
+//     if rb_bullet.is_dynamic() {
+//       println!("Entity : entity: {:?}, bullet: {:?}", entity, rb_bullet);
+//       commands.entity(entity).despawn();
+//     }
+//   }
+// }
+
+// fn detect_collisions(mut collision_events: EventReader<CollisionEvent>) {
+//   for event in collision_events.iter() {
+//     match event {
+//       CollisionEvent::Started(entity1, entity2) => {
+//         println!("Collision started between {:?} and {:?}", entity1, entity2);
+//       }
+//       CollisionEvent::Stopped(entity1, entity2) => {
+//         println!("Collision stopped between {:?} and {:?}", entity1, entity2);
+//       }
+//     }
+//   }
+// }
+
+fn detect_bullet_collision(
+  mut commands: Commands,
+  query: Query<&Name>,
+  mut collision_event_reader: EventReader<Collision>
+) {
+  for Collision(contacts) in collision_event_reader.read() {
+    if contacts.collision_started() {
+      let type_t_1 = query
+        .get(contacts.entity1)
+        .map(|n| n.to_string())
+        .unwrap_or("Unknown-1".to_string());
+
+      let type_t_2 = query
+        .get(contacts.entity2)
+        .map(|n| n.to_string())
+        .unwrap_or("Unknown-2".to_string());
+
+      if type_t_2 == type_t_1 {
+        return;
+      }
+
+      println!(
+        "(Entities (name: {type_t_1} => {}) and (name: {type_t_2} => {}) are colliding), (bodies: {:?} and {:?} ) is_sensor: {:?}, collision_started: {:?}",
+        contacts.entity1,
+        contacts.entity2,
+        contacts.body_entity1,
+        contacts.body_entity2,
+        contacts.is_sensor,
+        contacts.collision_started()
+      );
+
+      if type_t_1 == "bullet_t" {
+        println!(
+          "Bullet {} collided with entity: ({} => {:?})",
+          contacts.entity1,
+          type_t_2,
+          contacts.entity2
+        );
+        commands.entity(contacts.entity1).despawn();
+      }
+
+      if type_t_2 == "bullet_t" {
+        println!(
+          "Bullet {} collided with entity: ({} => {:?})",
+          contacts.entity2,
+          type_t_1,
+          contacts.entity1
+        );
+        commands.entity(contacts.entity2).despawn();
+      }
+    }
+  }
+}
+
+#[derive(Component, Debug, PartialEq, Eq)]
+pub struct BulletMarker {
+  name: String,
+}
+
 // prettier-ignore
 fn handle_left_click(
   mut commands: Commands,
@@ -551,37 +643,42 @@ fn handle_left_click(
       //   Y = (Y + from inner part of cam:sphere holder)
       //   X/Z = (from outer cam:sphere holder)
       let mut to = Vec3::new( fw_parent.x,  up_child.z, fw_parent.z);
-      println!("to: {:?}", to);
+      // println!("to: {:?}", to);
       
       let mut force = ExternalImpulse::default();
       force
         .apply_impulse_at_point(
-          to * 1.0 * 1500.0, 
+          to * 1.0 * 2500.0, 
           Vec3::ZERO, 
           Vec3::ZERO
         )
         .with_persistence(false);
+
+      let norm_vec_3 = fw_parent.clone().normalize();
 
       let handle = (
         RigidBody::Dynamic,
         // Collider::sphere(1.65),
         Collider::sphere(0.25),
         CollisionMargin(COLLISION_MARGIN * 1.0),
-        Transform::from_xyz(vec3_parent.x, vec3_parent.y  +10.0, vec3_parent.z), // .looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(
+          vec3_parent.x + (norm_vec_3.x * 10.0), 
+          vec3_parent.y  +0.0, 
+          vec3_parent.z + (norm_vec_3.z * 10.0)
+        ), // .looking_at(Vec3::ZERO, Vec3::Y),
         Mesh3d(meshes.add(Sphere::new(0.25))),
-        MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
+        MeshMaterial3d(materials.add(Color::srgb_u8(255, 200, 200))),
         // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
         force,
         Mass(10.0),
         get_defaul_physic_debug_params(),
         AnyObject,
-        Wireframe::default()
+        // Wireframe::default()
+        BulletMarker { name: "bullet_marker".to_string() },
+        Name::new("bullet_t"),
       );
 
       let object = commands.spawn(handle);
-
-      // commands.entity().insert(Wireframe);
-
 
       // // println!("Right mouse button pressed");
       // for ev_m in ev_m_motion.read() {

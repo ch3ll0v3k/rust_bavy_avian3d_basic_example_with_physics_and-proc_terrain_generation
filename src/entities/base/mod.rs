@@ -68,6 +68,7 @@ fn startup(
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
   {
+    // return;
     let pos = Vec3::new(-2.0, 20.0, 2.0);
     let size = Vec3::new(1.0, 1.0, 1.0);
 

@@ -31,7 +31,7 @@ use bevy::math::Affine2;
 
 use camera::CameraMarker;
 use debug::get_defaul_physic_debug_params;
-use entities::with_children::MEntityBigSphere;
+// use entities::with_children::MEntityBigSphere;
 use lights::MPointLightMarker;
 
 mod camera;
@@ -82,7 +82,7 @@ fn main() {
           ).with_scale_factor_override(1.0),
           // present_mode: AutoNoVsync,
           // mode: Fullscreen(MonitorSelection::Primary),
-          mode: BorderlessFullscreen(MonitorSelection::Primary),
+          // mode: BorderlessFullscreen(MonitorSelection::Primary),
           // resizable: false,
           // fit_canvas_to_parent: true,
           // fullsize_content_view: true,
@@ -194,7 +194,10 @@ fn setup(
         // Transform::from_translation(Vec3::new(-200., 0., 0.)),
         // Terrain,
         PhysicsStaticObject,
+        PhysicsStaticObjectTerrain,
         AnyObject,
+        Name::new("terrain_t"),
+
       ));
     }
   }
