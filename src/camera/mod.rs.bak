@@ -1,0 +1,204 @@
+use bevy::{ input::mouse::{ MouseScrollUnit, MouseWheel }, prelude::* };
+
+use crate::{ entities::with_children::MEntityBigSphere, lights::MPointLightMarker };
+
+#[derive(Component, Debug, PartialEq, Eq)]
+pub struct CameraMarker;
+
+pub struct CameraPlugin;
+impl Plugin for CameraPlugin {
+  fn build(&self, app: &mut App) {
+    app
+      .add_systems(Startup, startup)
+      .add_systems(Update, update)
+      .add_systems(Update, zoom_on_scroll);
+  }
+}
+const MUL_POS: f32 = 5.0;
+const POS: Vec3 = Vec3::new(-2.5 * MUL_POS, 4.5 * MUL_POS, 9.0 * MUL_POS);
+
+fn update() {}
+fn startup(mut commands: Commands) {
+  // Camera
+  commands.spawn((
+    Camera3d::default(),
+    Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
+    CameraMarker,
+  ));
+}
+
+// prettier-ignore
+fn cam_track_object(
+  query_big_sphere: Query<& Transform, (With<MEntityBigSphere>, Without<MPointLightMarker>)>,
+  mut query_point_light: Query<&mut Transform, (With<MPointLightMarker>, Without<MEntityBigSphere>)>,
+  mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<MPointLightMarker>, Without<MEntityBigSphere>)>
+) {
+
+  //  match query_big_sphere.get_single() {
+  //   Ok(trans_sphere) => {
+  //     println!("Sphere: pos: x-{}", trans_sphere.translation.x);
+  //     match query_point_light.get_single_mut() {
+  //       Ok(trans_light) => {
+  //         println!("Light: pos: x-{}", trans_light.translation.x);    
+  //       }
+  //       Err(QuerySingleError::NoEntities(_)) => {
+  //         println!("Light:Error: There is no player!");
+  //         return;
+  //       }
+  //       Err(QuerySingleError::MultipleEntities(_)) => {
+  //         println!("Light:Error: There is more than one player!");
+  //         return;
+  //       }
+  //     }
+  //   }
+  //   Err(QuerySingleError::NoEntities(_)) => {
+  //     println!("Sphere: Error: There is no player!");
+  //     return;
+  //   }
+  //   Err(QuerySingleError::MultipleEntities(_)) => {
+  //     println!("Sphere: Error: There is more than one player!");
+  //     return;
+  //   }
+  // }
+
+  let trans_sphere = query_big_sphere.single();
+  // trans_sphere.translation.x;
+  // trans_sphere.translation.y;
+  // trans_sphere.translation.z;
+  
+  let mut trans_light = query_point_light.single_mut();
+  // // trans_light.rotate_local_y(0.01);
+  
+  trans_light.translation.x = trans_sphere.translation.x;
+  trans_light.translation.y = trans_sphere.translation.y + 5.0;
+  trans_light.translation.z = trans_sphere.translation.z;
+
+  // let mut trans_cam = query_camera.single_mut();
+  // trans_cam.look_at(trans_sphere.translation, Vec3::Y);
+  // trans_cam.translation.x = trans_sphere.translation.x + 5.0;
+  // trans_cam.translation.y = trans_sphere.translation.y + 5.0;
+  // trans_cam.translation.z = trans_sphere.translation.z + 5.0;
+
+
+}
+
+fn zoom_on_scroll(
+  mut mw_evt: EventReader<MouseWheel>,
+  mut query_camera: Query<&mut Projection, With<CameraMarker>>
+) {
+  let Projection::Perspective(persp) = query_camera.single_mut().into_inner() else {
+    return;
+  };
+
+  for mouse_wheel_event in mw_evt.read() {
+    let (_dx, _dy) = match mouse_wheel_event.unit {
+      // MouseScrollUnit::Line => (mouse_wheel_event.x, mouse_wheel_event.y),
+      // MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
+      MouseScrollUnit::Line => (mouse_wheel_event.x, mouse_wheel_event.y),
+      MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
+    };
+
+    // println!("Mouse wheel: X: {}, Y: {}", dx, dy);
+
+    let dy = _dy * -1.0;
+    let val: f32 = persp.fov + dy / 30.0;
+
+    // println!("FOV: {}", val);
+
+    if val < 0.05 {
+      return;
+    } else if val > 2.75 {
+      return;
+    }
+
+    persp.fov = val;
+    return;
+
+    // persp.fov /= 1.25; // zoom in
+    // persp.fov *= 1.25; // zoom out
+
+    // transform.translation -= Vec3::new(0.0, dy / 1.0, 0.0);
+
+    // if kb_evt.pressed(KeyCode::ControlLeft) || kb_evt.pressed(KeyCode::ControlRight) {
+    //     std::mem::swap(&mut dx, &mut dy);
+    // }
+  }
+}
+
+// fn update_scroll_position(
+//   mut mw_evt: EventReader<MouseWheel>,
+//   mut query_camera: Query<&mut Transform, With<CameraMarker>>
+// ) {
+//   let transform = query_camera.single_mut();
+
+//   for mouse_wheel_event in mw_evt.read() {
+//     let (dx, dy) = match mouse_wheel_event.unit {
+//       // MouseScrollUnit::Line => (mouse_wheel_event.x, mouse_wheel_event.y),
+//       // MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
+//       MouseScrollUnit::Line => (mouse_wheel_event.x, mouse_wheel_event.y),
+//       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
+//     };
+
+//     println!("Mouse wheel: X: {}, Y: {}", dx, dy);
+
+//     // transform.translation -= Vec3::new(0.0, dy / 1.0, 0.0);
+
+//     // if kb_evt.pressed(KeyCode::ControlLeft) || kb_evt.pressed(KeyCode::ControlRight) {
+//     //     std::mem::swap(&mut dx, &mut dy);
+//     // }
+//   }
+// }
+
+// fn zoom_perspective(mut query_camera: Query<&mut Projection, With<CameraMarker>>) {
+//   // assume perspective. do nothing if orthographic.
+//   let Projection::Perspective(persp) = query_camera.single_mut().into_inner() else {
+//     return;
+//   };
+//   persp.fov /= 1.25; // zoom in
+//   persp.fov *= 1.25; // zoom out
+// }
+
+// fn debug_cam_position(mut query_camera: Query<&mut Transform, With<CameraMarker>>) {
+//   let mut transform = query_camera.single_mut();
+
+//   transform.rotate_local_y(0.01);
+
+//   match transform {
+//     Transform::Perspective(persp) => {
+//       // we have a perspective projection
+//     }
+//     Transform::Orthographic(ortho) => {
+//       // we have an orthographic projection
+//     }
+//   }
+// }
+
+// static mut X: i32 = 0;
+// fn debug_transform(query_camera: Query<&Transform, With<CameraMarker>>) {
+//   unsafe {
+//     X += 1;
+//     if X % 100 == 0 {
+//       let transform = query_camera.single();
+//       println!(
+//         "cam: (:x, :y, :z) = ({}, {}, {})",
+//         transform.translation.x,
+//         transform.translation.y,
+//         transform.translation.z
+//       );
+//     }
+//   }
+// }
+
+// prettier-ignore
+fn test_cam_update(
+  mut query_camera: Query<&mut Transform, (With<CameraMarker>)>
+) {
+
+  // let mut trans_cam = query_camera.single_mut();
+  // trans_cam.look_at(trans_sphere.translation, Vec3::Y);
+  // trans_cam.translation.x = trans_sphere.translation.x + 5.0;
+  // trans_cam.translation.y = trans_sphere.translation.y + 5.0;
+  // trans_cam.translation.z = trans_sphere.translation.z + 5.0;
+
+
+}
