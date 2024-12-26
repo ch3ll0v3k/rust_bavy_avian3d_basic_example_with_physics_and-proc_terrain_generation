@@ -620,6 +620,7 @@ pub struct BulletMarker {
 
 // prettier-ignore
 fn handle_left_click(
+  asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -686,6 +687,21 @@ fn handle_left_click(
       //   transform.rotate_local_y(ev_m.delta.x / 1000.0);
       //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
       // }
+
+      let sound: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/paintball_shoot.01.ogg");
+      
+      commands.spawn((
+        // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
+        AudioPlayer(sound),
+        // AudioPlayer(track_list.first().unwrap().clone()),
+        PlaybackSettings {
+          mode: bevy::audio::PlaybackMode::Once,
+          volume: bevy::audio::Volume::default(),
+          ..default()
+        },
+        // FadeIn,
+      ));
+
     }
   }
 }

@@ -10,6 +10,8 @@
 use avian3d::debug_render::PhysicsDebugPlugin;
 use avian3d::prelude::*;
 use avian3d::PhysicsPlugins;
+// use bevy::audio::AudioPlugin;
+use bevy::audio::AudioPlayer;
 use bevy::image::ImageAddressMode;
 use bevy::image::ImageFilterMode;
 use bevy::image::ImageLoaderSettings;
@@ -72,6 +74,8 @@ fn main() {
     // Enable physics
     // .add_plugins((PanOrbitCameraPlugin,))
     .add_plugins((
+      // AssetPlugin::default(),
+      // AudioPlugin::default(),
       // LogDiagnosticsPlugin::default(),
       DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
@@ -109,6 +113,7 @@ fn main() {
     )
     .add_systems(Startup, setup)
     .add_systems(Update, update)
+    // .add_systems(Startup, play)
     .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
     .run();
 }
@@ -117,15 +122,80 @@ fn main() {
 // pub struct Terrain;
 
 fn update() {}
+#[derive(Resource)]
+struct SoundtrackPlayer {
+  track_list: Vec<Handle<AudioSource>>,
+}
+
+impl SoundtrackPlayer {
+  fn new(track_list: Vec<Handle<AudioSource>>) -> Self {
+    Self { track_list }
+  }
+}
+// This component will be attached to an entity to fade the audio in
+#[derive(Component)]
+struct FadeIn;
+
+// https://github.com/bevyengine/bevy/blob/v0.15.0/examples/audio/soundtrack.rs
+
+// fn play(
+//   mut commands: Commands,
+//   soundtrack_player: Res<SoundtrackPlayer>,
+//   soundtrack: Query<Entity, With<AudioSink>>
+//   // game_state: Res<GameState>
+// ) {
+//   // commands.spawn((
+//   //   AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
+//   //   // AudioPlayer(track_list.first().unwrap().clone()),
+//   //   PlaybackSettings {
+//   //     mode: bevy::audio::PlaybackMode::Loop,
+//   //     volume: bevy::audio::Volume::default(),
+//   //     ..default()
+//   //   },
+//   //   // FadeIn,
+//   // ));
+// }
 
 // prettier-ignore
 fn setup(
   asset_server: Res<AssetServer>,
-   mut commands: Commands,
+  mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
+
+
+  // let track_1 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
+  // let track_2 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
+
+  let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/test.02.ogg");
+  // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/paintball_shoot.01.ogg");
+  // let track_list = vec![track_1, track_2];
+  // commands.insert_resource(SoundtrackPlayer::new(track_list));
+
+
   
+  commands.spawn((
+    // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
+    AudioPlayer(track_1),
+    // AudioPlayer(track_list.first().unwrap().clone()),
+    PlaybackSettings {
+      mode: bevy::audio::PlaybackMode::Loop,
+      volume: bevy::audio::Volume::default(),
+      ..default()
+    },
+    // FadeIn,
+  ));
+
+
+  // commands.spawn(AudioPlayerS::new(
+  //   asset_server.load("sounds/test.01.mp3"),
+  // ));
+
+  // let loader: Handle<_> = asset_server.load("sounds/test.01.mp3");
+  // let audio  = AudioPlayer::new(loader);
+  // commands.spawn(audio);
+
   // let Ok(entity) = query.get_single_mut() else { return; };
 
   let texture_handle: Handle<Image> = asset_server.load_with_settings(
@@ -147,7 +217,7 @@ fn setup(
     },
   );
 
-  // let texture_handle: Handle<Image> = asset_server.load("textures/terrain/base/sand.01.png" );
+  // let texture_handle: Handle<Image> = asset_server.load::<Image>("textures/terrain/base/sand.01.png" );
 
   // let base_color_texture: Option<Handle<Image>> = Some(asset_server.load("earth/base_color.jpg"));
 
