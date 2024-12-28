@@ -7,6 +7,7 @@ use bevy::diagnostic::EntityCountDiagnosticsPlugin;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::diagnostic::RegisterDiagnostic;
 use bevy::diagnostic::SystemInformationDiagnosticsPlugin;
+use bevy::pbr::wireframe::WireframeConfig;
 use bevy::pbr::wireframe::{ Wireframe, WireframePlugin };
 use bevy::prelude::*;
 use bevy_diagnostic::LogDiagnosticsPlugin;
@@ -37,6 +38,15 @@ impl Plugin for DebugPlugin {
         EntityCountDiagnosticsPlugin,
         SystemInformationDiagnosticsPlugin,
       ))
+      // // Wireframes can be configured with this resource. This can be changed at runtime.
+      // .insert_resource(WireframeConfig {
+      //   // The global wireframe config enables drawing of wireframes on every mesh,
+      //   // except those with `NoWireframe`. Meshes with `Wireframe` will always have a wireframe,
+      //   // regardless of the global configuration.
+      //   global: false,
+      //   default_color: Color::from(GREEN_100),
+      // })
+
       .register_diagnostic(Diagnostic::new(SYSTEM_ITERATION_COUNT).with_suffix(" iterations"))
       .add_systems(Update, update)
       .add_systems(Update, toggle_wireframe)
@@ -116,7 +126,7 @@ fn toggle_wireframe(
   // prettier-ignore
   if !ALLOWED_DEBUG_ENGINE { return; }
 
-  if input.just_pressed(KeyCode::Space) {
+  if input.just_pressed(KeyCode::KeyL) {
     for object in &all_no_wireframe {
       commands.entity(object).insert(Wireframe);
     }

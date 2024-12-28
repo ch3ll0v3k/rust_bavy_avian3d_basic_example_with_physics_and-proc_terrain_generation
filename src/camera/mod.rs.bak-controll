@@ -5,12 +5,10 @@ use std::{ borrow::BorrowMut, fmt, sync::Mutex };
 // use bevy::prelude::*;
 
 use avian3d::collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted };
-use avian3d::prelude::*;
 
 use avian3d::parry::na;
 use avian3d::prelude::{
   AngularVelocity,
-  CoefficientCombine,
   Collider,
   CollisionMargin,
   ExternalAngularImpulse,
@@ -21,7 +19,6 @@ use avian3d::prelude::{
   LockedAxes,
   Mass,
   MaxLinearSpeed,
-  Restitution,
   RigidBody,
 };
 use bevy::{
@@ -118,7 +115,7 @@ impl Plugin for CameraPlugin {
     }
 }
 const MUL_POS: f32 = 5.0;
-const POS: Vec3 = Vec3::new(-2.5 * MUL_POS, 30.5 * MUL_POS, 9.0 * MUL_POS);
+const POS: Vec3 = Vec3::new(-2.5 * MUL_POS, 4.5 * MUL_POS, 9.0 * MUL_POS);
 
 fn update() {}
 
@@ -136,44 +133,39 @@ fn startup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
-  // commands.spawn((
-  //   RigidBody::Dynamic,
-  //   // Collider::sphere(1.65),
-  //   Collider::sphere(2.0),
-  //   CollisionMargin(COLLISION_MARGIN * 1.0),
-  //   Transform::from_xyz(-20.0, 20.0, 20.0).looking_at(Vec3::ZERO, Vec3::ZERO),
-  //   Mesh3d(meshes.add(Sphere::new(2.0))),
-  //   MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
-  //   // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
-  //   Mass(10.0),
-  //   Name::new("player_bal_t"),
-  //   get_defaul_physic_debug_params(),
-  //   AnyObject,
-  // ));
+  commands.spawn((
+    RigidBody::Dynamic,
+    // Collider::sphere(1.65),
+    Collider::sphere(2.0),
+    CollisionMargin(COLLISION_MARGIN * 1.0),
+    Transform::from_xyz(-20.0, 20.0, 20.0).looking_at(Vec3::ZERO, Vec3::ZERO),
+    Mesh3d(meshes.add(Sphere::new(2.0))),
+    MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
+    // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
+    Mass(10.0),
+    get_defaul_physic_debug_params(),
+    AnyObject,
+  ));
 
   commands
     .spawn((
       RigidBody::Dynamic,
+      Collider::sphere(1.0),
       CollisionMargin(COLLISION_MARGIN * 1.0),
-      Collider::capsule(2.0, 5.0),
-      // Restitution::new(0.0),
-      Restitution {
-        coefficient: 0.0,
-        combine_rule: CoefficientCombine::Min,
-      },
       Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(POS, Vec3::Y),
-      Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
+      Mesh3d(meshes.add(Sphere::new(1.65))),
       MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
+      // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
       Mass(10.0),
       LockedAxes::ROTATION_LOCKED,
-      // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
+      // MaxLinearSpeed(100.0),
       // MaxLinearSpeed(5.0),
+      // MaxLinearSpeed()
       CameraParentMarker,
-      Name::new("p_player_t"),
+      Name::new("player_t"),
     ))
     .with_children(|children| {
       children.spawn((
-        Name::new("p_player_cam_t"),
         Camera3d::default(),
         Transform::from_xyz(0.0, 0.0, 0.0), // .looking_at(POS, Vec3::Y),
         CameraMarker,
@@ -327,15 +319,13 @@ fn on_m_left_down() { set_global_state(true); }
 // prettier-ignore
 fn on_m_left_up() { set_global_state(false); }
 
-// prettier-ignore
 // fn get_camera_direction(
-//   query: Query<&GlobalTransform, With<Camera>>,
+//     query: Query<&GlobalTransform, With<Camera>>,
 // ) {
-//   if let Some(camera_transform) = query.iter().next() {
-//     let forward = camera_transform.forward();
-//     camera_transform.affine().translation.x;
-//     println!("Camera forward direction: {:?}", forward);
-//   }
+//     if let Some(camera_transform) = query.iter().next() {
+//         let forward = camera_transform.forward();
+//         println!("Camera forward direction: {:?}", forward);
+//     }
 // }
 
 // #[tracing::instrument]
@@ -482,8 +472,7 @@ fn control_cam(
     !keys.pressed(KeyCode::KeyW) &&
     !keys.pressed(KeyCode::KeyS) &&
     !keys.pressed(KeyCode::KeyA) &&
-    !keys.pressed(KeyCode::KeyD) &&
-    !keys.pressed(KeyCode::Space)
+    !keys.pressed(KeyCode::KeyD)
   {
     return;
   }
@@ -554,17 +543,67 @@ fn control_cam(
     } else if keys.pressed(KeyCode::KeyD) {
       impulse3 += Vec3::new(x * -1.0, y * -1.0, z * -1.0) * force_scale_mul * BOOST_SPEED;
     }
-  }
 
-  let force = get_external_impulse(impulse3, false);
-  commands.entity(entity).insert((RigidBody::Dynamic, force));
+    let force = get_external_impulse(impulse3, false);
+    commands.entity(entity).insert((RigidBody::Dynamic, force));
 
-  for mut velocity in q_lin_velocity.iter_mut() {
-    let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
-    if xz_speed > max_speed {
-      let scale = max_speed / xz_speed;
-      velocity.x *= scale;
-      velocity.z *= scale;
+    for mut velocity in q_lin_velocity.iter_mut() {
+      let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
+      if xz_speed > max_speed {
+        let scale = max_speed / xz_speed;
+        velocity.x *= scale;
+        velocity.z *= scale;
+      }
+    }
+
+    // if keys.pressed(KeyCode::KeyW) {
+    //   let impulse3 = Vec3::new(x, y, z) * force_scale_mul * 20.0 * BOOST_SPEED;
+
+    //   let force = get_external_impulse(impulse3, false);
+    //   commands.entity(entity).insert((RigidBody::Dynamic, force));
+    // } else if keys.pressed(KeyCode::KeyS) {
+    //   let impulse3 =
+    //     Vec3::new(x * -1.0, y * -1.0, z * -1.0) * 20.0 * force_scale_mul * BOOST_SPEED;
+    //   let force = get_external_impulse(impulse3, false);
+    //   commands.entity(entity).insert((RigidBody::Dynamic, force));
+    // }
+
+    // let right = transform.right();
+    // x = (x - right.x) / LR_DIV_SCALE;
+    // y = (y - right.y) / LR_DIV_SCALE;
+    // z = (z - right.z) / LR_DIV_SCALE;
+    // if keys.pressed(KeyCode::KeyA) {
+    //   let impulse3 = Vec3::new(x, y, z) * force_scale_mul * BOOST_SPEED;
+    //   let force = get_external_impulse(impulse3, false);
+    //   commands.entity(entity).insert((RigidBody::Dynamic, force));
+    // } else if keys.pressed(KeyCode::KeyD) {
+    //   let impulse3 = Vec3::new(x * -1.0, y * -1.0, z * -1.0) * force_scale_mul * BOOST_SPEED;
+    //   let force = get_external_impulse(impulse3, false);
+    //   commands.entity(entity).insert((RigidBody::Dynamic, force));
+    // }
+  } else {
+    if keys.pressed(KeyCode::KeyW) {
+      transform.translation.x += x;
+      transform.translation.y += y;
+      transform.translation.z += z;
+    } else if keys.pressed(KeyCode::KeyS) {
+      transform.translation.x -= x;
+      transform.translation.y -= y;
+      transform.translation.z -= z;
+    }
+
+    let right = transform.right();
+    x = (x - right.x) / LR_DIV_SCALE;
+    y = (y - right.y) / LR_DIV_SCALE;
+    z = (z - right.z) / 20.0;
+    if keys.pressed(KeyCode::KeyA) {
+      transform.translation.x += x;
+      transform.translation.y += y;
+      transform.translation.z += z;
+    } else if keys.pressed(KeyCode::KeyD) {
+      transform.translation.x -= x;
+      transform.translation.y -= y;
+      transform.translation.z -= z;
     }
   }
 }
@@ -595,53 +634,24 @@ fn control_cam(
 //   }
 // }
 
-// prettier-ignore
 fn detect_bullet_collision(
   mut commands: Commands,
   query: Query<&Name>,
   mut collision_event_reader: EventReader<Collision>
 ) {
   for Collision(contacts) in collision_event_reader.read() {
-    // if contacts.collision_stopped() {
-    //   let type_t_1 = query.get(contacts.entity1).unwrap_or(&Name::new("unknown_t")).to_string();
-    //   let type_t_2 = query.get(contacts.entity2).unwrap_or(&Name::new("unknown_t")).to_string();
-    //   // let type_t_1 = query.get(contacts.body_entity1.unwrap()).unwrap_or(&Name::new("unknown_t")).to_string();
-    //   // let type_t_2 = query.get(contacts.body_entity2.unwrap()).unwrap_or(&Name::new("unknown_t")).to_string();
-    //   println!(" end > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
-    // }
-
     if contacts.collision_started() {
-      // let type_t_1 = query
-      //   .get(contacts.entity1)
-      //   .map(|n| n.to_string())
-      //   .unwrap_or("unknown_t".to_string());
+      let type_t_1 = query
+        .get(contacts.entity1)
+        .map(|n| n.to_string())
+        .unwrap_or("Unknown-1".to_string());
 
-      let type_t_1 = query.get(contacts.entity1).unwrap_or(&Name::new("unknown_t")).to_string();
-      let type_t_2 = query.get(contacts.entity2).unwrap_or(&Name::new("unknown_t")).to_string();
-
-      // let type_t_1 = query
-      //   .get(contacts.body_entity1.unwrap())
-      //   .unwrap_or(&Name::new("unknown_t"))
-      //   .to_string();
-      // let type_t_2 = query
-      //   .get(contacts.body_entity2.unwrap())
-      //   .unwrap_or(&Name::new("unknown_t"))
-      //   .to_string();
-
-      println!(" start > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
-
-      if type_t_1 == "unknown_t" || type_t_2 == "unknown_t" {
-        return;
-      }
+      let type_t_2 = query
+        .get(contacts.entity2)
+        .map(|n| n.to_string())
+        .unwrap_or("Unknown-2".to_string());
 
       if type_t_2 == type_t_1 {
-        return;
-      }
-
-      if
-        (type_t_1 == "p_bullet_t" && type_t_2 == "p_player_t") ||
-        (type_t_1 == "p_player_t" && type_t_2 == "p_bullet_t")
-      {
         return;
       }
 
@@ -654,29 +664,24 @@ fn detect_bullet_collision(
       //   contacts.is_sensor,
       //   contacts.collision_started()
       // );
-      // println!(
-      //   "0: (type(1): {type_t_1}) collided (type(2): {type_t_2}) ({:?} => {:?})",
-      //   contacts.body_entity1,
-      //   contacts.body_entity2
-      // );
 
-      // return;
-
-      if type_t_1 == "p_bullet_t" {
-        println!(
-          "0: (type(1): {type_t_1}) collided (type(2): {type_t_2}) ({} => {})",
-          contacts.entity1,
-          contacts.entity2
-        );
+      if type_t_1 == "bullet_t" {
+        // println!(
+        //   "Bullet {} collided with entity: ({} => {:?})",
+        //   contacts.entity1,
+        //   type_t_2,
+        //   contacts.entity2
+        // );
         commands.entity(contacts.entity1).despawn();
       }
 
-      if type_t_2 == "p_bullet_t" {
-        println!(
-          "1: (type(1): {type_t_1}) collided (type(2): {type_t_2}) ({} => {})",
-          contacts.entity1,
-          contacts.entity2
-        );
+      if type_t_2 == "bullet_t" {
+        // println!(
+        //   "Bullet {} collided with entity: ({} => {:?})",
+        //   contacts.entity2,
+        //   type_t_1,
+        //   contacts.entity1
+        // );
         commands.entity(contacts.entity2).despawn();
       }
     }
@@ -704,35 +709,42 @@ fn handle_left_click(
 
       let mut transform_parent = query_camera_parent.single_mut();
       let mut transform = query_camera.single_mut();
+
       let vec3_parent = transform_parent.translation;
+      // println!("-------------------------------");
       let fw_parent = Vec3::from(transform_parent.forward());
       let up_child = Vec3::from(transform.up());
-      let mut to = Vec3::new( fw_parent.x,  up_child.z * 1.5, fw_parent.z);
-      // println!("to-vec-y: {} => up_child.z {}", transform.translation.y, up_child.z);
+
+      // combined 
+      //   Y = (Y + from inner part of cam:sphere holder)
+      //   X/Z = (from outer cam:sphere holder)
+      let mut to = Vec3::new( fw_parent.x,  up_child.z, fw_parent.z);
+      // println!("to: {:?}", to);
       
       let mut force = ExternalImpulse::default();
       force
         .apply_impulse_at_point(
-          to * 2500.0, 
+          to * 1.0 * 2500.0, 
           Vec3::ZERO, 
           Vec3::ZERO
         )
         .with_persistence(false);
 
-      let off_xz = 5.0;
+      let off_xz = 20.0;
       let norm_vec_3 = fw_parent.clone().normalize();
 
       let handle_bullet = (
         RigidBody::Dynamic,
+        // Collider::sphere(1.65),
         Collider::sphere(0.25),
         CollisionMargin(COLLISION_MARGIN * 1.0),
         Transform::from_xyz(
           vec3_parent.x + (norm_vec_3.x * off_xz), 
-          vec3_parent.y +0.0, 
+          vec3_parent.y  +0.0, 
           vec3_parent.z + (norm_vec_3.z * off_xz)
         ), // .looking_at(Vec3::ZERO, Vec3::Y),
         Mesh3d(meshes.add(Sphere::new(0.25))),
-        MeshMaterial3d(materials.add(Color::srgb_u8(255, 0, 0))),
+        MeshMaterial3d(materials.add(Color::srgb_u8(255, 200, 200))),
         // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
         force,
         Mass(10.0),
@@ -740,7 +752,7 @@ fn handle_left_click(
         AnyObject,
         // Wireframe::default()
         BulletMarker { name: "bullet_marker".to_string() },
-        Name::new("p_bullet_t"),
+        Name::new("bullet_t"),
         // if ALLOWED_DEBUG_ENGINE { Wireframe } else { Wireframe::default() }, 
       );
 

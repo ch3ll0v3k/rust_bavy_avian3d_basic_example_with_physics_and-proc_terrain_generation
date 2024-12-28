@@ -12,6 +12,9 @@ use avian3d::prelude::*;
 use avian3d::PhysicsPlugins;
 // use bevy::audio::AudioPlugin;
 use bevy::audio::AudioPlayer;
+use bevy::color::palettes::css::BLACK;
+use bevy::color::palettes::css::SILVER;
+use bevy::color::palettes::css::WHITE_SMOKE;
 use bevy::image::ImageAddressMode;
 use bevy::image::ImageFilterMode;
 use bevy::image::ImageLoaderSettings;
@@ -59,15 +62,20 @@ use constants::physics_world::*;
 // // prettier-ignore
 // const TERRAIN_CHUNK_SUBDIVISIONS: u32 = (TERRAIN_CHUNK_SUBDIVISIONS_SPLIT / (TERRAIN_XZ_TO_Y_SCALLER as u32)) * 2;
 
-const TERRAIN_XZ_TO_Y_SCALLER: f32 = 4.0;
-const TERRAIN_HEIGHT: f32 = 70.0 * 1.2;
-const TERRAIN_CHUNK_W: f32 = 1024.0 / TERRAIN_XZ_TO_Y_SCALLER;
-const TERRAIN_CHUNK_H: f32 = 1024.0 / TERRAIN_XZ_TO_Y_SCALLER;
-const TERRAIN_CHUNK_SUBDIVISIONS_SPLIT: u32 = 32;
-const TERRAIN_CHUNK_SCALLER: f64 = 300.0;
+const TERRAIN_XZ_TO_Y_SCALLER: f32 = 4.0; // 4.0;
+const TERRAIN_HEIGHT: f32 = 70.0 * 2.0; // 70.0 * 2.0
+const TERRAIN_CHUNK_W: f32 = (1024.0 / TERRAIN_XZ_TO_Y_SCALLER) * 4.0; // 4.0
+const TERRAIN_CHUNK_H: f32 = (1024.0 / TERRAIN_XZ_TO_Y_SCALLER) * 4.0; // 4.0
+const TERRAIN_CHUNK_SUBDIVISIONS_SPLIT: u32 = 32; // 32
+const TERRAIN_CHUNK_SCALLER: f64 = 1000.0; // 3à0.0
 // prettier-ignore
 // const TERRAIN_CHUNK_SUBDIVISIONS: u32 = (TERRAIN_CHUNK_SUBDIVISIONS_SPLIT / (TERRAIN_XZ_TO_Y_SCALLER as u32)) * 1;
-const TERRAIN_CHUNK_SUBDIVISIONS: u32 = 16;
+const TERRAIN_CHUNK_SUBDIVISIONS: u32 = 16 * 8; // 16 * 8
+
+const WINDOW_POSITIONS_DEV_SIDE_33_PERCENT: Vec2 = Vec2::new(800.0, 1100.0);
+const WINDOW_POSITIONS_DEV_SIDE_50_PERCENT: Vec2 = Vec2::new(950.0, 1100.0);
+
+static USE_WIN_SIZE: Vec2 = WINDOW_POSITIONS_DEV_SIDE_50_PERCENT;
 
 fn main() {
   App::new()
@@ -79,10 +87,13 @@ fn main() {
       // LogDiagnosticsPlugin::default(),
       DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
+          position: WindowPosition::At(IVec2::new(1200, 0)),
           // title: "Bevy Game".to_string(),
           resolution: WindowResolution::new(
-            WP_W / WP_SCALE,
-            WP_H / WP_SCALE
+            // WP_W / WP_SCALE,
+            // WP_H / WP_SCALE
+            USE_WIN_SIZE.x,
+            USE_WIN_SIZE.y
           ).with_scale_factor_override(1.0),
           // present_mode: AutoNoVsync,
           // mode: Fullscreen(MonitorSelection::Primary),
@@ -156,6 +167,64 @@ struct FadeIn;
 //   // ));
 // }
 
+fn load_base_texture(asset_server: Res<AssetServer>, path: &str) -> Handle<Image> {
+  let texture_handle: Handle<Image> = asset_server.load_with_settings(
+    path, // "textures/terrain/base/sand.01.png",
+    |s: &mut _| {
+      *s = ImageLoaderSettings {
+        sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
+          // rewriting mode to repeat image,
+          // address_mode_u: ImageAddressMode::Repeat,
+          // address_mode_v: ImageAddressMode::Repeat,
+          address_mode_u: ImageAddressMode::Repeat,
+          address_mode_v: ImageAddressMode::Repeat,
+          // address_mode_w: ImageAddressMode::ClampToBorder,
+          mag_filter: ImageFilterMode::Linear,
+          ..default()
+        }),
+        ..default()
+      };
+    }
+  );
+
+  texture_handle
+}
+
+fn get_base_texture_material(
+  asset_server: Res<AssetServer>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  path: &str
+) -> (Handle<Image>, StandardMaterial, Handle<StandardMaterial>) {
+  let texture: Handle<Image> = load_base_texture(asset_server, "textures/terrain/base/sand.01.png");
+
+  let mut material = StandardMaterial {
+    // base_color: Color::BLACK,
+    base_color_texture: Some(texture.clone()),
+    // https://bevyengine.org/examples/assets/repeated-texture/
+    // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
+    // base_color: Color::srgba_u8(128, 197, 222,120),
+    base_color: Color::srgba_u8(128, 197, 222, 17),
+    // alpha_mode: AlphaMode::Mask(0.75),
+    alpha_mode: AlphaMode::Blend,
+    unlit: false,
+    emissive: LinearRgba::BLACK,
+    // emissive_exposure_weight: 1.0,
+    perceptual_roughness: 0.85,
+    // metallic: 0.0,
+    reflectance: 0.05,
+    // ior: 1.47,
+    ..default()
+  };
+
+  // material.base_color = Color::srgba_u8(128, 197, 222, 17);
+
+  // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
+  let handle = materials.add(material.clone());
+
+  (texture, material, handle)
+}
+
 // prettier-ignore
 fn setup(
   asset_server: Res<AssetServer>,
@@ -164,7 +233,6 @@ fn setup(
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
 
-
   // let track_1 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
   // let track_2 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
 
@@ -172,8 +240,6 @@ fn setup(
   // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/paintball_shoot.01.ogg");
   // let track_list = vec![track_1, track_2];
   // commands.insert_resource(SoundtrackPlayer::new(track_list));
-
-
   
   commands.spawn((
     // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
@@ -187,7 +253,6 @@ fn setup(
     // FadeIn,
   ));
 
-
   // commands.spawn(AudioPlayerS::new(
   //   asset_server.load("sounds/test.01.mp3"),
   // ));
@@ -198,32 +263,12 @@ fn setup(
 
   // let Ok(entity) = query.get_single_mut() else { return; };
 
-  let texture_handle: Handle<Image> = asset_server.load_with_settings(
-    "textures/terrain/base/sand.01.png",
-    |s: &mut _| {
-      *s = ImageLoaderSettings {
-          sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
-              // rewriting mode to repeat image,
-              // address_mode_u: ImageAddressMode::Repeat,
-              // address_mode_v: ImageAddressMode::Repeat,
-              address_mode_u: ImageAddressMode::Repeat,
-              address_mode_v: ImageAddressMode::Repeat,
-              // address_mode_w: ImageAddressMode::ClampToBorder,
-              mag_filter: ImageFilterMode::Linear,
-              ..default()
-          }),
-          ..default()
-      }
-    },
-  );
+  let terrain_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/terrain/base/sand.01.png");
+    
 
-  // let texture_handle: Handle<Image> = asset_server.load::<Image>("textures/terrain/base/sand.01.png" );
-
-  // let base_color_texture: Option<Handle<Image>> = Some(asset_server.load("earth/base_color.jpg"));
-
-  let material = StandardMaterial {
+  let terrain_material = StandardMaterial {
     // base_color: Color::BLACK,
-    base_color_texture: Some(texture_handle.clone()),
+    base_color_texture: Some(terrain_texture_handle.clone()),
     // https://bevyengine.org/examples/assets/repeated-texture/
     // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
@@ -239,23 +284,30 @@ fn setup(
   };
 
   // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
-  let material_handle = materials.add(material);
+  let terrain_material_handle = materials.add(terrain_material);
 
-  let max = 0;
-  for x in -max..=max {
-    for z in -max..=max {
-      let terrain: Mesh = generate_chunk(x as f64, z as f64);
+  let mut _min: f32 = f32::MAX;
+  let mut _max: f32 = -f32::MAX;
 
+  let segments:i32 = 1;
+  for x in -segments..=segments {
+    for z in -segments..=segments {
+      let (terrain, min, max) = generate_chunk(x as f64, z as f64);
+
+      _min = if _min > min { min } else { _min };
+      _max = if _max < max { max } else { _max };
+
+      
       commands.spawn((
         RigidBody::Static,
         CollisionMargin(COLLISION_MARGIN),
         Collider::trimesh_from_mesh(&terrain).unwrap(),
         get_defaul_physic_debug_params(),
         Mesh3d(meshes.add(terrain)),
-        MeshMaterial3d(material_handle.clone()),
+        MeshMaterial3d(terrain_material_handle.clone()),
         // MeshMaterial3d(materials.add(Color::srgb_u8(10, 255, 127))),
         // MeshMaterial3d(
-        //   materials.add(StandardMaterial {
+          //   materials.add(StandardMaterial {
         //     base_color: Color::WHITE,
         //     perceptual_roughness: 0.9,
         //     ..default()
@@ -267,10 +319,53 @@ fn setup(
         PhysicsStaticObjectTerrain,
         AnyObject,
         Name::new("terrain_t"),
+      ));
 
+      let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_W, 0.01, TERRAIN_CHUNK_H));
+
+      if
+        let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = water.attribute_mut(
+          Mesh::ATTRIBUTE_UV_0
+        )
+      {
+        for uv in uvs.iter_mut() {
+          uv[0] *= 32.0; // Scale U
+          uv[1] *= 32.0; // Scale V
+        }
+      }
+
+      commands.spawn((
+        // RigidBody::Static,
+        Collider::trimesh_from_mesh(&water).unwrap(),
+        Sensor,
+        // Transform::from_translation(
+        //   Vec3::new(
+        //   (x * TERRAIN_CHUNK_W as i32) as f32, 
+        //   10.125, 
+        //   (z * TERRAIN_CHUNK_H as i32) as f32
+        //   )
+        // ),
+        Transform::from_xyz(
+          (x * TERRAIN_CHUNK_W as i32) as f32, 
+          -13.0, 
+          (z * TERRAIN_CHUNK_H as i32) as f32
+          // .looking_at(Vec3::ZERO, Vec3::ZERO)
+        ),
+        Mesh3d(meshes.add(water)),
+        // MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
+        MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
+        // MeshMaterial3d(water_material_handle.clone()),
+        // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
+        AnyObject,
+        Name::new("water_t"),
       ));
     }
   }
+
+  // terrain: (min: -74.509224 max: 70.95005)
+
+  println!("terrain: (min: {_min} max: {_max})");
+
 }
 
 fn generate_chunk(
@@ -279,7 +374,7 @@ fn generate_chunk(
   // mut materials: ResMut<Assets<StandardMaterial>>,
   x: f64,
   z: f64
-) -> Mesh {
+) -> (Mesh, f32, f32) {
   let noise: BasicMulti<Perlin> = BasicMulti::<Perlin>::default();
 
   let mut terrain = Mesh::from(
@@ -292,6 +387,8 @@ fn generate_chunk(
   );
 
   let use_segment_separator = false;
+  let mut min: f32 = f32::MAX;
+  let mut max: f32 = -f32::MAX;
 
   if
     let Some(VertexAttributeValues::Float32x3(positions)) = terrain.attribute_mut(
@@ -316,24 +413,14 @@ fn generate_chunk(
     }
 
     // seconds pass
-    // for pos in positions.iter_mut() {
-    //     let xi: f32 = noise.get([
-    //         pos[0] as f64 / (TERRAIN_CHUNK_SCALLER * 0.1) + (TERRAIN_CHUNK_SCALLER * x),
-    //         pos[2] as f64 / (TERRAIN_CHUNK_SCALLER * 0.1) + (TERRAIN_CHUNK_SCALLER * z),
-    //         0. as f64,
-    //     ]) as f32;
-    //     pos[1] += xi * TERRAIN_HEIGHT * 0.1 / TERRAIN_XZ_TO_Y_SCALLER;
-    // }
-
-    // third pass
-    // for pos in positions.iter_mut() {
-    //     let xi: f32 = noise.get([
-    //         pos[0] as f64 / (TERRAIN_CHUNK_SCALLER * 0.01) + (TERRAIN_CHUNK_SCALLER * x),
-    //         pos[2] as f64 / (TERRAIN_CHUNK_SCALLER * 0.01) + (TERRAIN_CHUNK_SCALLER * z),
-    //         0. as f64,
-    //     ]) as f32;
-    //     pos[1] += xi * TERRAIN_HEIGHT * 0.1 / TERRAIN_XZ_TO_Y_SCALLER * 0.2;
-    // }
+    for pos in positions.iter_mut() {
+      let xi: f32 = noise.get([
+        (((pos[0] as f64) + (TERRAIN_CHUNK_W as f64) * x) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
+        (((pos[2] as f64) + (TERRAIN_CHUNK_H as f64) * z) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
+        0.0 as f64,
+      ]) as f32;
+      pos[1] += xi * TERRAIN_HEIGHT * 0.001;
+    }
 
     for pos in positions.iter_mut() {
       pos[1] *= 1.0;
@@ -342,6 +429,9 @@ fn generate_chunk(
     let colors: Vec<[f32; 4]> = positions
       .iter()
       .map(|[_, g, _]| {
+        // min = if min > *g { *g } else { min };
+        // max = if max < *g { *g } else { max };
+
         // return Color::from(GREEN_400).to_linear().to_f32_array();
         // return Color::BLACK.to_linear().to_f32_array();
 
@@ -349,50 +439,137 @@ fn generate_chunk(
         // max: 2.6873593
         // min: 0.5470822
 
-        let step = 0.149;
+        const MAX: f32 = 0.7336247; // 0.75;
+        const MIN: f32 = 0.28396824; // 0.25;
+
+        let step = (MAX - MIN) / 12.0;
         // let M = 1.0;
 
-        let g = (*g / TERRAIN_HEIGHT) * 2.0 + 2.0 - 0.5; // * 26.0;
+        let g = (*g + TERRAIN_HEIGHT) / (TERRAIN_HEIGHT * 2.0); //  * 2.0 + 2.0; // * 26.0;
         // println!("{:?}", g);
+        // min: 0.25 => max: 0.75
 
-        if g > 1.7 {
+        min = if min > g { g } else { min };
+        max = if max < g { g } else { max };
+
+        if g > MAX - step * 2.0 {
+          return Color::from(GRAY_100).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 2.1 {
+          return Color::from(GRAY_200).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 2.2 {
+          return Color::from(GRAY_300).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 2.3 {
+          return Color::from(GRAY_300).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 2.4 {
+          return Color::from(GRAY_400).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 2.5 {
+          return Color::from(GRAY_400).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 3.0 {
+          // return Color::from(RED_500).to_linear().to_f32_array();
           return Color::from(GRAY_500).to_linear().to_f32_array();
         }
-        return Color::from(GREEN_500).to_linear().to_f32_array();
-        // if g > 0.8 {
-        if g > 2.6 {
+
+        if g > MAX - step * 5.0 {
+          return Color::from(GRAY_500).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 6.0 {
+          // before mountens
+          return Color::from(GREEN_300).to_linear().to_f32_array();
+        }
+        if g > MAX - step * 6.2 {
+          // return Color::from(GRAY_400).to_linear().to_f32_array();
+          return Color::from(GREEN_200).to_linear().to_f32_array();
+          // return Color::from(RED_500).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 6.5 {
+          // return Color::from(GRAY_400).to_linear().to_f32_array();
+          return Color::from(GREEN_100).to_linear().to_f32_array();
+        }
+
+        // water-upper border
+        if g > MAX - step * 7.3 {
+          return Color::from(GRAY_300).to_linear().to_f32_array();
+          // return Color::from(RED_500).to_linear().to_f32_array();
+        }
+
+        // water-lower border
+        if g > MAX - step * 7.4 {
+          return Color::from(GRAY_300).to_linear().to_f32_array();
+          // return Color::from(RED_500).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 7.5 {
+          return Color::from(GRAY_200).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 7.6 {
+          return Color::from(GRAY_600).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 8.0 {
+          // return Color::from(GRAY_400).to_linear().to_f32_array();
+          return Color::from(BLUE_500).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 8.5 {
+          // return Color::from(GRAY_400).to_linear().to_f32_array();
+          return Color::from(BLUE_600).to_linear().to_f32_array();
+        }
+
+        if g > MAX - step * 9.0 {
+          // return Color::from(GRAY_400).to_linear().to_f32_array();
+          return Color::from(BLUE_700).to_linear().to_f32_array();
+        }
+
+        return Color::from(BLUE_800).to_linear().to_f32_array();
+
+        if g > MAX {
           Color::from(GRAY_100).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 1.0 {
+        } else if g > MAX - step * 1.0 {
           Color::from(GRAY_300).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 2.0 {
+        } else if g > MAX - step * 2.0 {
           Color::from(AMBER_800).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 3.0 {
+        } else if g > MAX - step * 3.0 {
           Color::from(YELLOW_400).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 4.0 {
+        } else if g > MAX - step * 4.0 {
           Color::from(YELLOW_500).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 5.0 {
+        } else if g > MAX - step * 5.0 {
           Color::from(AMBER_400).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 6.0 {
+        } else if g > MAX - step * 6.0 {
           Color::from(AMBER_500).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 7.0 {
+        } else if g > MAX - step * 7.0 {
           Color::from(AMBER_600).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 8.0 {
+        } else if g > MAX - step * 8.0 {
           Color::from(AMBER_700).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 9.0 {
+        } else if g > MAX - step * 9.0 {
           Color::from(AMBER_800).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 0.0 {
+        } else if g > MAX - step * 0.0 {
           Color::from(GREEN_800).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 10.0 {
+        } else if g > MAX - step * 10.0 {
           Color::from(ORANGE_400).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 11.0 {
+        } else if g > MAX - step * 11.0 {
           Color::from(BLUE_400).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 12.0 {
+        } else if g > MAX - step * 12.0 {
           Color::from(GRAY_800).to_linear().to_f32_array()
-        } else if g > 2.6 - step * 13.0 {
+        } else if g > MAX - step * 13.0 {
           Color::from(PURPLE_400).to_linear().to_f32_array()
         } else {
           // Color::from(GREEN_600).to_linear().to_f32_array()
-          Color::from(RED_600).to_linear().to_f32_array()
+          Color::from(BLACK).to_linear().to_f32_array()
         }
       })
       .collect();
@@ -403,6 +580,7 @@ fn generate_chunk(
     // terrain.with_computed_normals();
     // return terrain.with_computed_normals();
   }
+  // println!("min: {min} max: {max}");
 
   if
     let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = terrain.attribute_mut(
@@ -410,10 +588,10 @@ fn generate_chunk(
     )
   {
     for uv in uvs.iter_mut() {
-      uv[0] *= 2.0; // Scale U
-      uv[1] *= 2.0; // Scale V
+      uv[0] *= 8.0; // Scale U
+      uv[1] *= 8.0; // Scale V
     }
   }
 
-  return terrain;
+  return (terrain, min, max);
 }
