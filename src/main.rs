@@ -235,7 +235,6 @@ fn setup(
 
   // let track_1 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
   // let track_2 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
-
   let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/test.02.ogg");
   // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/paintball_shoot.01.ogg");
   // let track_list = vec![track_1, track_2];
@@ -264,7 +263,7 @@ fn setup(
   // let Ok(entity) = query.get_single_mut() else { return; };
 
   let terrain_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/terrain/base/sand.01.png");
-    
+  // let tree_platanus_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/tree/platanus-acerifolia-02.png");
 
   let terrain_material = StandardMaterial {
     // base_color: Color::BLACK,
@@ -363,6 +362,8 @@ fn setup(
   }
 
   // terrain: (min: -74.509224 max: 70.95005)
+
+
 
   println!("terrain: (min: {_min} max: {_max})");
 
