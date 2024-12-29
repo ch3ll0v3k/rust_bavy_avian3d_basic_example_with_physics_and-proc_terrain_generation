@@ -24,17 +24,17 @@ fn startup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
-  commands.spawn((
-    RigidBody::Static,
-    Collider::cylinder(20.0, 0.1),
-    CollisionMargin(0.05),
-    get_defaul_physic_debug_params(),
-    Mesh3d(meshes.add(Cylinder::new(20.0, 0.1))),
-    MeshMaterial3d(materials.add(Color::WHITE)),
-    Transform::from_xyz(0.0, -2.0, 0.0),
-    PhysicsStaticObject,
-    AnyObject,
-  ));
+  // commands.spawn((
+  //   RigidBody::Static,
+  //   Collider::cylinder(20.0, 0.1),
+  //   CollisionMargin(0.05),
+  //   get_defaul_physic_debug_params(),
+  //   Mesh3d(meshes.add(Cylinder::new(20.0, 0.1))),
+  //   MeshMaterial3d(materials.add(Color::WHITE)),
+  //   Transform::from_xyz(0.0, -2.0, 0.0),
+  //   PhysicsStaticObject,
+  //   AnyObject,
+  // ));
 }
 
 // prettier-ignore

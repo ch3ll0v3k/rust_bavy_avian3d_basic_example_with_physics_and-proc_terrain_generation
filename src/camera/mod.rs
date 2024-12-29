@@ -508,13 +508,14 @@ fn control_cam(
   //   // .insert(Force::new(force, transform.translation));
 
   let mut max_speed: f32 = 5.0;
-  let mut running_speed: f32 = 1.0;
+  let mut running_speed: f32 = 10.0; // 1.0;
   let mut jump_force: f32 = 0.0;
   let use_physics = true;
 
   if keys.pressed(KeyCode::KeyQ) {
-    running_speed = 2.0;
-    max_speed *= 3.0;
+    // running_speed = 2.0;
+    // max_speed *= 3.0;
+    max_speed *= 30.0;
   }
 
   if keys.pressed(KeyCode::Space) {
@@ -628,7 +629,7 @@ fn detect_bullet_collision(
       //   .unwrap_or(&Name::new("unknown_t"))
       //   .to_string();
 
-      println!(" start > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
+      // println!(" start > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
 
       if type_t_1 == "unknown_t" || type_t_2 == "unknown_t" {
         return;
@@ -669,6 +670,7 @@ fn detect_bullet_collision(
           contacts.entity2
         );
         commands.entity(contacts.entity1).despawn();
+
       }
 
       if type_t_2 == "p_bullet_t" {
@@ -696,13 +698,13 @@ fn handle_left_click(
   mut materials: ResMut<Assets<StandardMaterial>>,
   mut ev_m_motion: EventReader<bevy::input::mouse::MouseMotion>,
   mut ev_b_input: EventReader<MouseButtonInput>,
-  mut query_camera_parent: Query<&mut Transform, (With<CameraParentMarker>, Without<CameraMarker>)>,
+  mut player: Query<&mut Transform, (With<CameraParentMarker>, Without<CameraMarker>)>,
   mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<CameraParentMarker>)>
 ) {
   for ev_b in ev_b_input.read() {
     if ev_b.button == MouseButton::Left {
 
-      let mut transform_parent = query_camera_parent.single_mut();
+      let mut transform_parent = player.single_mut();
       let mut transform = query_camera.single_mut();
       let vec3_parent = transform_parent.translation;
       let fw_parent = Vec3::from(transform_parent.forward());
@@ -778,14 +780,14 @@ fn handle_left_click(
 fn handle_drag(
   mut ev_m_motion: EventReader<bevy::input::mouse::MouseMotion>,
   mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<CameraParentMarker>)>,
-  mut query_camera_parent: Query<&mut Transform, (With<CameraParentMarker>, Without<CameraMarker>)>
+  mut player: Query<&mut Transform, (With<CameraParentMarker>, Without<CameraMarker>)>
 ) {
   // if let Some(is_left_m_btn_down) = get_global_state() {
   //   if !is_left_m_btn_down { return; }
   // }
 
   // let mut transform = query_camera.single_mut();
-  let mut trans_cam_parent = query_camera_parent.single_mut();
+  let mut trans_cam_parent = player.single_mut();
   let mut trans_cam = query_camera.single_mut();
   for ev_m in ev_m_motion.read() {
     // println!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
