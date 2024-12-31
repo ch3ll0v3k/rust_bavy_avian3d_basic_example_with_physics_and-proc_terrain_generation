@@ -35,16 +35,9 @@ impl Plugin for MGameStatePlugin {
       .add_systems(Startup, startup)
       .add_systems(Update, update)
       .add_systems(Update, toggle_pause_game.run_if(input_just_pressed(KeyCode::Escape)))
-      .add_systems(Update, on_pause.run_if((
-          in_state(MGameState::Paused)
-        )
-      ))
+      .add_systems(Update, on_pause.run_if(in_state(MGameState::Paused)))
       .add_systems(Update, on_running.run_if(
-        (
-          in_state(MGameState::Running)
-          // &&
-          // on_timer(Duration::from_millis(1000))
-        )
+        in_state(MGameState::Running)
       ));
   }
 }
