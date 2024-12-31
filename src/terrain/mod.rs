@@ -58,13 +58,12 @@ fn startup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
-  {
+  if true {
     let cubes: i32 = 3;
-
     for y in 0..cubes {
       for x in 0..cubes {
         for z in 0..cubes {
-          let cube = Mesh::from(Cuboid::new(1.0, 1.0, 1.0));
+          let cube = Mesh::from(Cuboid::new(10.0, 10.0, 10.0));
           let random_color = Color::srgb(
             rand::random::<f32>() * 255.0,
             rand::random::<f32>() * 255.0,
@@ -75,12 +74,16 @@ fn startup(
             NotShadowCaster,
             NotShadowReceiver,
             RigidBody::Dynamic,
+            Mass(0.1),
             CollisionMargin(COLLISION_MARGIN),
             Collider::trimesh_from_mesh(&cube).unwrap(),
-
             Mesh3d(meshes.add(cube)),
             MeshMaterial3d(materials.add(random_color)),
-            Transform::from_xyz(x as f32, 25.0 + (y as f32), z as f32),
+            Transform::from_xyz(
+              30.0 * (x as f32),
+              rand::random::<f32>() * 100.0 + 250.0 + (y as f32),
+              30.0 * (z as f32)
+            ),
             PhysicsStaticObject,
             AnyObject,
           ));
