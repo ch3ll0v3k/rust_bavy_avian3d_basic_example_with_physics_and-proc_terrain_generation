@@ -41,6 +41,7 @@ use bevy::{
 
 use crate::debug::ALLOWED_DEBUG_ENGINE;
 use crate::state::MGameState;
+use crate::sys_paths;
 use crate::{
   debug::{ get_defaul_physic_debug_params, is_allowed_debug_engine },
   entities::with_children::MEntityBigSphere,
@@ -154,11 +155,18 @@ fn update() {}
 // better option then Name::new("some tag")
 // >> https://chatgpt.com/c/6773dcd8-1cd4-8000-bd81-a2e2507b9f5f
 
+fn test(commands: &mut Commands) -> Entity {
+  let id = commands.spawn(RigidBody::Dynamic).id();
+  id
+}
+
 fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
+  let id = test(&mut commands);
+
   // commands.spawn((
   //   RigidBody::Dynamic,
   //   // Collider::sphere(1.65),
@@ -801,7 +809,7 @@ fn handle_left_click(
         CollisionMargin(COLLISION_MARGIN * 1.0),
         Transform::from_xyz(
           vec3_parent.x + (norm_vec_3.x * off_xz), 
-          vec3_parent.y +0.0, 
+          vec3_parent.y +2.0, 
           vec3_parent.z + (norm_vec_3.z * off_xz)
         ), // .looking_at(Vec3::ZERO, Vec3::Y),
         Mesh3d(meshes.add(Sphere::new(0.25))),
@@ -828,8 +836,7 @@ fn handle_left_click(
       //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
       // }
 
-      // let sound: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/paintball_shoot.01.ogg");
-      let sound: Handle<AudioSource> = asset_server.load("sounds/paintball_shoot.01.ogg");
+      let sound: Handle<AudioSource> = asset_server.load(sys_paths::sounds::EPaths::PaintballShoot.as_str());
       
       commands.spawn((
         // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),

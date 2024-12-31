@@ -36,7 +36,7 @@ fn startup(
 
   commands.insert_resource(AmbientLight {
     color: Color::default(),
-    brightness: 80.0,
+    brightness: 80.0 * 2.0,
   });
 
   // commands.spawn(

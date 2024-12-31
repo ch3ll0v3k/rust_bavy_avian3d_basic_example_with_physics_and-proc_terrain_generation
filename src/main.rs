@@ -53,6 +53,7 @@ mod constants;
 mod terrain;
 mod entities;
 mod state;
+mod sys_paths;
 
 use markers::m_avian::*;
 use markers::m_bevy::*;
@@ -129,7 +130,7 @@ fn main() {
   App::new()
     // Enable physics
     // .add_plugins((PanOrbitCameraPlugin,))
-    .insert_resource(ClearColor(Color::from(BLUE_200)))
+    // .insert_resource(ClearColor(Color::from(BLUE_200)))
     .add_plugins((
       // AssetPlugin::default(),
       // AudioPlugin::default(),
@@ -208,24 +209,21 @@ fn main() {
 // }
 
 fn load_base_texture(asset_server: Res<AssetServer>, path: &str) -> Handle<Image> {
-  let texture_handle: Handle<Image> = asset_server.load_with_settings(
-    path, // "textures/terrain/base/sand.01.png",
-    |s: &mut _| {
-      *s = ImageLoaderSettings {
-        sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
-          // rewriting mode to repeat image,
-          // address_mode_u: ImageAddressMode::Repeat,
-          // address_mode_v: ImageAddressMode::Repeat,
-          address_mode_u: ImageAddressMode::Repeat,
-          address_mode_v: ImageAddressMode::Repeat,
-          // address_mode_w: ImageAddressMode::ClampToBorder,
-          mag_filter: ImageFilterMode::Linear,
-          ..default()
-        }),
+  let texture_handle: Handle<Image> = asset_server.load_with_settings(path, |s: &mut _| {
+    *s = ImageLoaderSettings {
+      sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
+        // rewriting mode to repeat image,
+        // address_mode_u: ImageAddressMode::Repeat,
+        // address_mode_v: ImageAddressMode::Repeat,
+        address_mode_u: ImageAddressMode::Repeat,
+        address_mode_v: ImageAddressMode::Repeat,
+        // address_mode_w: ImageAddressMode::ClampToBorder,
+        mag_filter: ImageFilterMode::Linear,
         ..default()
-      };
-    }
-  );
+      }),
+      ..default()
+    };
+  });
 
   texture_handle
 }
@@ -235,7 +233,10 @@ fn get_base_texture_material(
   mut materials: ResMut<Assets<StandardMaterial>>,
   path: &str
 ) -> (Handle<Image>, StandardMaterial, Handle<StandardMaterial>) {
-  let texture: Handle<Image> = load_base_texture(asset_server, "textures/terrain/base/sand.01.png");
+  let texture: Handle<Image> = load_base_texture(
+    asset_server,
+    sys_paths::textures::EPaths::Base.as_str()
+  );
 
   let mut material = StandardMaterial {
     // base_color: Color::BLACK,
@@ -243,10 +244,7 @@ fn get_base_texture_material(
     // https://bevyengine.org/examples/assets/repeated-texture/
     // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
-    // base_color: Color::srgba_u8(128, 197, 222,120),
-    base_color: Color::srgba_u8(128, 197, 222, 17),
-    // alpha_mode: AlphaMode::Mask(0.75),
-    alpha_mode: AlphaMode::Blend,
+    // alpha_mode: AlphaMode::Blend,
     unlit: false,
     emissive: LinearRgba::BLACK,
     // emissive_exposure_weight: 1.0,
@@ -260,7 +258,7 @@ fn get_base_texture_material(
   // material.base_color = Color::srgba_u8(128, 197, 222, 17);
 
   // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
-  let handle = materials.add(material.clone());
+  let handle: Handle<StandardMaterial> = materials.add(material.clone());
 
   (texture, material, handle)
 }
@@ -375,10 +373,7 @@ fn setup(
   // return;
   
   {
-    // let track_1 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
-    // let track_2 = asset_server.load::<AudioSource>("sounds/test.01.mp3");
-    let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/test.02.ogg");
-    // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>("sounds/paintball_shoot.01.ogg");
+    let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>(sys_paths::sounds::EPaths::EnvOne.as_str());
     // let track_list = vec![track_1, track_2];
     // commands.insert_resource(SoundtrackPlayer::new(track_list));
     
@@ -403,12 +398,13 @@ fn setup(
     // commands.spawn(audio);
   }
 
-  // let Ok(entity) = query.get_single_mut() else { return; };
+  // // let Ok(entity) = query.get_single_mut() else { return; };
 
-  let terrain_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/terrain/base/sand.01.png");
-  // let tree_platanus_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/tree/platanus-acerifolia-02.png");
+  // // let terrain_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/terrain/base/sand.01.png");
+  let terrain_texture_handle: Handle<Image> = load_base_texture(asset_server, sys_paths::textures::EPaths::Base.as_str());
+  // // let tree_platanus_texture_handle: Handle<Image> = load_base_texture(asset_server, "textures/tree/platanus-acerifolia-02.png");
 
-  let terrain_material = StandardMaterial {
+  let terrain_material: StandardMaterial = StandardMaterial {
     // base_color: Color::BLACK,
     base_color_texture: Some(terrain_texture_handle.clone()),
     // https://bevyengine.org/examples/assets/repeated-texture/
@@ -425,8 +421,17 @@ fn setup(
     ..default()
   };
 
-  // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
-  let terrain_material_handle = materials.add(terrain_material);
+  // // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
+  let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
+
+
+
+  // let (
+  //   texture, 
+  //   material, 
+  //   terrain_material_handle
+  // ) = get_base_texture_material(asset_server, materials, sys_paths::textures::EPaths::Base.as_str());
+
 
   let mut _min: f32 = f32::MAX;
   let mut _max: f32 = -f32::MAX;
@@ -453,10 +458,8 @@ fn setup(
         CollisionMargin(COLLISION_MARGIN),
         Collider::trimesh_from_mesh(&terrain).unwrap(),
         Mesh3d(meshes.add(terrain)),
-        // MeshMaterial3d(terrain_material_handle.clone()),
-        // MeshMaterial3d(materials.add(Color::srgb_u8(10, 255, 127))),
-        // Transform::from_translation(Vec3::new(-200., 0., 0.)),
-        MeshMaterial3d(materials.add(Color::srgb_u8(255, 255, 255))),
+        MeshMaterial3d(terrain_material_handle.clone()),
+        // MeshMaterial3d(materials.add(Color::srgb_u8(255, 255, 255))),
         MTerrainMarker,
         PhysicsStaticObject,
         PhysicsStaticObjectTerrain,
@@ -633,7 +636,7 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
       .subdivisions(TERRAIN_CHUNK_SUBDIVISIONS / (dyn_scale as u32))
   );
 
-  let use_segment_separator = true;
+  let use_segment_separator = false;
   let mut min: f32 = f32::MAX;
   let mut max: f32 = -f32::MAX;
 
@@ -710,36 +713,35 @@ fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
 
   let mut color: [f32; 4];
 
-  if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 1.5 {
-    color = Color::from(BLACK).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.5 {
-    color = Color::from(RED_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 3.5 {
-    color = Color::from(GREEN_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 4.5 {
-    color = Color::from(BLUE_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 5.5 {
-    color = Color::from(BLACK).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
-    color = Color::from(RED_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {
-    color = Color::from(GREEN_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.0 {
-    color = Color::from(BLUE_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {
-    color = Color::from(BLACK).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.0 {
-    color = Color::from(RED_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.5 {
-    color = Color::from(GREEN_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 10.0 {
-    color = Color::from(BLUE_500).to_linear().to_f32_array();
-  } else {
-    color = Color::from(BLACK).to_linear().to_f32_array();
-  }
-  // color[3] = 0.1;
-
-  return color;
+  // if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 1.5 {
+  //   color = Color::from(BLACK).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.5 {
+  //   color = Color::from(RED_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 3.5 {
+  //   color = Color::from(GREEN_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 4.5 {
+  //   color = Color::from(BLUE_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 5.5 {
+  //   color = Color::from(BLACK).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
+  //   color = Color::from(RED_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {
+  //   color = Color::from(GREEN_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.0 {
+  //   color = Color::from(BLUE_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {
+  //   color = Color::from(BLACK).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.0 {
+  //   color = Color::from(RED_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.5 {
+  //   color = Color::from(GREEN_500).to_linear().to_f32_array();
+  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 10.0 {
+  //   color = Color::from(BLUE_500).to_linear().to_f32_array();
+  // } else {
+  //   color = Color::from(BLACK).to_linear().to_f32_array();
+  // }
+  // // color[3] = 0.1;
+  // return color;
 
   if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.0 {
     color = Color::from(GRAY_100).to_linear().to_f32_array();

@@ -14,7 +14,7 @@ use bevy_diagnostic::LogDiagnosticsPlugin;
 
 use crate::markers::m_bevy::AnyObject;
 
-pub const ALLOWED_DEBUG_PHYSICS: bool = true;
+pub const ALLOWED_DEBUG_PHYSICS: bool = !true;
 pub const ALLOWED_DEBUG_ENGINE: bool = true;
 pub const ALLOWED_DEBUG_FPS: bool = true;
 
