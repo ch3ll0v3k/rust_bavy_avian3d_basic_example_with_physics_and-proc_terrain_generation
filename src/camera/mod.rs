@@ -39,6 +39,7 @@ use bevy::{
 };
 
 use crate::debug::ALLOWED_DEBUG_ENGINE;
+use crate::state::MGameState;
 use crate::{
   debug::{ get_defaul_physic_debug_params, is_allowed_debug_engine },
   entities::with_children::MEntityBigSphere,
@@ -59,8 +60,7 @@ struct CMaxLinearSpeed(f32);
 pub struct CameraPlugin;
 
 // static mut IS_LEFT_DOWW: Option<bool> = Some(false);
-
-static IS_LEFT_DOWW: Mutex<Option<bool>> = Mutex::new(Some(false));
+// static IS_LEFT_DOWW: Mutex<Option<bool>> = Mutex::new(Some(false));
 
 #[derive(Resource, Default, Deref, DerefMut)]
 struct Parameters(PhysicalCameraParameters);
@@ -70,36 +70,58 @@ impl Plugin for CameraPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, startup)
-      .add_systems(Update, update)
-      .add_systems(Update, zoom_on_scroll)
-      .add_systems(Update, control_cam)
-      .add_systems(Update, keyboard_events)
-      .add_systems(Update, handle_drag)
-      .add_systems(Update, cam_track_object)
-      .add_systems(Update, cam_track_object_origin)
-      .add_systems(Update, detect_bullet_collision)
+
+      // .add_systems(Update, on_pause.run_if((
+      //     in_state(MGameState::Paused)
+      //   )
+      // ))
       .add_systems(Update, 
         (
-          handle_left_click.run_if(input_just_pressed(MouseButton::Left))
+          update,
+          zoom_on_scroll,
+          // control_cam,
+          keyboard_events,
+          // handle_drag,
+          cam_track_object,
+          cam_track_object_origin,
+          detect_bullet_collision,
+        ).run_if(in_state(MGameState::Running))
+      )
+      // .add_systems(Update, update)
+      // .add_systems(Update, zoom_on_scroll)
+      .add_systems(Update, control_cam)
+      // .add_systems(Update, keyboard_events)
+      .add_systems(Update, handle_drag)
+      // .add_systems(Update, cam_track_object)
+      // .add_systems(Update, cam_track_object_origin)
+      // .add_systems(Update, detect_bullet_collision)
+      .add_systems(Update, 
+        (
+          handle_left_click          // handle_left_click.run_if(input_just_pressed(MouseButton::Left))
         )
+          .run_if(in_state(MGameState::Running))
+          .run_if(input_just_pressed(MouseButton::Left))
+
       )
       .add_systems(Update, 
         (
-          mk_jump.run_if(input_just_pressed(KeyCode::Space))
+          mk_jump
         )
+          .run_if(in_state(MGameState::Running))
+          .run_if(input_just_pressed(KeyCode::Space))
       )
       // .add_systems(Update, ( 
       //     on_q_pressed.run_if(
       //       input_just_pressed(KeyCode::Space)
       //     ),
       //     on_m_left_down.run_if(
-        //       input_just_pressed(MouseButton::Left)
-        //     ),
-        //     on_m_left_up.run_if(
-          //       input_just_released(MouseButton::Left)
-          //     ),
-          //   )
-          // )
+      //       input_just_pressed(MouseButton::Left)
+      //     ),
+      //     on_m_left_up.run_if(
+      //       input_just_released(MouseButton::Left)
+      //     ),
+      //   )
+      // )
       .add_systems(Update, constrain_linear_xz_speed)
       .insert_resource(CMaxLinearSpeed(5.0)) // Set max speed for x + z axes
       .insert_resource(Parameters(PhysicalCameraParameters {
@@ -312,20 +334,24 @@ fn on_q_pressed() {
   // println!("Q pressed");
 }
 
-fn set_global_state(value: bool) {
-  let mut state = IS_LEFT_DOWW.lock().unwrap();
-  *state = Some(value);
-}
+// fn set_global_state(value: bool) {
+//   let mut state = IS_LEFT_DOWW.lock().unwrap();
+//   *state = Some(value);
+// }
 
-fn get_global_state() -> Option<bool> {
-  let state = IS_LEFT_DOWW.lock().unwrap();
-  *state
-}
+// fn get_global_state() -> Option<bool> {
+//   let state = IS_LEFT_DOWW.lock().unwrap();
+//   *state
+// }
 
 // prettier-ignore
-fn on_m_left_down() { set_global_state(true); }
+fn on_m_left_down() { 
+  // set_global_state(true); 
+}
 // prettier-ignore
-fn on_m_left_up() { set_global_state(false); }
+fn on_m_left_up() { 
+  // set_global_state(false); 
+}
 
 // prettier-ignore
 // fn get_camera_direction(
@@ -458,6 +484,7 @@ fn constrain_linear_xz_speed(
 }
 
 fn control_cam(
+  g_state: Res<State<MGameState>>,
   mut q_lin_velocity: Query<&mut LinearVelocity, With<CameraParentMarker>>,
   mut commands: Commands,
   mut mw_evt: EventReader<MouseWheel>,
@@ -522,6 +549,10 @@ fn control_cam(
     jump_force = 100.0;
   }
 
+  let m_state = g_state.get();
+
+  let is_paused = m_state == &MGameState::Paused;
+
   let force_scale_mul: f32 = 100.0 * running_speed;
   const FW_DIV_SCALE: f32 = 20.0;
   const LR_DIV_SCALE: f32 = 1.0;
@@ -535,7 +566,7 @@ fn control_cam(
   let mut impulse3 = Vec3::new(0.0, 0.0, 0.0);
   impulse3.y = jump_force;
 
-  if use_physics {
+  if use_physics && !is_paused {
     let impl_x: f32 = x;
     let impl_y: f32 = y;
     let impl_z: f32 = z;
@@ -554,6 +585,31 @@ fn control_cam(
       impulse3 += Vec3::new(x, y, z) * force_scale_mul * BOOST_SPEED;
     } else if keys.pressed(KeyCode::KeyD) {
       impulse3 += Vec3::new(x * -1.0, y * -1.0, z * -1.0) * force_scale_mul * BOOST_SPEED;
+    }
+  } else {
+    // println!("Camera is paused");
+    if keys.pressed(KeyCode::KeyW) {
+      transform.translation.x += x * 10.0;
+      transform.translation.y += y * 10.0;
+      transform.translation.z += z * 10.0;
+    } else if keys.pressed(KeyCode::KeyS) {
+      transform.translation.x -= x * 10.0;
+      transform.translation.y -= y * 10.0;
+      transform.translation.z -= z * 10.0;
+    }
+
+    let right = transform.right();
+    x = (x - right.x) / LR_DIV_SCALE;
+    y = (y - right.y) / LR_DIV_SCALE;
+    z = (z - right.z) / 20.0;
+    if keys.pressed(KeyCode::KeyA) {
+      transform.translation.x += x;
+      transform.translation.y += y;
+      transform.translation.z += z;
+    } else if keys.pressed(KeyCode::KeyD) {
+      transform.translation.x -= x;
+      transform.translation.y -= y;
+      transform.translation.z -= z;
     }
   }
 
