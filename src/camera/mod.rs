@@ -24,6 +24,7 @@ use avian3d::prelude::{
   Restitution,
   RigidBody,
 };
+use bevy::text::cosmic_text::ttf_parser::Tag;
 use bevy::{
   animation::transition,
   input::{
@@ -77,6 +78,7 @@ impl Plugin for CameraPlugin {
       // ))
       .add_systems(Update, 
         (
+          handle_bullet_out_of_allowed_area,
           update,
           zoom_on_scroll,
           // control_cam,
@@ -87,17 +89,17 @@ impl Plugin for CameraPlugin {
           detect_bullet_collision,
         ).run_if(in_state(MGameState::Running))
       )
+      .add_systems(Update, control_cam)
+      .add_systems(Update, handle_drag)
       // .add_systems(Update, update)
       // .add_systems(Update, zoom_on_scroll)
-      .add_systems(Update, control_cam)
       // .add_systems(Update, keyboard_events)
-      .add_systems(Update, handle_drag)
       // .add_systems(Update, cam_track_object)
       // .add_systems(Update, cam_track_object_origin)
       // .add_systems(Update, detect_bullet_collision)
       .add_systems(Update, 
         (
-          handle_left_click          // handle_left_click.run_if(input_just_pressed(MouseButton::Left))
+          handle_left_click
         )
           .run_if(in_state(MGameState::Running))
           .run_if(input_just_pressed(MouseButton::Left))
@@ -139,19 +141,18 @@ impl Plugin for CameraPlugin {
 
     }
 }
+
+const BULLET_MIN_Y_ALLOWED: f32 = -10.0;
 const MUL_POS: f32 = 5.0;
 const POS: Vec3 = Vec3::new(-2.5 * MUL_POS, 30.5 * MUL_POS, 9.0 * MUL_POS);
 
 fn update() {}
 
-// impl fmt::Debug for Commands {
-//   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//     write!(f, "Hi: {}", self.id)
-//   }
-// }
-
 // constrain linear-speed
-// https://chatgpt.com/c/676a596e-4fd4-8000-9c52-8e4661d5dc76
+// >> https://chatgpt.com/c/676a596e-4fd4-8000-9c52-8e4661d5dc76
+
+// better option then Name::new("some tag")
+// >> https://chatgpt.com/c/6773dcd8-1cd4-8000-bd81-a2e2507b9f5f
 
 fn startup(
   mut commands: Commands,
@@ -726,7 +727,6 @@ fn detect_bullet_collision(
           contacts.entity2
         );
         commands.entity(contacts.entity1).despawn();
-
       }
 
       if type_t_2 == "p_bullet_t" {
@@ -744,6 +744,21 @@ fn detect_bullet_collision(
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct BulletMarker {
   name: String,
+}
+
+fn handle_bullet_out_of_allowed_area(
+  mut commands: Commands,
+  q_name: Query<&Name>,
+  // query: Query<(Entity, &RigidBody, &Transform), With<CameraParentMarker>>
+  q_bullets: Query<(Entity, &Transform), With<BulletMarker>>
+) {
+  for (entity, transform) in q_bullets.iter() {
+    if transform.translation.y < BULLET_MIN_Y_ALLOWED {
+      let bullet_t = q_name.get(entity).unwrap_or(&Name::new("unknown_t")).to_string();
+      // println!("Bullet out of allowed area: {:?}", bullet_t);
+      commands.entity(entity).despawn();
+    }
+  }
 }
 
 // prettier-ignore
