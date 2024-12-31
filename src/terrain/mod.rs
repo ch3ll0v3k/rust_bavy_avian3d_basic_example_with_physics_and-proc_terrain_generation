@@ -17,7 +17,7 @@ use wgpu::Face;
 // use avian3d::prelude::{PhysicsSet};
 
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
-use crate::sys_paths;
+use crate::{ sys_paths, COLLISION_MARGIN };
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MTerrainMarker;
@@ -58,6 +58,37 @@ fn startup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
+  {
+    let cubes: i32 = 3;
+
+    for y in 0..cubes {
+      for x in 0..cubes {
+        for z in 0..cubes {
+          let cube = Mesh::from(Cuboid::new(1.0, 1.0, 1.0));
+          let random_color = Color::srgb(
+            rand::random::<f32>() * 255.0,
+            rand::random::<f32>() * 255.0,
+            rand::random::<f32>() * 255.0
+          );
+
+          commands.spawn((
+            NotShadowCaster,
+            NotShadowReceiver,
+            RigidBody::Dynamic,
+            CollisionMargin(COLLISION_MARGIN),
+            Collider::trimesh_from_mesh(&cube).unwrap(),
+
+            Mesh3d(meshes.add(cube)),
+            MeshMaterial3d(materials.add(random_color)),
+            Transform::from_xyz(x as f32, 25.0 + (y as f32), z as f32),
+            PhysicsStaticObject,
+            AnyObject,
+          ));
+        }
+      }
+    }
+  }
+
   // return;
 
   // let mesh = Mesh::from(shape::UVSphere {

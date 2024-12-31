@@ -1825,6 +1825,7 @@ dependencies = [
  "bevy_diagnostic",
  "bevy_window",
  "noise",
+ "rand",
  "tracing",
  "wgpu",
 ]
