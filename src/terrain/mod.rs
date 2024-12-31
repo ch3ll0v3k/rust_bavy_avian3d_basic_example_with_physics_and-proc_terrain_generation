@@ -7,6 +7,7 @@ use bevy::image::{
   ImageSampler,
   ImageSamplerDescriptor,
 };
+use bevy::pbr::{ NotShadowCaster, NotShadowReceiver };
 use bevy::render::mesh::*;
 use avian3d::prelude::*;
 use bevy::prelude::*;
@@ -64,15 +65,15 @@ fn startup(
   //   sectors: 64,
   //   stacks: 64,
   // });
-  const SIZE_T: f32 = 10_000_000.0;
+  const SIZE_T: f32 = 100_000_000.0;
   const OFFSET_T: f32 = 0.0;
 
-  {
-    let sky_seg_down: Handle<Image> = load_base_texture(
-      &asset_server,
-      sys_paths::textures::EPaths::SkySegDown.as_str()
-    );
-  }
+  // {
+  //   let sky_seg_down: Handle<Image> = load_base_texture(
+  //     &asset_server,
+  //     sys_paths::textures::EPaths::SkySegDown.as_str()
+  //   );
+  // }
 
   {
     let sky_seg_east: Handle<Image> = load_base_texture(
@@ -81,7 +82,10 @@ fn startup(
     );
 
     let sky_seg_east_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
+    // let sky_seg_east_mash = Mesh::from(Plane3d::new(Vec3::Z, Vec2::new(SIZE_T, SIZE_T)));
     commands.spawn((
+      NotShadowCaster,
+      NotShadowReceiver,
       Mesh3d(meshes.add(sky_seg_east_mash)),
       // MeshMaterial3d(materials.add(Color::WHITE)),
       MeshMaterial3d(
@@ -90,8 +94,10 @@ fn startup(
           // base_color: Color::srgb(255.0, 0.0, 0.0), // Sky blue
           base_color_texture: Some(sky_seg_east.clone()),
           base_color: Color::from(BLUE_200), // Sky blue
-          cull_mode: Some(Face::Front), // Render the inside of the sphere
+          cull_mode: Some(Face::Front),
+          // cull_mode: Some(Face::Back),
           unlit: !false,
+          double_sided: false,
           ..default()
         })
       ),
@@ -103,6 +109,7 @@ fn startup(
     ));
   }
 
+  // return;
   {
     let sky_seg_north: Handle<Image> = load_base_texture(
       &asset_server,
@@ -111,6 +118,8 @@ fn startup(
 
     let sky_seg_north_mash = Mesh::from(Cuboid::new(1.0, SIZE_T, SIZE_T));
     commands.spawn((
+      NotShadowCaster,
+      NotShadowReceiver,
       Mesh3d(meshes.add(sky_seg_north_mash)),
       // MeshMaterial3d(materials.add(Color::WHITE)),
       MeshMaterial3d(
@@ -121,6 +130,7 @@ fn startup(
           base_color: Color::from(BLUE_200), // Sky blue
           cull_mode: Some(Face::Front), // Render the inside of the sphere
           unlit: !false,
+          double_sided: false,
           ..default()
         })
       ),
@@ -139,6 +149,8 @@ fn startup(
     );
     let sky_seg_south_mesh = Mesh::from(Cuboid::new(1.0, SIZE_T, SIZE_T));
     commands.spawn((
+      NotShadowCaster,
+      NotShadowReceiver,
       Mesh3d(meshes.add(sky_seg_south_mesh)),
       // MeshMaterial3d(materials.add(Color::WHITE)),
       MeshMaterial3d(
@@ -149,6 +161,7 @@ fn startup(
           base_color: Color::from(BLUE_200), // Sky blue
           cull_mode: Some(Face::Front), // Render the inside of the sphere
           unlit: !false,
+          double_sided: false,
           ..default()
         })
       ),
@@ -168,6 +181,8 @@ fn startup(
 
     let sky_seg_west_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
     commands.spawn((
+      NotShadowCaster,
+      NotShadowReceiver,
       Mesh3d(meshes.add(sky_seg_west_mash)),
       // MeshMaterial3d(materials.add(Color::WHITE)),
       MeshMaterial3d(
@@ -178,6 +193,7 @@ fn startup(
           base_color: Color::from(BLUE_200), // Sky blue
           cull_mode: Some(Face::Front), // Render the inside of the sphere
           unlit: !false,
+          double_sided: false,
           ..default()
         })
       ),
@@ -197,6 +213,8 @@ fn startup(
 
     let sky_seg_top_mash = Mesh::from(Cuboid::new(SIZE_T, 1.0, SIZE_T));
     commands.spawn((
+      NotShadowCaster,
+      NotShadowReceiver,
       Mesh3d(meshes.add(sky_seg_top_mash)),
       // MeshMaterial3d(materials.add(Color::WHITE)),
       MeshMaterial3d(
@@ -207,6 +225,7 @@ fn startup(
           base_color: Color::from(BLUE_200), // Sky blue
           cull_mode: Some(Face::Front), // Render the inside of the sphere
           unlit: !false,
+          double_sided: false,
           ..default()
         })
       ),
