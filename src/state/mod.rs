@@ -46,11 +46,11 @@ fn startup(mut commands: Commands) {}
 fn update() {}
 
 fn on_pause() {
-  // println!("on_pause....");
+  // dbg!("on_pause....");
 }
 
 fn on_running() {
-  // println!("on_running....");
+  // dbg!("on_running....");
 }
 
 // prettier-ignore
@@ -72,7 +72,7 @@ fn toggle_pause_game(
 }
 
 fn toggle_physics_state(mut time: ResMut<Time<Physics>>, is_physics_on: bool) {
-  // println!("toggle_physics_state: is_physics_on: {is_physics_on}");
+  // dbg!("toggle_physics_state: is_physics_on: {is_physics_on}");
   if is_physics_on {
     time.unpause();
   } else {
@@ -81,7 +81,7 @@ fn toggle_physics_state(mut time: ResMut<Time<Physics>>, is_physics_on: bool) {
 }
 
 fn toggle_game_state(mut next_state: ResMut<NextState<MGameState>>, is_paused: bool) {
-  // println!("toggle_game_state: is_paused: {is_paused}");
+  // dbg!("toggle_game_state: is_paused: {is_paused}");
   if is_paused {
     next_state.set(MGameState::Paused);
   } else {

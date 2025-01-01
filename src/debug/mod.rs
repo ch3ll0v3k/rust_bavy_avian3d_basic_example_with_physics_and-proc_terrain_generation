@@ -104,13 +104,13 @@ fn get_fps(
     let mut writer = names.single_mut();
     if let Some(raw) = fps.smoothed() {
       let s = format!("FPS: {:.2}", raw);
-      // println!("{:?}", s);
+      // dbg!("{:?}", s);
       writer.0 = s.to_string();
       // *writer.text(text, 4) = format!("{raw:.2}");
     }
     // if let Some(raw) = fps.value() {
     //     let s = format!("{:.2}", raw);
-    //     // println!("{:?}", s);
+    //     // dbg!("{:?}", s);
     //     writer.0 = s.to_string();
     //     // *writer.text(text, 4) = format!("{raw:.2}");
     // }

@@ -36,27 +36,27 @@ fn cam_track_object(
 
   //  match query_big_sphere.get_single() {
   //   Ok(trans_sphere) => {
-  //     println!("Sphere: pos: x-{}", trans_sphere.translation.x);
+  //     dbg!("Sphere: pos: x-{}", trans_sphere.translation.x);
   //     match query_point_light.get_single_mut() {
   //       Ok(trans_light) => {
-  //         println!("Light: pos: x-{}", trans_light.translation.x);    
+  //         dbg!("Light: pos: x-{}", trans_light.translation.x);    
   //       }
   //       Err(QuerySingleError::NoEntities(_)) => {
-  //         println!("Light:Error: There is no player!");
+  //         dbg!("Light:Error: There is no player!");
   //         return;
   //       }
   //       Err(QuerySingleError::MultipleEntities(_)) => {
-  //         println!("Light:Error: There is more than one player!");
+  //         dbg!("Light:Error: There is more than one player!");
   //         return;
   //       }
   //     }
   //   }
   //   Err(QuerySingleError::NoEntities(_)) => {
-  //     println!("Sphere: Error: There is no player!");
+  //     dbg!("Sphere: Error: There is no player!");
   //     return;
   //   }
   //   Err(QuerySingleError::MultipleEntities(_)) => {
-  //     println!("Sphere: Error: There is more than one player!");
+  //     dbg!("Sphere: Error: There is more than one player!");
   //     return;
   //   }
   // }
@@ -98,12 +98,12 @@ fn zoom_on_scroll(
       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
     };
 
-    // println!("Mouse wheel: X: {}, Y: {}", dx, dy);
+    // dbg!("Mouse wheel: X: {}, Y: {}", dx, dy);
 
     let dy = _dy * -1.0;
     let val: f32 = persp.fov + dy / 30.0;
 
-    // println!("FOV: {}", val);
+    // dbg!("FOV: {}", val);
 
     if val < 0.05 {
       return;
@@ -139,7 +139,7 @@ fn zoom_on_scroll(
 //       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
 //     };
 
-//     println!("Mouse wheel: X: {}, Y: {}", dx, dy);
+//     dbg!("Mouse wheel: X: {}, Y: {}", dx, dy);
 
 //     // transform.translation -= Vec3::new(0.0, dy / 1.0, 0.0);
 
@@ -179,7 +179,7 @@ fn zoom_on_scroll(
 //     X += 1;
 //     if X % 100 == 0 {
 //       let transform = query_camera.single();
-//       println!(
+//       dbg!(
 //         "cam: (:x, :y, :z) = ({}, {}, {})",
 //         transform.translation.x,
 //         transform.translation.y,

@@ -9,7 +9,7 @@ use crate::{ sys_paths };
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MAssetLoaderPlugin;
 
-pub mod texture_cache;
+pub mod image_cache;
 pub mod audio_cache;
 
 // prettier-ignore
@@ -21,7 +21,7 @@ impl Plugin for MAssetLoaderPlugin {
     // .add_systems(Update, update);
 
     app
-      .insert_resource(texture_cache::TextureCache::new())
+      .insert_resource(image_cache::ImageCache::new())
       .insert_resource(audio_cache::AudioCache::new());
 
   }

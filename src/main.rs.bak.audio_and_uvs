@@ -137,11 +137,73 @@ fn main() {
       GizmoConfig::default()
     )
     .add_systems(Startup, setup)
+    // .add_systems(Update, update)
+    // .add_systems(FixedUpdate, update)
     .add_systems(Update, update.run_if(on_timer(Duration::from_millis(1000))))
+
     .insert_resource(Time::<Fixed>::from_hz(60.0))
+    // .add_systems(Startup, play)
     .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
     .run();
 }
+
+// #[derive(Component, Debug, PartialEq, Eq)]
+// pub struct Terrain;
+
+// fn play(
+//   mut commands: Commands,
+//   soundtrack_player: Res<SoundtrackPlayer>,
+//   soundtrack: Query<Entity, With<AudioSink>>
+//   // game_state: Res<GameState>
+// ) {
+//   // commands.spawn((
+//   //   AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
+//   //   // AudioPlayer(track_list.first().unwrap().clone()),
+//   //   PlaybackSettings {
+//   //     mode: bevy::audio::PlaybackMode::Loop,
+//   //     volume: bevy::audio::Volume::default(),
+//   //     ..default()
+//   //   },
+//   //   // FadeIn,
+//   // ));
+// }
+
+// fn get_base_texture_material(
+//   asset_server: &Res<AssetServer>,
+//   mut materials: ResMut<Assets<StandardMaterial>>,
+//   path: &str
+// ) -> (Handle<Image>, StandardMaterial, Handle<StandardMaterial>) {
+//   let texture: Handle<Image> = load_base_texture(
+//     asset_server,
+//     EImagePaths::Base.as_str()
+//   );
+
+//   let mut material = StandardMaterial {
+//     // base_color: Color::BLACK,
+//     base_color_texture: Some(texture.clone()),
+//     // https://bevyengine.org/examples/assets/repeated-texture/
+//     // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
+//     // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
+//     // alpha_mode: AlphaMode::Blend,
+//     unlit: false,
+//     emissive: LinearRgba::BLACK,
+//     // emissive_exposure_weight: 1.0,
+//     perceptual_roughness: 0.85,
+//     // metallic: 0.0,
+//     reflectance: 0.05,
+//     // ior: 1.47,
+//     ..default()
+//   };
+
+//   // material.base_color = Color::srgba_u8(128, 197, 222, 17);
+
+//   // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
+//   let handle: Handle<StandardMaterial> = materials.add(material.clone());
+
+//   (texture, material, handle)
+// }
+
+// fn gen_collinders_if(x: f64, z: f64, dyn_scale: i16) {}
 
 // prettier-ignore
 fn setup(
@@ -152,31 +214,35 @@ fn setup(
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
 
-  let audio_hashmap: &mut ResMut<AudioCache> = res_mut_audio_cache.as_mut().unwrap();
-  // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>(sys_paths::sounds::EPaths::EnvOne.as_str());
-  let track_1 = cache_load_audio(
-    audio_hashmap, 
-    &asset_server, 
-    EAudioPaths::EnvOne.as_str(),
-    false
-  );
+  
+  {    
+    let audio_hashmap: &mut ResMut<AudioCache> = res_mut_audio_cache.as_mut().unwrap();
+    // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>(sys_paths::sounds::EPaths::EnvOne.as_str());
+    let track_1 = cache_load_audio(
+      audio_hashmap, 
+      &asset_server, 
+      EAudioPaths::EnvOne.as_str(),
+      false
+    );
 
-  // all options are same as default
+    // all options are same as default
 
-  commands.spawn((
-    AudioPlayer(track_1),
-    PlaybackSettings {
-      mode: bevy::audio::PlaybackMode::Loop,
-      volume: bevy::audio::Volume::default(),
-      ..default()
-    },
-    // FadeIn,
-  ));
+    commands.spawn((
+      AudioPlayer(track_1),
+      PlaybackSettings {
+        mode: bevy::audio::PlaybackMode::Loop,
+        volume: bevy::audio::Volume::default(),
+        ..default()
+      },
+      // FadeIn,
+    ));
 
-  // commands.spawn(AudioPlayer::new(track_1 ));
+    // commands.spawn(AudioPlayer::new(track_1 ));
 
-  // let audio  = AudioPlayer::new(track_1);
-  // commands.spawn(audio);
+    // let audio  = AudioPlayer::new(track_1);
+    // commands.spawn(audio);
+  }
+  // // let Ok(entity) = query.get_single_mut() else { return; };
 
 }
 

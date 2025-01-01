@@ -16,12 +16,16 @@ use wgpu::Face;
 // use avian3d::prelude::{AngularVelocity, Collider, RigidBody};
 // use avian3d::prelude::{PhysicsSet};
 
+use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
 use crate::COLLISION_MARGIN;
 use crate::sys_paths;
 
 use sys_paths::audio::EAudioPaths;
 use sys_paths::image::EImagePaths;
+
+const SIZE_T: f32 = 100_000_000.0;
+const OFFSET_T: f32 = 0.0;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MSkyMarker;
@@ -36,25 +40,8 @@ impl Plugin for MSkyPlugin {
   }
 }
 
-fn load_base_texture(asset_server: &Res<AssetServer>, path: &str) -> Handle<Image> {
-  let texture_handle: Handle<Image> = asset_server.load_with_settings(path, |s: &mut _| {
-    *s = ImageLoaderSettings {
-      sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
-        // rewriting mode to repeat image,
-        // address_mode_u: ImageAddressMode::Repeat,
-        // address_mode_v: ImageAddressMode::Repeat,
-        // // address_mode_w: ImageAddressMode::ClampToBorder,
-        // mag_filter: ImageFilterMode::Linear,
-        ..default()
-      }),
-      ..default()
-    };
-  });
-
-  texture_handle
-}
-
 fn startup(
+  mut res_mut_texture_cache: Option<ResMut</*res_mut_texture_cache::*/ ImageCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -94,9 +81,6 @@ fn startup(
   //   }
   // }
 
-  const SIZE_T: f32 = 100_000_000.0;
-  const OFFSET_T: f32 = 0.0;
-
   // {
   //   let sky_seg_down: Handle<Image> = load_base_texture(
   //     &asset_server,
@@ -104,10 +88,14 @@ fn startup(
   //   );
   // }
 
+  let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
+
   {
-    let sky_seg_east: Handle<Image> = load_base_texture(
+    let sky_seg_east: Handle<Image> = cache_load_image(
+      image_hashmap,
       &asset_server,
-      EImagePaths::SkySegEast.as_str()
+      EImagePaths::SkySegEast.as_str(),
+      false
     );
 
     let sky_seg_east_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
@@ -140,9 +128,11 @@ fn startup(
 
   // return;
   {
-    let sky_seg_north: Handle<Image> = load_base_texture(
+    let sky_seg_north: Handle<Image> = cache_load_image(
+      image_hashmap,
       &asset_server,
-      EImagePaths::SkySegNorth.as_str()
+      EImagePaths::SkySegNorth.as_str(),
+      false
     );
 
     let sky_seg_north_mash = Mesh::from(Cuboid::new(1.0, SIZE_T, SIZE_T));
@@ -172,10 +162,13 @@ fn startup(
   }
 
   {
-    let sky_seg_south: Handle<Image> = load_base_texture(
+    let sky_seg_south: Handle<Image> = cache_load_image(
+      image_hashmap,
       &asset_server,
-      EImagePaths::SkySegSouth.as_str()
+      EImagePaths::SkySegSouth.as_str(),
+      false
     );
+
     let sky_seg_south_mesh = Mesh::from(Cuboid::new(1.0, SIZE_T, SIZE_T));
     commands.spawn((
       NotShadowCaster,
@@ -203,9 +196,11 @@ fn startup(
   }
 
   {
-    let sky_seg_west: Handle<Image> = load_base_texture(
+    let sky_seg_west: Handle<Image> = cache_load_image(
+      image_hashmap,
       &asset_server,
-      EImagePaths::SkySegWest.as_str()
+      EImagePaths::SkySegWest.as_str(),
+      false
     );
 
     let sky_seg_west_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
@@ -235,9 +230,11 @@ fn startup(
   }
 
   {
-    let sky_seg_up: Handle<Image> = load_base_texture(
+    let sky_seg_up: Handle<Image> = cache_load_image(
+      image_hashmap,
       &asset_server,
-      EImagePaths::SkySegUp.as_str()
+      EImagePaths::SkySegUp.as_str(),
+      false
     );
 
     let sky_seg_top_mash = Mesh::from(Cuboid::new(SIZE_T, 1.0, SIZE_T));

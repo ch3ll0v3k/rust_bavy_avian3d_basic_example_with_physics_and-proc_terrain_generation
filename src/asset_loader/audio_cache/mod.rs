@@ -60,14 +60,14 @@ pub fn cache_load_audio(
    
   let mut audio_handle: Handle<AudioSource>;
   let cache_path: String = path.to_string();
-    // println!("capacity: {:?}", audio_hashmap.hash_map.capacity());
+    // dbg!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
   if let Some(handle_audio) = audio_hashmap.audio_cache.get(&cache_path) {
-    println!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
+    dbg!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
     return handle_audio.clone();      
   }
   
-  println!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
+  dbg!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
   audio_handle = _load_audio_with_common_settings(asset_server, path, with_settings);
   audio_hashmap.audio_cache.insert(cache_path, audio_handle.clone());
  
@@ -76,19 +76,19 @@ pub fn cache_load_audio(
   // let mut audio_handle: Handle<Image>;
   // let cache_path: String = path.to_string();
   // if let Some(audio_hashmap) = &mut audio_cache {
-  //   // println!("capacity: {:?}", audio_hashmap.hash_map.capacity());
+  //   // dbg!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
   //   if let Some(handle_audio) = audio_hashmap.audio_cache.get(&cache_path) {
-  //     println!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
+  //     dbg!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
   //     return handle_audio.clone();      
   //   }
     
-  //   println!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
+  //   dbg!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
   //   audio_handle = _load_audio_with_common_settings(asset_server, path, with_settings);
   //   audio_hashmap.audio_cache.insert(cache_path, audio_handle.clone());
     
   // }else{
-  //   println!("audio_hashmap.audio_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
+  //   dbg!("audio_hashmap.audio_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
   //   audio_handle = _load_audio_with_common_settings(asset_server, path, with_settings);
   // }
 
