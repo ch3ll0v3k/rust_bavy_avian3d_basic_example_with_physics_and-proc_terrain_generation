@@ -173,7 +173,7 @@ fn startup(
         }
       }
 
-      if false {
+      if true {
         let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z));
 
         let mut water = Mesh::from(
@@ -193,9 +193,9 @@ fn startup(
         }
 
         commands.spawn((
-          // RigidBody::Static,
-          // Collider::trimesh_from_mesh(&water).unwrap(),
-          // Sensor,
+          RigidBody::Static,
+          Collider::trimesh_from_mesh(&water).unwrap(),
+          Sensor,
           // Transform::from_translation(
           //   Vec3::new(
           //   (x * TERRAIN_CHUNK_X as i32) as f32, 
@@ -210,14 +210,12 @@ fn startup(
             // .looking_at(Vec3::ZERO, Vec3::ZERO)
           ),
           Mesh3d(meshes.add(water)),
-          // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
+          MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
-          MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,30))),
+          // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,30))),
           // MeshMaterial3d(water_material_handle.clone()),
           // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
-          DebugRender::default()
-            .with_collider_color(Color::srgb(255.0, 0.0, 1.0)),
-        
+          DebugRender::default().with_collider_color(Color::srgb(255.0, 0.0, 1.0)),
           AnyObject,
           Name::new("water_t"),
         ));
@@ -380,6 +378,11 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
 
     for pos in positions.iter_mut() {
       pos[1] *= 1.0;
+    }
+
+    // waler down
+    for pos in positions.iter_mut() {
+      pos[1] -= 10000.0; // def: 1.0
     }
 
     let colors: Vec<[f32; 4]> = positions

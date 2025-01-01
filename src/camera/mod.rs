@@ -42,7 +42,7 @@ use bevy::{
 use crate::asset_loader::audio_cache::{ cache_load_audio, AudioCache };
 use crate::debug::ALLOWED_DEBUG_ENGINE;
 use crate::state::MGameState;
-use crate::{ dbgln, sys_paths };
+use crate::{ dbgln, sys_paths, GRAVITY };
 use crate::{
   debug::{ get_defaul_physic_debug_params, is_allowed_debug_engine },
   entities::with_children::MEntityBigSphere,
@@ -199,7 +199,7 @@ fn startup(
       Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(POS, Vec3::Y),
       Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
       MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
-      Mass(10.0),
+      Mass(100.0),
       LockedAxes::ROTATION_LOCKED,
       // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
       // MaxLinearSpeed(5.0),
@@ -518,6 +518,64 @@ fn control_cam(
   //   if !is_left_m_btn_down { return; }
   // }
 
+  let mut impulse3 = Vec3::new(0.0, 0.0, 0.0);
+
+  let extara_down = -10.0;
+
+  let f = -10.0 - 2.0 - extara_down;
+  let df = 1000.0;
+  let mut apply_force = false;
+
+  let (entity, body, mut transform) = q_camera_parent.single_mut();
+  if transform.translation.y < -f {
+    // dbgln!("transform.translation.y: y {:.4}", transform.translation.y);
+
+    if transform.translation.y < -2.0 {
+      commands.entity(entity).insert(GravityScale(0.0));
+      // commands.entity(entity).insert(GravityScale(0.06));
+      // commands.entity(entity).insert(GravityScale(0.1));
+
+      // apply_force = true;
+      let diff = transform.translation.y; //  - f;
+      let abs_diff = (if diff < -df { -df } else { diff }).abs();
+      let impulse = (abs_diff / df) * 20.0;
+      // let force = (abs_diff / df) * 10.0;
+      let inverse = (diff / df).abs();
+
+      dbgln!("diff: y {:.4}", diff);
+
+      let mut vel = q_lin_velocity.single_mut();
+      vel.0 *= 0.98;
+
+      // commands
+      //   .entity(entity)
+      //   .insert(LinearVelocity(Vec3::ZERO))
+      //   .insert(AngularVelocity(Vec3::ZERO));
+
+      // dbgln!("transform.translation.y: y {:.4}, inverse: {:.4}", inverse, transform.translation.y);
+      // XXX
+      // dbgln!(
+      //   "transform: y {:.4}, diff: {:.4}, impulse: {:.4}, force: {:.4}",
+      //   transform.translation.y,
+      //   diff,
+      //   impulse,
+      //   force
+      // );
+
+      impulse3.y = GRAVITY * impulse;
+      // impulse3.y = GRAVITY * force;
+
+      // if transform.translation.y < -8.0 {
+      //   transform.translation.y += inverse * 100.0;
+      //   // impulse3.y *= 2.0;
+      // }
+    } else {
+      commands.entity(entity).insert(GravityScale(1.0));
+    }
+  } else {
+    commands.entity(entity).insert(GravityScale(1.0));
+  }
+
   if
     !keys.pressed(KeyCode::KeyW) &&
     !keys.pressed(KeyCode::KeyS) &&
@@ -525,10 +583,14 @@ fn control_cam(
     !keys.pressed(KeyCode::KeyD) &&
     !keys.pressed(KeyCode::Space)
   {
+    // if apply_force {
+    let impulse = get_external_impulse(impulse3, false);
+    commands.entity(entity).insert((RigidBody::Dynamic, impulse));
+    // }
+    // let force = get_external_force(impulse3, false);
+    // commands.entity(entity).insert((RigidBody::Dynamic, force));
     return;
   }
-
-  let (entity, body, mut transform) = q_camera_parent.single_mut();
 
   // let mut force = ExternalImpulse::default();
   // force
@@ -559,7 +621,7 @@ fn control_cam(
   }
 
   if keys.pressed(KeyCode::Space) {
-    jump_force = 100.0;
+    jump_force = 1000.0;
   }
 
   let m_state = g_state.get();
@@ -576,8 +638,7 @@ fn control_cam(
   let mut y = fw.y / FW_DIV_SCALE;
   let mut z = fw.z / FW_DIV_SCALE;
 
-  let mut impulse3 = Vec3::new(0.0, 0.0, 0.0);
-  impulse3.y = jump_force;
+  impulse3.y += jump_force;
 
   if use_physics && !is_paused {
     let impl_x: f32 = x;
