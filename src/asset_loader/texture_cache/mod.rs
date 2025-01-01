@@ -59,7 +59,7 @@ fn _load_texture_with_common_settings(
 // prettier-ignore
 pub fn cache_load_texture(
   // mut texture_cache: Option<ResMut</*texture_cache::*/TextureCache>>,
-  texture_hashmap: &mut ResMut<TextureCache>,
+  audio_hashmap: &mut ResMut<TextureCache>,
   asset_server: &Res<AssetServer>,
   path: &str,
   with_settings: bool
@@ -67,35 +67,35 @@ pub fn cache_load_texture(
    
   let mut texture_handle: Handle<Image>;
   let cache_path: String = path.to_string();
-    // println!("capacity: {:?}", texture_hashmap.hash_map.capacity());
+    // println!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
-  if let Some(handle_image) = texture_hashmap.texture_cache.get(&cache_path) {
-    println!("texture_hashmap.texture_cache.get(&({cache_path}) => found ...");
+  if let Some(handle_image) = audio_hashmap.texture_cache.get(&cache_path) {
+    println!("audio_hashmap.texture_cache.get(&({cache_path}) => found ...");
     return handle_image.clone();      
   }
   
-  println!("texture_hashmap.texture_cache.get(&({cache_path}) => not found: update cache ...");
+  println!("audio_hashmap.texture_cache.get(&({cache_path}) => not found: update cache ...");
   texture_handle = _load_texture_with_common_settings(asset_server, path, with_settings);
-  texture_hashmap.texture_cache.insert(cache_path, texture_handle.clone());
+  audio_hashmap.texture_cache.insert(cache_path, texture_handle.clone());
  
   texture_handle
 
   // let mut texture_handle: Handle<Image>;
   // let cache_path: String = path.to_string();
-  // if let Some(texture_hashmap) = &mut texture_cache {
-  //   // println!("capacity: {:?}", texture_hashmap.hash_map.capacity());
+  // if let Some(audio_hashmap) = &mut texture_cache {
+  //   // println!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
-  //   if let Some(handle_image) = texture_hashmap.texture_cache.get(&cache_path) {
-  //     println!("texture_hashmap.texture_cache.get(&({cache_path}) => found ...");
+  //   if let Some(handle_image) = audio_hashmap.texture_cache.get(&cache_path) {
+  //     println!("audio_hashmap.texture_cache.get(&({cache_path}) => found ...");
   //     return handle_image.clone();      
   //   }
     
-  //   println!("texture_hashmap.texture_cache.get(&({cache_path}) => not found: update cache ...");
+  //   println!("audio_hashmap.texture_cache.get(&({cache_path}) => not found: update cache ...");
   //   texture_handle = _load_texture_with_common_settings(asset_server, path, with_settings);
-  //   texture_hashmap.texture_cache.insert(cache_path, texture_handle.clone());
+  //   audio_hashmap.texture_cache.insert(cache_path, texture_handle.clone());
     
   // }else{
-  //   println!("texture_hashmap.texture_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
+  //   println!("audio_hashmap.texture_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
   //   texture_handle = _load_texture_with_common_settings(asset_server, path, with_settings);
   // }
 

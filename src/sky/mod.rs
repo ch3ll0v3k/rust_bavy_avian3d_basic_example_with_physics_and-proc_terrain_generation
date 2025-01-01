@@ -17,7 +17,11 @@ use wgpu::Face;
 // use avian3d::prelude::{PhysicsSet};
 
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
-use crate::{ sys_paths, COLLISION_MARGIN };
+use crate::COLLISION_MARGIN;
+use crate::sys_paths;
+
+use sys_paths::audio::EAudioPaths;
+use sys_paths::image::EImagePaths;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MSkyMarker;
@@ -96,14 +100,14 @@ fn startup(
   // {
   //   let sky_seg_down: Handle<Image> = load_base_texture(
   //     &asset_server,
-  //     sys_paths::textures::EPaths::SkySegDown.as_str()
+  //     EImagePaths::SkySegDown.as_str()
   //   );
   // }
 
   {
     let sky_seg_east: Handle<Image> = load_base_texture(
       &asset_server,
-      sys_paths::textures::EPaths::SkySegEast.as_str()
+      EImagePaths::SkySegEast.as_str()
     );
 
     let sky_seg_east_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
@@ -138,7 +142,7 @@ fn startup(
   {
     let sky_seg_north: Handle<Image> = load_base_texture(
       &asset_server,
-      sys_paths::textures::EPaths::SkySegNorth.as_str()
+      EImagePaths::SkySegNorth.as_str()
     );
 
     let sky_seg_north_mash = Mesh::from(Cuboid::new(1.0, SIZE_T, SIZE_T));
@@ -170,7 +174,7 @@ fn startup(
   {
     let sky_seg_south: Handle<Image> = load_base_texture(
       &asset_server,
-      sys_paths::textures::EPaths::SkySegSouth.as_str()
+      EImagePaths::SkySegSouth.as_str()
     );
     let sky_seg_south_mesh = Mesh::from(Cuboid::new(1.0, SIZE_T, SIZE_T));
     commands.spawn((
@@ -201,7 +205,7 @@ fn startup(
   {
     let sky_seg_west: Handle<Image> = load_base_texture(
       &asset_server,
-      sys_paths::textures::EPaths::SkySegWest.as_str()
+      EImagePaths::SkySegWest.as_str()
     );
 
     let sky_seg_west_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
@@ -233,7 +237,7 @@ fn startup(
   {
     let sky_seg_up: Handle<Image> = load_base_texture(
       &asset_server,
-      sys_paths::textures::EPaths::SkySegUp.as_str()
+      EImagePaths::SkySegUp.as_str()
     );
 
     let sky_seg_top_mash = Mesh::from(Cuboid::new(SIZE_T, 1.0, SIZE_T));

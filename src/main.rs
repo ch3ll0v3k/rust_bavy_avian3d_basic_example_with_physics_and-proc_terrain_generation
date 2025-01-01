@@ -6,6 +6,8 @@
 #![allow(unused_braces)]
 #![allow(unused_parens)]
 
+use asset_loader::audio_cache::cache_load_audio;
+use asset_loader::audio_cache::AudioCache;
 // use avian3d::debug_render::DebugRender;
 use avian3d::debug_render::PhysicsDebugPlugin;
 use avian3d::prelude::*;
@@ -62,6 +64,8 @@ use markers::m_bevy::*;
 use constants::viewport_settings::*;
 use constants::physics_world::*;
 use terrain::MTerrainMarker;
+use sys_paths::audio::EAudioPaths;
+use sys_paths::image::EImagePaths;
 
 const WINDOW_POSITIONS_DEV_SIDE_33_PERCENT: Vec2 = Vec2::new(800.0, 1100.0);
 const WINDOW_POSITIONS_DEV_SIDE_50_PERCENT: Vec2 = Vec2::new(950.0, 1100.0);
@@ -104,7 +108,7 @@ fn main() {
           ).with_scale_factor_override(1.0),
           present_mode: AutoNoVsync,
           // mode: Fullscreen(MonitorSelection::Primary),
-          mode: BorderlessFullscreen(MonitorSelection::Primary),
+          // mode: BorderlessFullscreen(MonitorSelection::Primary),
           // resizable: false,
           // fit_canvas_to_parent: true,
           // fullsize_content_view: true,
@@ -173,7 +177,7 @@ fn main() {
 // ) -> (Handle<Image>, StandardMaterial, Handle<StandardMaterial>) {
 //   let texture: Handle<Image> = load_base_texture(
 //     asset_server,
-//     sys_paths::textures::EPaths::Base.as_str()
+//     EImagePaths::Base.as_str()
 //   );
 
 //   let mut material = StandardMaterial {
@@ -205,34 +209,28 @@ fn main() {
 
 // prettier-ignore
 fn setup(
+  mut res_mut_audio_cache: Option<ResMut</*res_mut_texture_cache::*/AudioCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
 
-  // let yl = T2.len();
-  // let xl = T2[0].len();
-  // println!("{:?} {:?}", yl, xl);
-  // for uy in 0..yl{
-  //   // println!("{:?}", V[uy]);
-  //   for ux in 0..xl{
-  //     let v = T2[uy][ux];
-  //     print!("{} ", v);
-  //   }
-  //   println!("");
-  // }
-  // return;
   
-  {
-    let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>(sys_paths::sounds::EPaths::EnvOne.as_str());
-    // let track_list = vec![track_1, track_2];
-    // commands.insert_resource(SoundtrackPlayer::new(track_list));
-    
+  {    
+    let audio_hashmap: &mut ResMut<AudioCache> = res_mut_audio_cache.as_mut().unwrap();
+    // let track_1: Handle<AudioSource> = asset_server.load::<AudioSource>(sys_paths::sounds::EPaths::EnvOne.as_str());
+    let track_1 = cache_load_audio(
+      audio_hashmap, 
+      &asset_server, 
+      EAudioPaths::EnvOne.as_str(),
+      false
+    );
+
+    // all options are same as default
+
     commands.spawn((
-      // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
       AudioPlayer(track_1),
-      // AudioPlayer(track_list.first().unwrap().clone()),
       PlaybackSettings {
         mode: bevy::audio::PlaybackMode::Loop,
         volume: bevy::audio::Volume::default(),
@@ -241,12 +239,9 @@ fn setup(
       // FadeIn,
     ));
 
-    // commands.spawn(AudioPlayerS::new(
-    //   asset_server.load("sounds/test.01.mp3"),
-    // ));
+    // commands.spawn(AudioPlayer::new(track_1 ));
 
-    // let loader: Handle<_> = asset_server.load("sounds/test.01.mp3");
-    // let audio  = AudioPlayer::new(loader);
+    // let audio  = AudioPlayer::new(track_1);
     // commands.spawn(audio);
   }
   // // let Ok(entity) = query.get_single_mut() else { return; };

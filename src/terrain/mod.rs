@@ -22,10 +22,13 @@ mod terrain_lod_map;
 
 use crate::camera::{ CameraMarker, CameraParentMarker };
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
-use crate::{ sys_paths, PhysicsStaticObjectTerrain, COLLISION_MARGIN };
+use crate::{ PhysicsStaticObjectTerrain, COLLISION_MARGIN };
+use crate::sys_paths;
 use crate::terrain::terrain_lod_map::get_lod;
-
 use crate::asset_loader::texture_cache::{ cache_load_texture, TextureCache };
+
+use sys_paths::audio::EAudioPaths;
+use sys_paths::image::EImagePaths;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MTerrainMarker;
@@ -92,7 +95,7 @@ fn startup(
   let terrain_texture_handle: Handle<Image> = cache_load_texture(
     texture_hashmap,
     &asset_server, 
-    sys_paths::textures::EPaths::Base.as_str(),
+    EImagePaths::Base.as_str(),
     true
   );
 

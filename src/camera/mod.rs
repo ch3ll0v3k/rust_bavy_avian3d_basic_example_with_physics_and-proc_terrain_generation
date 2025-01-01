@@ -39,6 +39,7 @@ use bevy::{
   render::camera::PhysicalCameraParameters,
 };
 
+use crate::asset_loader::audio_cache::{ cache_load_audio, AudioCache };
 use crate::debug::ALLOWED_DEBUG_ENGINE;
 use crate::state::MGameState;
 use crate::sys_paths;
@@ -49,6 +50,9 @@ use crate::{
   AnyObject,
   COLLISION_MARGIN,
 };
+
+use sys_paths::audio::EAudioPaths;
+use sys_paths::image::EImagePaths;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct CameraMarker;
@@ -771,6 +775,7 @@ fn handle_bullet_out_of_allowed_area(
 
 // prettier-ignore
 fn handle_left_click(
+  mut res_mut_audio_cache: Option<ResMut</*res_mut_texture_cache::*/AudioCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -836,7 +841,16 @@ fn handle_left_click(
       //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
       // }
 
-      let sound: Handle<AudioSource> = asset_server.load(sys_paths::sounds::EPaths::PaintballShoot.as_str());
+      let audio_hashmap: &mut ResMut<AudioCache> = res_mut_audio_cache.as_mut().unwrap();
+
+      let sound = cache_load_audio(
+        audio_hashmap, 
+        &asset_server, 
+        EAudioPaths::PaintballShoot.as_str(),
+        false
+      );
+
+      // let sound: Handle<AudioSource> = asset_server.load(sys_paths::sounds::EPaths::PaintballShoot.as_str());
       
       commands.spawn((
         // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),

@@ -1,2 +1,2 @@
-pub mod textures;
-pub mod sounds;
+pub mod image;
+pub mod audio;
