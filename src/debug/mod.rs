@@ -1,34 +1,64 @@
-// dbgln
-use avian3d::prelude::*;
-use bevy::color::palettes::tailwind::*;
-use bevy::diagnostic::Diagnostic;
-use bevy::diagnostic::DiagnosticPath;
-use bevy::diagnostic::DiagnosticsStore;
-use bevy::diagnostic::EntityCountDiagnosticsPlugin;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-use bevy::diagnostic::RegisterDiagnostic;
-use bevy::diagnostic::SystemInformationDiagnosticsPlugin;
-use bevy::pbr::wireframe::WireframeConfig;
-use bevy::pbr::wireframe::{ Wireframe, WireframePlugin };
-use bevy::prelude::*;
+// use avian3d::prelude::*;
+use avian3d::prelude::DebugRender;
+
+use bevy::app::{ App, Plugin, Startup, Update };
+use bevy::color::{ Color, palettes::tailwind::* };
+
 use bevy_diagnostic::LogDiagnosticsPlugin;
 
+use bevy::diagnostic::{
+  Diagnostic,
+  DiagnosticPath,
+  DiagnosticsStore,
+  EntityCountDiagnosticsPlugin,
+  FrameTimeDiagnosticsPlugin,
+  RegisterDiagnostic,
+  SystemInformationDiagnosticsPlugin,
+};
+
+use bevy::prelude::{
+  Commands,
+  Component,
+  Entity,
+  IntoSystemConfigs,
+  KeyCode,
+  Query,
+  Res,
+  ResMut,
+  Resource,
+  Text,
+  With,
+  Without,
+};
+
+use bevy::math::Vec3;
+use bevy::pbr::wireframe::{ Wireframe, WireframePlugin, WireframeConfig };
+use bevy::text::TextColor;
+use bevy::time::{ Fixed, Time };
+use bevy::input::{ ButtonInput, common_conditions::input_just_pressed };
+
+use crate::dbgln;
 use crate::markers::m_bevy::AnyObject;
 
 pub const ALLOWED_DEBUG_PHYSICS: bool = !true;
 pub const ALLOWED_DEBUG_ENGINE: bool = true;
 pub const ALLOWED_DEBUG_FPS: bool = true;
 
+pub const IS_WIREFRAME_DEFAULT_ON: bool = false;
+
 const SYSTEM_ITERATION_COUNT: DiagnosticPath = DiagnosticPath::const_new("system_iteration_count");
 
-// prettier-ignore
-pub fn is_allowed_debug_physics() -> bool { ALLOWED_DEBUG_PHYSICS }
-// prettier-ignore
-pub fn is_allowed_debug_engine() -> bool { ALLOWED_DEBUG_ENGINE }
-// prettier-ignore
-pub fn is_allowed_debug_fps() -> bool { ALLOWED_DEBUG_FPS }
+#[derive(Component, Debug, PartialEq, Eq)]
+struct NameTextMarker;
+
+#[derive(Resource, Debug, PartialEq, Eq)]
+struct IWireframeOn {
+  is_on: bool,
+}
 
 pub struct DebugPlugin;
+
+// prettier-ignore
 impl Plugin for DebugPlugin {
   fn build(&self, app: &mut App) {
     app
@@ -39,7 +69,13 @@ impl Plugin for DebugPlugin {
         EntityCountDiagnosticsPlugin,
         SystemInformationDiagnosticsPlugin,
       ))
-      // // Wireframes can be configured with this resource. This can be changed at runtime.
+      .register_diagnostic(Diagnostic::new(SYSTEM_ITERATION_COUNT).with_suffix(" iterations"))
+      .add_systems(Update, update)
+      .add_systems(Update, toggle_wireframe.run_if(input_just_pressed(KeyCode::KeyL)))
+      .add_systems(Update, update_fps);
+
+    app
+      // Wireframes can be configured with this resource. This can be changed at runtime.
       // .insert_resource(WireframeConfig {
       //   // The global wireframe config enables drawing of wireframes on every mesh,
       //   // except those with `NoWireframe`. Meshes with `Wireframe` will always have a wireframe,
@@ -47,18 +83,13 @@ impl Plugin for DebugPlugin {
       //   global: false,
       //   default_color: Color::from(GREEN_100),
       // })
+      .insert_resource(IWireframeOn { is_on: IS_WIREFRAME_DEFAULT_ON });
 
-      .register_diagnostic(Diagnostic::new(SYSTEM_ITERATION_COUNT).with_suffix(" iterations"))
-      .add_systems(Update, update)
-      .add_systems(Update, toggle_wireframe)
-      .add_systems(Update, get_fps);
+
   }
 }
 
-fn startup(
-  mut commands: Commands
-  //mut meshes: ResMut<Assets<Mesh>>
-) {
+fn startup(mut commands: Commands) {
   // prettier-ignore
   if !ALLOWED_DEBUG_FPS { return; }
 
@@ -67,18 +98,19 @@ fn startup(
 
 fn update() {
   // for (entity, _cube_marker) in query.iter() {
-  //     let mut position = cube_positions.0;
-  //     position.x += time.delta_seconds();
-  //     cube_positions.0 = position;
-  //     commands.entity(entity).insert(position);
+  //   let mut position = cube_positions.0;
+  //   position.x += time.delta_seconds();
+  //   cube_positions.0 = position;
+  //   commands.entity(entity).insert(position);
   // }
 }
 
-#[derive(Component, Debug, PartialEq, Eq)]
-struct NameTextMarker;
-
-// #[derive(Component, Debug, PartialEq, Eq)]
-// struct NameSpanMarker;
+// prettier-ignore
+pub fn is_allowed_debug_physics() -> bool { ALLOWED_DEBUG_PHYSICS }
+// prettier-ignore
+pub fn is_allowed_debug_engine() -> bool { ALLOWED_DEBUG_ENGINE }
+// prettier-ignore
+pub fn is_allowed_debug_fps() -> bool { ALLOWED_DEBUG_FPS }
 
 pub fn get_defaul_physic_debug_params() -> DebugRender {
   if ALLOWED_DEBUG_PHYSICS {
@@ -91,7 +123,7 @@ pub fn get_defaul_physic_debug_params() -> DebugRender {
   }
 }
 
-fn get_fps(
+fn update_fps(
   mut names: Query<&mut Text, With<NameTextMarker>>,
   diagnostics: Res<DiagnosticsStore>,
   fixed_time: Res<Time<Fixed>>
@@ -99,27 +131,20 @@ fn get_fps(
   // prettier-ignore
   if !ALLOWED_DEBUG_FPS { return; }
 
-  // let dt_f: f64 = fixed_time.delta_secs_f64();
-  // let dt_dur: std::time::Duration = fixed_time.delta();
   if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
     let mut writer = names.single_mut();
     if let Some(raw) = fps.smoothed() {
-      let s = format!("FPS: {:.2}", raw);
-      // dbgln!("{:?}", s);
+      let s: String = format!("FPS: {:.2}", raw);
       writer.0 = s.to_string();
       // *writer.text(text, 4) = format!("{raw:.2}");
     }
-    // if let Some(raw) = fps.value() {
-    //     let s = format!("{:.2}", raw);
-    //     // dbgln!("{:?}", s);
-    //     writer.0 = s.to_string();
-    //     // *writer.text(text, 4) = format!("{raw:.2}");
-    // }
   }
 }
 
 fn toggle_wireframe(
+  mut is_wireframe_on: ResMut<IWireframeOn>,
   mut commands: Commands,
+  all_allowed_entities: Query<Entity, With<AnyObject>>,
   all_wireframes: Query<Entity, (With<AnyObject>, With<Wireframe>)>,
   all_no_wireframe: Query<Entity, (With<AnyObject>, Without<Wireframe>)>,
   input: Res<ButtonInput<KeyCode>>
@@ -127,12 +152,25 @@ fn toggle_wireframe(
   // prettier-ignore
   if !ALLOWED_DEBUG_ENGINE { return; }
 
-  if input.just_pressed(KeyCode::KeyL) {
-    for object in &all_no_wireframe {
-      commands.entity(object).insert(Wireframe);
+  is_wireframe_on.is_on = !is_wireframe_on.is_on;
+  dbgln!("is_wireframe_on: {}", is_wireframe_on.is_on);
+
+  if is_wireframe_on.is_on {
+    for entity in &all_allowed_entities {
+      commands.entity(entity).insert(Wireframe);
     }
-    for object in &all_wireframes {
-      commands.entity(object).remove::<Wireframe>();
+  } else {
+    for entity in &all_allowed_entities {
+      commands.entity(entity).remove::<Wireframe>();
     }
   }
+
+  // if input.just_pressed(KeyCode::KeyL) {
+  //   for entity in &all_no_wireframe {
+  //     commands.entity(entity).insert(Wireframe);
+  //   }
+  //   for entity in &all_wireframes {
+  //     commands.entity(entity).remove::<Wireframe>();
+  //   }
+  // }
 }
