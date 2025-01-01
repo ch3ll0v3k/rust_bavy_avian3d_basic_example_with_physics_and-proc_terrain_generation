@@ -42,7 +42,7 @@ use bevy::{
 use crate::asset_loader::audio_cache::{ cache_load_audio, AudioCache };
 use crate::debug::ALLOWED_DEBUG_ENGINE;
 use crate::state::MGameState;
-use crate::sys_paths;
+use crate::{ dbgln, sys_paths };
 use crate::{
   debug::{ get_defaul_physic_debug_params, is_allowed_debug_engine },
   entities::with_children::MEntityBigSphere,
@@ -325,12 +325,12 @@ fn zoom_on_scroll(
       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
     };
 
-    // dbg!("Mouse wheel: X: {}, Y: {}", dx, dy);
+    // dbgln!("Mouse wheel: X: {}, Y: {}", dx, dy);
 
     let dy = _dy * -1.0;
     let val: f32 = persp.fov + dy / 30.0;
 
-    // dbg!("FOV: {}", val);
+    // dbgln!("FOV: {}", val);
 
     if val < 0.05 {
       return;
@@ -344,7 +344,7 @@ fn zoom_on_scroll(
 }
 
 fn on_q_pressed() {
-  // dbg!("Q pressed");
+  // dbgln!("Q pressed");
 }
 
 // fn set_global_state(value: bool) {
@@ -373,7 +373,7 @@ fn on_m_left_up() {
 //   if let Some(camera_transform) = query.iter().next() {
 //     let forward = camera_transform.forward();
 //     camera_transform.affine().translation.x;
-//     dbg!("Camera forward direction: {:?}", forward);
+//     dbgln!("Camera forward direction: {:?}", forward);
 //   }
 // }
 
@@ -447,7 +447,7 @@ fn mk_jump(
 
   // // for (entity, _rigid_body, transform) in query.iter() {
   // for (entity, _rigid_body) in query.iter() {
-  //   dbg!("Entity apply_impulse_at_point: entity: {:?}, force: {:?}", entity, force);
+  //   dbgln!("Entity apply_impulse_at_point: entity: {:?}, force: {:?}", entity, force);
   //   commands
   //     .entity(entity)
   //     // .insert((RigidBody::Dynamic, force));
@@ -600,7 +600,7 @@ fn control_cam(
       impulse3 += Vec3::new(x * -1.0, y * -1.0, z * -1.0) * force_scale_mul * BOOST_SPEED;
     }
   } else {
-    // dbg!("Camera is paused");
+    // dbgln!("Camera is paused");
     if keys.pressed(KeyCode::KeyW) {
       transform.translation.x += x * 10.0;
       transform.translation.y += y * 10.0;
@@ -646,7 +646,7 @@ fn control_cam(
 // ) {
 //   for (entity, rb_bullet) in q_bullet.iter() {
 //     if rb_bullet.is_dynamic() {
-//       dbg!("Entity : entity: {:?}, bullet: {:?}", entity, rb_bullet);
+//       dbgln!("Entity : entity: {:?}, bullet: {:?}", entity, rb_bullet);
 //       commands.entity(entity).despawn();
 //     }
 //   }
@@ -656,10 +656,10 @@ fn control_cam(
 //   for event in collision_events.iter() {
 //     match event {
 //       CollisionEvent::Started(entity1, entity2) => {
-//         dbg!("Collision started between {:?} and {:?}", entity1, entity2);
+//         dbgln!("Collision started between {:?} and {:?}", entity1, entity2);
 //       }
 //       CollisionEvent::Stopped(entity1, entity2) => {
-//         dbg!("Collision stopped between {:?} and {:?}", entity1, entity2);
+//         dbgln!("Collision stopped between {:?} and {:?}", entity1, entity2);
 //       }
 //     }
 //   }
@@ -677,7 +677,7 @@ fn detect_bullet_collision(
     //   let type_t_2 = query.get(contacts.entity2).unwrap_or(&Name::new("unknown_t")).to_string();
     //   // let type_t_1 = query.get(contacts.body_entity1.unwrap()).unwrap_or(&Name::new("unknown_t")).to_string();
     //   // let type_t_2 = query.get(contacts.body_entity2.unwrap()).unwrap_or(&Name::new("unknown_t")).to_string();
-    //   dbg!(" end > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
+    //   dbgln!(" end > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
     // }
 
     if contacts.collision_started() {
@@ -698,7 +698,7 @@ fn detect_bullet_collision(
       //   .unwrap_or(&Name::new("unknown_t"))
       //   .to_string();
 
-      // dbg!(" start > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
+      // dbgln!(" start > : (type(1): {type_t_1}) collided (type(2): {type_t_2})");
 
       if type_t_1 == "unknown_t" || type_t_2 == "unknown_t" {
         return;
@@ -715,7 +715,7 @@ fn detect_bullet_collision(
         return;
       }
 
-      // dbg!(
+      // dbgln!(
       //   "(Entities (name: {type_t_1} => {}) and (name: {type_t_2} => {}) are colliding), (bodies: {:?} and {:?} ) is_sensor: {:?}, collision_started: {:?}",
       //   contacts.entity1,
       //   contacts.entity2,
@@ -724,7 +724,7 @@ fn detect_bullet_collision(
       //   contacts.is_sensor,
       //   contacts.collision_started()
       // );
-      // dbg!(
+      // dbgln!(
       //   "0: (type(1): {type_t_1}) collided (type(2): {type_t_2}) ({:?} => {:?})",
       //   contacts.body_entity1,
       //   contacts.body_entity2
@@ -733,7 +733,7 @@ fn detect_bullet_collision(
       // return;
 
       if type_t_1 == "p_bullet_t" {
-        dbg!(
+        dbgln!(
           "0: (type(1): {type_t_1}) collided (type(2): {type_t_2}) ({} => {})",
           contacts.entity1,
           contacts.entity2
@@ -742,7 +742,7 @@ fn detect_bullet_collision(
       }
 
       if type_t_2 == "p_bullet_t" {
-        dbg!(
+        dbgln!(
           "1: (type(1): {type_t_1}) collided (type(2): {type_t_2}) ({} => {})",
           contacts.entity1,
           contacts.entity2
@@ -767,7 +767,7 @@ fn handle_bullet_out_of_allowed_area(
   for (entity, transform) in q_bullets.iter() {
     if transform.translation.y < BULLET_MIN_Y_ALLOWED {
       let bullet_t = q_name.get(entity).unwrap_or(&Name::new("unknown_t")).to_string();
-      // dbg!("Bullet out of allowed area: {:?}", bullet_t);
+      // dbgln!("Bullet out of allowed area: {:?}", bullet_t);
       commands.entity(entity).despawn();
     }
   }
@@ -794,7 +794,7 @@ fn handle_left_click(
       let fw_parent = Vec3::from(transform_parent.forward());
       let up_child = Vec3::from(transform.up());
       let mut to = Vec3::new( fw_parent.x,  up_child.z * 1.5, fw_parent.z);
-      // dbg!("to-vec-y: {} => up_child.z {}", transform.translation.y, up_child.z);
+      // dbgln!("to-vec-y: {} => up_child.z {}", transform.translation.y, up_child.z);
       
       let mut force = ExternalImpulse::default();
       force
@@ -834,9 +834,9 @@ fn handle_left_click(
       // commands.entity(object).insert(handle_bullet);
       // commands.entity(object).insert(Wireframe);
 
-      // // dbg!("Right mouse button pressed");
+      // // dbgln!("Right mouse button pressed");
       // for ev_m in ev_m_motion.read() {
-      //   // dbg!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
+      //   // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
       //   transform.rotate_local_y(ev_m.delta.x / 1000.0);
       //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
       // }
@@ -882,7 +882,7 @@ fn handle_drag(
   let mut trans_cam_parent = player.single_mut();
   let mut trans_cam = query_camera.single_mut();
   for ev_m in ev_m_motion.read() {
-    // dbg!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
+    // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
     trans_cam_parent.rotate_local_y((ev_m.delta.x / 500.0) * 2.0 * -1.0);
     // trans_cam_parent.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
     // trans_cam_parent.rotate_local_z((ev_m.delta.y / 1000.0) * 1.0);
@@ -901,10 +901,10 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
   for ev in evr_kbd.read() {
     match ev.state {
       ButtonState::Pressed => {
-        // dbg!("Key press: {:?} {:?}", ev.key_code, ev.logical_key);
+        // dbgln!("Key press: {:?} {:?}", ev.key_code, ev.logical_key);
       }
       ButtonState::Released => {
-        // dbg!("Key release: {:?} {:?}", ev.key_code, ev.logical_key);
+        // dbgln!("Key release: {:?} {:?}", ev.key_code, ev.logical_key);
       }
     }
   }
@@ -924,7 +924,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 //       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
 //     };
 
-//     dbg!("Mouse wheel: X: {}, Y: {}", dx, dy);
+//     dbgln!("Mouse wheel: X: {}, Y: {}", dx, dy);
 
 //     // transform.translation -= Vec3::new(0.0, dy / 1.0, 0.0);
 
@@ -964,7 +964,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 //     X += 1;
 //     if X % 100 == 0 {
 //       let transform = query_camera.single();
-//       dbg!(
+//       dbgln!(
 //         "cam: (:x, :y, :z) = ({}, {}, {})",
 //         transform.translation.x,
 //         transform.translation.y,

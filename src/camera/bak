@@ -1,3 +1,4 @@
+// dbgln;
 use std::{ fmt, sync::Mutex };
 // use tracing::instrument;
 
@@ -228,12 +229,12 @@ fn zoom_on_scroll(
       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
     };
 
-    // dbg!("Mouse wheel: X: {}, Y: {}", dx, dy);
+    // dbgln!("Mouse wheel: X: {}, Y: {}", dx, dy);
 
     let dy = _dy * -1.0;
     let val: f32 = persp.fov + dy / 30.0;
 
-    // dbg!("FOV: {}", val);
+    // dbgln!("FOV: {}", val);
 
     if val < 0.05 {
       return;
@@ -247,7 +248,7 @@ fn zoom_on_scroll(
 }
 
 fn on_q_pressed() {
-  // dbg!("Q pressed");
+  // dbgln!("Q pressed");
 }
 
 fn set_global_state(value: bool) {
@@ -270,7 +271,7 @@ fn on_m_left_up() { set_global_state(false); }
 // ) {
 //     if let Some(camera_transform) = query.iter().next() {
 //         let forward = camera_transform.forward();
-//         dbg!("Camera forward direction: {:?}", forward);
+//         dbgln!("Camera forward direction: {:?}", forward);
 //     }
 // }
 
@@ -343,7 +344,7 @@ fn apply_force_to_selected_object(
 
   // // for (entity, _rigid_body, transform) in query.iter() {
   // for (entity, _rigid_body) in query.iter() {
-  //   dbg!("Entity apply_impulse_at_point: entity: {:?}, force: {:?}", entity, force);
+  //   dbgln!("Entity apply_impulse_at_point: entity: {:?}, force: {:?}", entity, force);
   //   commands
   //     .entity(entity)
   //     // .insert((RigidBody::Dynamic, force));
@@ -373,7 +374,7 @@ fn control_cam(
   // transform.translation -= Vec3::new(0.0, dy / 1.0, 0.0);
 
   let fw = transform.forward();
-  // dbg!("FW: x: {}, y: {}, z: {}", fw.x, fw.y, fw.z);
+  // dbgln!("FW: x: {}, y: {}, z: {}", fw.x, fw.y, fw.z);
 
   // query_camera_parent.
 
@@ -407,10 +408,10 @@ fn control_cam(
   }
 
   // let x = keys.into_inner();
-  // dbg!("X: {:?}", x);
+  // dbgln!("X: {:?}", x);
 
   // for key in keys.get_pressed() {
-  //   dbg!("{:?} is currently held down", key);
+  //   dbgln!("{:?} is currently held down", key);
   // }
 
   // rotater around own axis
@@ -430,9 +431,9 @@ fn handle_left_click(
   let mut transform = query_camera.single_mut();
   for ev_b in ev_b_input.read() {
     if ev_b.button == MouseButton::Left {
-      // // dbg!("Left mouse button pressed");
+      // // dbgln!("Left mouse button pressed");
       // for ev_m in ev_m_motion.read() {
-      //   // dbg!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
+      //   // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
       //   transform.rotate_local_y(ev_m.delta.x / 1000.0);
       //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
       // }
@@ -454,7 +455,7 @@ fn handle_drag(
   let mut trans_cam_parent = query_camera_parent.single_mut();
   let mut trans_cam = query_camera.single_mut();
   for ev_m in ev_m_motion.read() {
-    // dbg!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
+    // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
     trans_cam_parent.rotate_local_y((ev_m.delta.x / 500.0) * -1.0);
     // trans_cam_parent.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
     // trans_cam_parent.rotate_local_z((ev_m.delta.y / 1000.0) * 1.0);
@@ -473,10 +474,10 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
   for ev in evr_kbd.read() {
     match ev.state {
       ButtonState::Pressed => {
-        // dbg!("Key press: {:?} {:?}", ev.key_code, ev.logical_key);
+        // dbgln!("Key press: {:?} {:?}", ev.key_code, ev.logical_key);
       }
       ButtonState::Released => {
-        // dbg!("Key release: {:?} {:?}", ev.key_code, ev.logical_key);
+        // dbgln!("Key release: {:?} {:?}", ev.key_code, ev.logical_key);
       }
     }
   }
@@ -496,7 +497,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 //       MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
 //     };
 
-//     dbg!("Mouse wheel: X: {}, Y: {}", dx, dy);
+//     dbgln!("Mouse wheel: X: {}, Y: {}", dx, dy);
 
 //     // transform.translation -= Vec3::new(0.0, dy / 1.0, 0.0);
 
@@ -536,7 +537,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 //     X += 1;
 //     if X % 100 == 0 {
 //       let transform = query_camera.single();
-//       dbg!(
+//       dbgln!(
 //         "cam: (:x, :y, :z) = ({}, {}, {})",
 //         transform.translation.x,
 //         transform.translation.y,

@@ -9,6 +9,8 @@ use bevy::{
   prelude::{ Commands, KeyCode, NextState, Res, ResMut, State, States },
 };
 
+use crate::dbgln;
+
 // https://idanarye.github.io/bevy-tnua/avian3d/schedule/struct.Physics.html
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
@@ -46,11 +48,11 @@ fn startup(mut commands: Commands) {}
 fn update() {}
 
 fn on_pause() {
-  // dbg!("on_pause....");
+  // dbgln!("on_pause....");
 }
 
 fn on_running() {
-  // dbg!("on_running....");
+  // dbgln!("on_running....");
 }
 
 // prettier-ignore
@@ -72,7 +74,7 @@ fn toggle_pause_game(
 }
 
 fn toggle_physics_state(mut time: ResMut<Time<Physics>>, is_physics_on: bool) {
-  // dbg!("toggle_physics_state: is_physics_on: {is_physics_on}");
+  // dbgln!("toggle_physics_state: is_physics_on: {is_physics_on}");
   if is_physics_on {
     time.unpause();
   } else {
@@ -81,7 +83,7 @@ fn toggle_physics_state(mut time: ResMut<Time<Physics>>, is_physics_on: bool) {
 }
 
 fn toggle_game_state(mut next_state: ResMut<NextState<MGameState>>, is_paused: bool) {
-  // dbg!("toggle_game_state: is_paused: {is_paused}");
+  // dbgln!("toggle_game_state: is_paused: {is_paused}");
   if is_paused {
     next_state.set(MGameState::Paused);
   } else {

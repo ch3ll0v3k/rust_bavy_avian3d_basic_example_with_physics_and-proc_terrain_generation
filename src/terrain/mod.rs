@@ -22,7 +22,7 @@ mod terrain_lod_map;
 
 use crate::camera::{ CameraMarker, CameraParentMarker };
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
-use crate::{ PhysicsStaticObjectTerrain, COLLISION_MARGIN };
+use crate::{ dbgln, PhysicsStaticObjectTerrain, COLLISION_MARGIN };
 use crate::sys_paths;
 use crate::terrain::terrain_lod_map::get_lod;
 use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
@@ -156,11 +156,11 @@ fn startup(
       )).id();
 
       if let Some(res_mut) = &mut inner_mapper_mut {
-        // dbg!("capacity: {:?}", res_mut.hash_map.capacity());
+        // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
         if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
-          // dbg!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
+          // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
         }else{
-          // dbg!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
+          // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
           let capacity = res_mut.hash_map.insert(
             (z as i16, x as i16), 
             IInnerMap{ 
@@ -228,7 +228,7 @@ fn startup(
 
   // terrain: (min: -74.509224 max: 70.95005)
 
-  dbg!("terrain: (min: {_min} max: {_max})");
+  dbgln!("terrain: (min: {_min} max: {_max})");
 
 }
 
@@ -255,22 +255,22 @@ fn update(
   let m_z = ( (pos.z + (TERRAIN_CHUNK_Z / 2.0)) / TERRAIN_CHUNK_Z) as i32;
 
   // if let Some(res_mut) = &mut inner_mapper_mut {
-  //   dbg!("----------------------------------------------");
+  //   dbgln!("----------------------------------------------");
   //   let keys: Vec<(i16, i16)> = res_mut.hash_map.iter().map(|(k, v)| k.clone()).collect::<Vec<(i16, i16)>>();
   //   for k in keys {
   //     let (z, x) = k;
-  //     dbg!("z: {z} / x: {x}");
+  //     dbgln!("z: {z} / x: {x}");
   //   }
   // }
 
   unsafe {
-  // dbg!("player @: => {TERRAIN_CHUNK_X} => +>  (x: {m_x} z: {m_z} => p x/z => {}/{}", pos.x, pos.z);      
+  // dbgln!("player @: => {TERRAIN_CHUNK_X} => +>  (x: {m_x} z: {m_z} => p x/z => {}/{}", pos.x, pos.z);      
 
     if m_x != M_X || m_z != M_Y {
       M_X = m_x;
       M_Y = m_z;
-      // dbg!("player @: (x: {m_x} y: {m_z})");      
-      dbg!("player @: => {TERRAIN_CHUNK_X} => +>  (x: {m_x} z: {m_z} => p x/z => {}/{}", pos.x, pos.z);      
+      // dbgln!("player @: (x: {m_x} y: {m_z})");      
+      dbgln!("player @: => {TERRAIN_CHUNK_X} => +>  (x: {m_x} z: {m_z} => p x/z => {}/{}", pos.x, pos.z);      
 
       // if let Some(res_mut) = &mut inner_mapper {
       //   // let mut res_mut = inner_mapper.unwrap
@@ -287,17 +287,17 @@ fn update(
       // let some = inner_mapper.state.get(&(0, 0));
       //   match Some(some)  {
       //   None => {
-      //     dbg!("inner_mapper.state.get(&(0, 0)): None");
+      //     dbgln!("inner_mapper.state.get(&(0, 0)): None");
       //     inner_mapper.state.insert((0, 0), IInnerMap{ entity: Entity::from_bits(12), lod: 123});
       //   }
       //   Some(x) => {
       //     let en = x.unwrap();
-      //     dbg!("inner_mapper.state.get(&(0, 0)): entity: {:?}, lod: {:?}", en.entity, en.lod);
+      //     dbgln!("inner_mapper.state.get(&(0, 0)): entity: {:?}, lod: {:?}", en.entity, en.lod);
       //   },
       // }
 
       // if let Some(x) = inner_mapper.state.get(&(0, 0)){
-      //   dbg!("inner_mapper.state.get(&(0, 0)): entity: {:?}, lod: {:?}", x.entity, x.lod);
+      //   dbgln!("inner_mapper.state.get(&(0, 0)): entity: {:?}, lod: {:?}", x.entity, x.lod);
       // }
 
       // let Option<&(Entity, i16)> = inner_mapper.state.get(&(0, 0));
@@ -344,7 +344,7 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
       .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
       .subdivisions(final_subdivisions)
   );
-  // dbg!("chunk-size: {TERRAIN_CHUNK_X} => (base-subdiv: {TERRAIN_CHUNK_SUBDIVISIONS}, dyn_scale: {dyn_scale}) => final-subdiv: {final_subdivisions}");
+  // dbgln!("chunk-size: {TERRAIN_CHUNK_X} => (base-subdiv: {TERRAIN_CHUNK_SUBDIVISIONS}, dyn_scale: {dyn_scale}) => final-subdiv: {final_subdivisions}");
 
   let use_segment_separator = false;
   let mut min: f32 = f32::MAX;

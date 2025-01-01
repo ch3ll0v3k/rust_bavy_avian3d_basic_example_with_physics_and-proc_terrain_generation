@@ -71,6 +71,9 @@ const WINDOW_POSITIONS_DEV_SIDE_33_PERCENT: Vec2 = Vec2::new(800.0, 1100.0);
 const WINDOW_POSITIONS_DEV_SIDE_50_PERCENT: Vec2 = Vec2::new(950.0, 1100.0);
 const USE_WIN_SIZE: Vec2 = WINDOW_POSITIONS_DEV_SIDE_50_PERCENT;
 
+#[macro_use]
+mod debug_utils;
+
 #[derive(Resource)]
 struct SoundtrackPlayer {
   track_list: Vec<Handle<AudioSource>>,
@@ -81,13 +84,13 @@ impl SoundtrackPlayer {
     Self { track_list }
   }
 }
-// This component will be attached to an entity to fade the audio in
+
 #[derive(Component)]
 struct FadeIn;
 
-// This component will be attached to an entity to fade the audio in
-
 fn main() {
+  dbgln!("App stating...");
+
   App::new()
     // Enable physics
     // .add_plugins((PanOrbitCameraPlugin,))

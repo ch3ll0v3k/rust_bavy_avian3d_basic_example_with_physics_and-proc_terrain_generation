@@ -18,6 +18,8 @@ use bevy::{
 
 use std::collections::HashMap;
 
+use crate::dbgln;
+
 #[derive(Resource, Default)]
 pub struct ImageCache {
   pub image_cache: HashMap<String, Handle<Image>>,
@@ -67,14 +69,14 @@ pub fn cache_load_image(
    
   let mut image_handle: Handle<Image>;
   let cache_path: String = path.to_string();
-    // dbg!("capacity: {:?}", audio_hashmap.hash_map.capacity());
+    // dbgln!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
   if let Some(handle_image) = audio_hashmap.image_cache.get(&cache_path) {
-    dbg!("audio_hashmap.image_cache.get(&({cache_path}) => found ...");
+    dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => found ...");
     return handle_image.clone();      
   }
   
-  dbg!("audio_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
+  dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
   audio_hashmap.image_cache.insert(cache_path, image_handle.clone());
  
@@ -83,19 +85,19 @@ pub fn cache_load_image(
   // let mut image_handle: Handle<Image>;
   // let cache_path: String = path.to_string();
   // if let Some(audio_hashmap) = &mut image_cache {
-  //   // dbg!("capacity: {:?}", audio_hashmap.hash_map.capacity());
+  //   // dbgln!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
   //   if let Some(handle_image) = audio_hashmap.image_cache.get(&cache_path) {
-  //     dbg!("audio_hashmap.image_cache.get(&({cache_path}) => found ...");
+  //     dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => found ...");
   //     return handle_image.clone();      
   //   }
     
-  //   dbg!("audio_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
+  //   dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
   //   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
   //   audio_hashmap.image_cache.insert(cache_path, image_handle.clone());
     
   // }else{
-  //   dbg!("audio_hashmap.image_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
+  //   dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
   //   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
   // }
 
