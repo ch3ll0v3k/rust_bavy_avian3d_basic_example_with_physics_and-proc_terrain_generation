@@ -55,6 +55,7 @@ mod sky;
 mod entities;
 mod state;
 mod sys_paths;
+mod asset_loader;
 
 use markers::m_avian::*;
 use markers::m_bevy::*;
@@ -113,6 +114,7 @@ fn main() {
       }), // .set(WindowPlugin {}),
       PhysicsPlugins::default(),
       PhysicsDebugPlugin::default(),
+      asset_loader::MAssetLoaderPlugin,
       cubes::CubesPlugin,
       debug::DebugPlugin,
       camera::CameraPlugin,

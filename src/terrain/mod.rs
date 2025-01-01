@@ -25,6 +25,8 @@ use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObje
 use crate::{ sys_paths, PhysicsStaticObjectTerrain, COLLISION_MARGIN };
 use crate::terrain::terrain_lod_map::get_lod;
 
+use crate::asset_loader::texture_cache::{ cache_load_texture, TextureCache };
+
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MTerrainMarker;
 
@@ -72,13 +74,13 @@ impl Plugin for MTerrainPlugin {
     app
       .add_systems(Startup, startup)
       .add_systems(Update, update)
-      .add_systems(Update, update)
       .insert_resource(InnerMapper::new());
   }
 }
 
 // prettier-ignore
 fn startup(
+  mut res_mut_texture_cache: Option<ResMut</*res_mut_texture_cache::*/TextureCache>>,
   mut inner_mapper_mut: Option<ResMut<InnerMapper>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
@@ -86,9 +88,13 @@ fn startup(
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
 
-
-  let terrain_texture_handle: Handle<Image> = load_base_texture(&asset_server, sys_paths::textures::EPaths::Base.as_str());
-  // let tree_platanus_texture_handle: Handle<Image> = load_base_texture(&asset_server, "textures/tree/platanus-acerifolia-02.png");
+  let texture_hashmap: &mut ResMut<TextureCache> = res_mut_texture_cache.as_mut().unwrap();
+  let terrain_texture_handle: Handle<Image> = cache_load_texture(
+    texture_hashmap,
+    &asset_server, 
+    sys_paths::textures::EPaths::Base.as_str(),
+    true
+  );
 
   let terrain_material: StandardMaterial = StandardMaterial {
     // base_color: Color::BLACK,
@@ -107,7 +113,6 @@ fn startup(
     ..default()
   };
 
-  // // material.base_color_tiling = Vec2::new(2.0, 2.0); // Scale the texture UVs
   let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
   let lod: [[i16; 13]; 13] = get_lod();
@@ -149,10 +154,10 @@ fn startup(
 
       if let Some(res_mut) = &mut inner_mapper_mut {
         // println!("capacity: {:?}", res_mut.hash_map.capacity());
-        if let Some(res) = &res_mut.hash_map.get(&(z as i16, x as i16)) {
-          println!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
+        if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
+          // println!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
         }else{
-          println!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
+          // println!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
           let capacity = res_mut.hash_map.insert(
             (z as i16, x as i16), 
             IInnerMap{ 
@@ -336,7 +341,7 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
       .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
       .subdivisions(final_subdivisions)
   );
-  println!("chunk-size: {TERRAIN_CHUNK_X} => (base-subdiv: {TERRAIN_CHUNK_SUBDIVISIONS}, dyn_scale: {dyn_scale}) => final-subdiv: {final_subdivisions}");
+  // println!("chunk-size: {TERRAIN_CHUNK_X} => (base-subdiv: {TERRAIN_CHUNK_SUBDIVISIONS}, dyn_scale: {dyn_scale}) => final-subdiv: {final_subdivisions}");
 
   let use_segment_separator = false;
   let mut min: f32 = f32::MAX;

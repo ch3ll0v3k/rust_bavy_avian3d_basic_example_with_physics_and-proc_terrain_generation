@@ -2,5 +2,15 @@
   "tabWidth": 2,
   "semi": true,
   "singleQuote": true,
-  "prettier.printWidth": 72
+  "prettier.printWidth": 72,
+  "no-multiple-empty-lines": "off",
+  "overrides": [
+    {
+      "files": "*.rs",
+      "options": {
+        "no-multiple-empty-lines": "off",
+        "parser": "rust"
+      }
+    }
+  ]
 }
