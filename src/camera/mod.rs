@@ -77,11 +77,11 @@ impl Plugin for CameraPlugin {
     app
       .add_systems(Startup, startup)
 
-      // .add_systems(Update, on_pause.run_if((
+      // .add_systems(FixedUpdate,on_pause.run_if((
       //     in_state(MGameState::Paused)
       //   )
       // ))
-      .add_systems(Update, 
+      .add_systems(FixedUpdate,
         (
           handle_bullet_out_of_allowed_area,
           update,
@@ -94,15 +94,15 @@ impl Plugin for CameraPlugin {
           detect_bullet_collision,
         ).run_if(in_state(MGameState::Running))
       )
-      .add_systems(Update, control_cam)
-      .add_systems(Update, handle_drag)
-      // .add_systems(Update, update)
-      // .add_systems(Update, zoom_on_scroll)
-      // .add_systems(Update, keyboard_events)
-      // .add_systems(Update, cam_track_object)
-      // .add_systems(Update, cam_track_object_origin)
-      // .add_systems(Update, detect_bullet_collision)
-      .add_systems(Update, 
+      .add_systems(Update,control_cam)
+      .add_systems(Update,handle_drag)
+      // .add_systems(Update,update)
+      // .add_systems(Update,zoom_on_scroll)
+      // .add_systems(Update,keyboard_events)
+      // .add_systems(Update,cam_track_object)
+      // .add_systems(Update,cam_track_object_origin)
+      // .add_systems(Update,detect_bullet_collision)
+      .add_systems(Update,
         (
           handle_left_click
         )
@@ -110,14 +110,14 @@ impl Plugin for CameraPlugin {
           .run_if(input_just_pressed(MouseButton::Left))
 
       )
-      .add_systems(Update, 
+      .add_systems(Update,
         (
           mk_jump
         )
           .run_if(in_state(MGameState::Running))
           .run_if(input_just_pressed(KeyCode::Space))
       )
-      // .add_systems(Update, ( 
+      // .add_systems(FixedUpdate,( 
       //     on_q_pressed.run_if(
       //       input_just_pressed(KeyCode::Space)
       //     ),
@@ -129,7 +129,7 @@ impl Plugin for CameraPlugin {
       //     ),
       //   )
       // )
-      .add_systems(Update, constrain_linear_xz_speed)
+      .add_systems(Update,constrain_linear_xz_speed)
       .insert_resource(CMaxLinearSpeed(5.0)) // Set max speed for x + z axes
       .insert_resource(Parameters(PhysicalCameraParameters {
           aperture_f_stops: 1.0,

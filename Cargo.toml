@@ -22,6 +22,7 @@ wgpu = "23.0.1"
 tracing = "0.1.41"
 rand = "0.8.5"
 chrono = "0.4.39"
+instant = "0.1.13"
 
 
 [profile.dev]

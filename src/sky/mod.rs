@@ -16,10 +16,15 @@ use wgpu::Face;
 // use avian3d::prelude::{AngularVelocity, Collider, RigidBody};
 // use avian3d::prelude::{PhysicsSet};
 
-use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
-use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
-use crate::COLLISION_MARGIN;
+use crate::{
+  debug::get_defaul_physic_debug_params,
+  AnyObject,
+  PhysicsStaticObject,
+  COLLISION_MARGIN,
+};
 use crate::sys_paths;
+
+use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
 
 use sys_paths::audio::EAudioPaths;
 use sys_paths::image::EImagePaths;
@@ -36,12 +41,12 @@ pub struct MSkyPlugin;
 impl Plugin for MSkyPlugin {
   fn build(&self, app: &mut App) {
     app.add_systems(Startup, startup);
-    app.add_systems(Update, update);
+    app.add_systems(FixedUpdate, update);
   }
 }
 
 fn startup(
-  mut res_mut_texture_cache: Option<ResMut</*res_mut_texture_cache::*/ ImageCache>>,
+  mut res_mut_image_cache: Option<ResMut</*res_mut_image_cache::*/ ImageCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -88,7 +93,7 @@ fn startup(
   //   );
   // }
 
-  let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
+  let image_hashmap: &mut ResMut<ImageCache> = res_mut_image_cache.as_mut().unwrap();
 
   {
     let sky_seg_east: Handle<Image> = cache_load_image(

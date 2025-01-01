@@ -11,6 +11,7 @@ pub struct MAssetLoaderPlugin;
 
 pub mod image_cache;
 pub mod audio_cache;
+pub mod font_cache;
 
 // prettier-ignore
 impl Plugin for MAssetLoaderPlugin {
@@ -22,7 +23,8 @@ impl Plugin for MAssetLoaderPlugin {
 
     app
       .insert_resource(image_cache::ImageCache::new())
-      .insert_resource(audio_cache::AudioCache::new());
+      .insert_resource(audio_cache::AudioCache::new())
+      .insert_resource(font_cache::FontCache::new());
 
   }
 }
