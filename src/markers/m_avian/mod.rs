@@ -8,3 +8,6 @@ pub struct PhysicsStaticObjectTerrain;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct PhysicsDynamicObject;
+
+#[derive(Component, Debug, PartialEq, Eq)]
+pub struct PhysicsDynamicObjectFloatable;

@@ -1,24 +1,27 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unreachable_code)]
+#![allow(unused_assignments)]
 #![allow(unused_mut)]
 #![allow(unused_imports)]
 #![allow(unused_braces)]
 #![allow(unused_parens)]
 
-use asset_loader::audio_cache::{ cache_load_audio, AudioCache };
-// use avian3d::debug_render::DebugRender;
-use avian3d::debug_render::PhysicsDebugPlugin;
+#[macro_use]
+mod debug_utils;
+
+use avian3d::debug_render::{ PhysicsDebugPlugin, DebugRender };
 use avian3d::prelude::*;
 use avian3d::PhysicsPlugins;
-use bevy::app::ScheduleRunnerPlugin;
-use bevy::app::{ App, Startup, Update };
-use bevy::asset::{ AssetServer, Assets, Handle };
-// use bevy::audio::AudioPlugin;
-use bevy::audio::{ AudioPlayer, AudioSource, PlaybackSettings };
-use bevy::color::{ Color, palettes::css::*, palettes::tailwind::* };
 
 use bevy::prelude::*;
+use asset_loader::audio_cache::{ cache_load_audio, AudioCache };
+
+use bevy::app::{ ScheduleRunnerPlugin, App, Startup, Update };
+use bevy::asset::{ AssetServer, Assets, Handle };
+use bevy::audio::AudioPlugin;
+use bevy::audio::{ AudioPlayer, AudioSource, PlaybackSettings, PlaybackMode, Volume };
+use bevy::color::{ Color, palettes::css::*, palettes::tailwind::* };
 
 use bevy::gizmos::AppGizmoBuilder;
 use bevy::image::{
@@ -42,7 +45,6 @@ use bevy_window::{
   WindowPosition,
 };
 
-use camera::CameraParentMarker;
 use instant::Instant;
 use noise::{ BasicMulti, NoiseFn, Perlin };
 
@@ -50,11 +52,8 @@ use bevy::ecs::query::QuerySingleError;
 use bevy::render::mesh::VertexAttributeValues;
 use bevy::window::WindowMode::*;
 
-use bevy::math::Affine2;
+// use bevy::math::Affine2;
 use std::{ collections::HashMap, time::Duration };
-
-#[macro_use]
-mod debug_utils;
 
 mod camera;
 mod cubes;
@@ -69,17 +68,15 @@ mod state;
 mod sys_paths;
 mod asset_loader;
 
+use sys_paths::image::EImagePaths;
 use camera::CameraMarker;
 use debug::get_defaul_physic_debug_params;
 use lights::MPointLightMarker;
-
-use markers::m_avian::*;
-use markers::m_bevy::*;
-use constants::viewport_settings::*;
-use constants::physics_world::*;
+use markers::{ m_avian::*, m_bevy::* };
+use constants::{ viewport_settings::*, physics_world::* };
 use terrain::MTerrainMarker;
 use sys_paths::audio::EAudioPaths;
-use sys_paths::image::EImagePaths;
+use camera::CameraParentMarker;
 
 const WINDOW_POSITIONS_DEV_SIDE_33_PERCENT: Vec2 = Vec2::new(800.0, 1100.0);
 const WINDOW_POSITIONS_DEV_SIDE_50_PERCENT: Vec2 = Vec2::new(950.0, 1100.0);
@@ -192,8 +189,8 @@ fn setup(
   commands.spawn((
     AudioPlayer(track_1),
     PlaybackSettings {
-      mode: bevy::audio::PlaybackMode::Loop,
-      volume: bevy::audio::Volume::default(),
+      mode: PlaybackMode::Loop,
+      volume: Volume::default(),
       ..default()
     },
     // FadeIn,

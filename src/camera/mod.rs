@@ -61,7 +61,7 @@ pub struct CameraMarker;
 pub struct CameraParentMarker;
 
 #[derive(Resource)]
-struct CMaxLinearSpeed(f32);
+struct CMaxLinearSpeedXZ(f32);
 
 pub struct CameraPlugin;
 
@@ -130,7 +130,7 @@ impl Plugin for CameraPlugin {
       //   )
       // )
       .add_systems(Update,constrain_linear_xz_speed)
-      .insert_resource(CMaxLinearSpeed(5.0)) // Set max speed for x + z axes
+      .insert_resource(CMaxLinearSpeedXZ(30.0)) // Set max speed for x + z axes
       .insert_resource(Parameters(PhysicalCameraParameters {
           aperture_f_stops: 1.0,
           shutter_speed_s: 1.0 / 125.0,
@@ -142,7 +142,6 @@ impl Plugin for CameraPlugin {
           //   sensitivity_iso: 100.0,
           //   sensor_height: 0.01866,
       }));
-
 
     }
 }
@@ -484,16 +483,16 @@ fn get_external_force(impulse3: Vec3, is_persistent: bool) -> ExternalForce {
 
 fn constrain_linear_xz_speed(
   mut q_lin_velocity: Query<&mut LinearVelocity, With<CameraParentMarker>>,
-  max_speed: Res<CMaxLinearSpeed>
+  c_max_speed: Res<CMaxLinearSpeedXZ>
 ) {
-  // for mut velocity in q_lin_velocity.iter_mut() {
-  //   let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
-  //   if xz_speed > max_speed.0 {
-  //     let scale = max_speed.0 / xz_speed;
-  //     velocity.x *= scale;
-  //     velocity.z *= scale;
-  //   }
-  // }
+  for mut velocity in q_lin_velocity.iter_mut() {
+    let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
+    if xz_speed > c_max_speed.0 {
+      let scale = c_max_speed.0 / xz_speed;
+      velocity.x *= scale;
+      velocity.z *= scale;
+    }
+  }
 }
 
 fn control_cam(
@@ -518,15 +517,18 @@ fn control_cam(
   //   if !is_left_m_btn_down { return; }
   // }
 
-  let mut impulse3 = Vec3::new(0.0, 0.0, 0.0);
-
   let extara_down = -10.0;
-
   let f = -10.0 - 2.0 - extara_down;
   let df = 1000.0;
+  let mut impulse3 = Vec3::new(0.0, 0.0, 0.0);
   let mut apply_force = false;
+  let mut is_in_water = false;
 
   let (entity, body, mut transform) = q_camera_parent.single_mut();
+  if transform.translation.y < -2.0 {
+    is_in_water = true;
+  }
+
   if transform.translation.y < -f {
     // dbgln!("transform.translation.y: y {:.4}", transform.translation.y);
 
@@ -535,14 +537,14 @@ fn control_cam(
       // commands.entity(entity).insert(GravityScale(0.06));
       // commands.entity(entity).insert(GravityScale(0.1));
 
-      // apply_force = true;
+      apply_force = true;
       let diff = transform.translation.y; //  - f;
       let abs_diff = (if diff < -df { -df } else { diff }).abs();
       let impulse = (abs_diff / df) * 20.0;
-      // let force = (abs_diff / df) * 10.0;
+      let force = (abs_diff / df) * 10.0;
       let inverse = (diff / df).abs();
 
-      dbgln!("diff: y {:.4}", diff);
+      // dbgln!("diff: y {:.4}", diff);
 
       let mut vel = q_lin_velocity.single_mut();
       vel.0 *= 0.98;
@@ -609,19 +611,19 @@ fn control_cam(
   //   .insert((RigidBody::Dynamic, force));
   //   // .insert(Force::new(force, transform.translation));
 
-  let mut max_speed: f32 = 5.0;
+  let mut l_max_speed: f32 = 10.0;
   let mut running_speed: f32 = 10.0; // 1.0;
   let mut jump_force: f32 = 0.0;
   let use_physics = true;
 
-  if keys.pressed(KeyCode::KeyQ) {
+  if !is_in_water && keys.pressed(KeyCode::KeyQ) {
     // running_speed = 2.0;
-    // max_speed *= 3.0;
-    max_speed *= 30.0;
+    // l_max_speed *= 3.0; // normal (prod);
+    l_max_speed *= 30.0; // debug (dev);
   }
 
-  if keys.pressed(KeyCode::Space) {
-    jump_force = 1000.0;
+  if !is_in_water && keys.pressed(KeyCode::Space) {
+    jump_force = 1500.0;
   }
 
   let m_state = g_state.get();
@@ -692,8 +694,8 @@ fn control_cam(
 
   for mut velocity in q_lin_velocity.iter_mut() {
     let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
-    if xz_speed > max_speed {
-      let scale = max_speed / xz_speed;
+    if xz_speed > l_max_speed {
+      let scale = l_max_speed / xz_speed;
       velocity.x *= scale;
       velocity.z *= scale;
     }

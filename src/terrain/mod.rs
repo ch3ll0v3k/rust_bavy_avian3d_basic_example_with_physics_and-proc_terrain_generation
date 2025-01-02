@@ -174,14 +174,14 @@ fn startup(
       }
 
       if true {
-        let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z));
+        // let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z));
 
         let mut water = Mesh::from(
           Plane3d::default()
             .mesh()
             // .size(TERRAIN_CHUNK_X-(TERRAIN_CHUNK_X/2.0), TERRAIN_CHUNK_Z-(TERRAIN_CHUNK_Z/2.0))
             .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
-            .subdivisions(4)
+            .subdivisions(0)
         );
         water.compute_normals();
 
@@ -193,9 +193,9 @@ fn startup(
         }
 
         commands.spawn((
-          RigidBody::Static,
-          Collider::trimesh_from_mesh(&water).unwrap(),
-          Sensor,
+          // RigidBody::Static,
+          // Collider::trimesh_from_mesh(&water).unwrap(),
+          // Sensor,
           // Transform::from_translation(
           //   Vec3::new(
           //   (x * TERRAIN_CHUNK_X as i32) as f32, 
@@ -205,17 +205,18 @@ fn startup(
           // ),
           Transform::from_xyz(
             (x * TERRAIN_CHUNK_X as i32) as f32, 
-            -13.0, 
+             -3.0, // -13
             (z * TERRAIN_CHUNK_Z as i32) as f32
             // .looking_at(Vec3::ZERO, Vec3::ZERO)
           ),
           Mesh3d(meshes.add(water)),
           MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
+          // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 250))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,30))),
           // MeshMaterial3d(water_material_handle.clone()),
           // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
-          DebugRender::default().with_collider_color(Color::srgb(255.0, 0.0, 1.0)),
+          // DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 1.0)),
           AnyObject,
           Name::new("water_t"),
         ));
@@ -376,19 +377,22 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
     //   pos[1] += xi * TERRAIN_HEIGHT * 0.001;
     // }
 
-    for pos in positions.iter_mut() {
-      pos[1] *= 1.0;
-    }
+    // for pos in positions.iter_mut() {
+    //   pos[1] *= 1.0;
+    // }
 
     // waler down
     for pos in positions.iter_mut() {
-      pos[1] -= 10000.0; // def: 1.0
+      // pos[1] -= 10000.0; // def: 1.0
+      pos[1] += 0.0; // def: 1.0
     }
+
+    let sub = 7.0; // -10.0;
 
     let colors: Vec<[f32; 4]> = positions
       .iter()
       .map(|[_, g, _]| {
-        let g: f32 = (*g + TERRAIN_HEIGHT) / (TERRAIN_HEIGHT * 2.0); //  * 2.0 + 2.0; // * 26.0;
+        let g: f32 = ((*g-sub) + TERRAIN_HEIGHT) / (TERRAIN_HEIGHT * 2.0); //  * 2.0 + 2.0; // * 26.0;
         min = if min > g { g } else { min };
         max = if max < g { g } else { max };
         return terrain_cal_color_on_g(g);
@@ -475,14 +479,17 @@ fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
     color = Color::from(GREEN_200).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
     color = Color::from(GREEN_100).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 { // water-upper border
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 { 
     color = Color::from(GRAY_300).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.4 { // water-lower border
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.4 { // water-upper border
     color = Color::from(GRAY_300).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {
-    color = Color::from(GRAY_200).to_linear().to_f32_array();
+    // color = Color::from(RED_500).to_linear().to_f32_array();
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {// water-lower border
+    color = Color::from(GRAY_300).to_linear().to_f32_array();
+    // color = Color::from(PURPLE_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.6 {
-    color = Color::from(GRAY_600).to_linear().to_f32_array();
+    color = Color::from(GRAY_400).to_linear().to_f32_array();
+    // color = Color::from(RED_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.0 {
     color = Color::from(BLUE_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {

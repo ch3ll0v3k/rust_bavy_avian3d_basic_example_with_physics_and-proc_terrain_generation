@@ -1,10 +1,12 @@
 // use avian3d::prelude::*;
 // use bevy::prelude::*;
 
+use bevy::audio::AudioPlugin;
+
 use bevy::{
   app::{ App, Plugin },
   asset::{ AssetServer, Handle },
-  audio::AudioSource,
+  audio::{ AudioPlayer, AudioSource, PlaybackSettings, PlaybackMode, Volume },
   image::{
     Image,
     ImageAddressMode,
@@ -40,7 +42,6 @@ fn _load_audio_with_common_settings(
   path: &str,
   with_settings: bool
 ) -> Handle<AudioSource> {
-
   
   if !with_settings {
     let handle_audio_source: Handle<AudioSource> = asset_server.load::<AudioSource>(path);
