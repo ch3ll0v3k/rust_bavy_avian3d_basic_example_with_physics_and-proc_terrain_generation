@@ -1,18 +1,32 @@
 // use bevy::image::Image;
 
-pub enum EImagePaths {
-  Base,
-  SkyOne,
-  SkyTwo,
-  SkyBoxOne,
-  SkyBoxTwo,
-  SkyBox3,
+pub mod pbr;
+
+pub enum EImageSky {
   SkySegDown,
   SkySegEast,
   SkySegNorth,
   SkySegSouth,
   SkySegUp,
   SkySegWest,
+}
+
+// prettier-ignore
+impl EImageSky {
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      EImageSky::SkySegDown => "textures/sky/sky-segments/down.png",
+      EImageSky::SkySegEast => "textures/sky/sky-segments/east.png",
+      EImageSky::SkySegNorth => "textures/sky/sky-segments/north.png",
+      EImageSky::SkySegSouth => "textures/sky/sky-segments/south.png",
+      EImageSky::SkySegUp => "textures/sky/sky-segments/up.png",
+      EImageSky::SkySegWest => "textures/sky/sky-segments/west.png",
+    }
+  }
+}
+
+pub enum EImageTerrainBase {
+  Base,
   F0CrackedSand,
   F0CrackedTreeBark,
   F0DirtySand,
@@ -22,46 +36,41 @@ pub enum EImagePaths {
   F0SilverMoss,
   F0IceAndSnowGround,
   F0StoneRockMossMusk,
-
-  Walet1Base,
-  Walet1Normal,
 }
 
 // prettier-ignore
-impl EImagePaths {
+impl EImageTerrainBase {
   pub fn as_str(&self) -> &'static str {
     match self {
-      EImagePaths::Base => "textures/terrain/base/sand.01.png",
+      EImageTerrainBase::Base => "textures/terrain/base/sand.01.png",
+      EImageTerrainBase::F0CrackedSand => "textures/terrain/common/cracked_sand-1024x1024.png",
+      EImageTerrainBase::F0CrackedTreeBark => "textures/terrain/common/cracked_tree_bark-1024x1024.png",
+      EImageTerrainBase::F0DirtySand => "textures/terrain/common/dirty_sand-1024x1024.png",
+      EImageTerrainBase::F0FantasyColoredRockStone => "textures/terrain/common/fantasy_colored_rock_stone-1024x1024.png",
+      EImageTerrainBase::F0GreenMoss => "textures/terrain/common/green_moss-1024x1024.png",
+      EImageTerrainBase::F0GrayMoss => "textures/terrain/common/gray_moss-1024x1024.png",
+      EImageTerrainBase::F0SilverMoss => "textures/terrain/common/silver_moss-1024x1024.png",
+      EImageTerrainBase::F0IceAndSnowGround => "textures/terrain/common/ice_and_snow_ground-1024x1024.png",
+      EImageTerrainBase::F0StoneRockMossMusk => "textures/terrain/common/stone_rock_moss_musk-1024x1024.png",
 
-      EImagePaths::SkyOne => "textures/sky/sky.01.png",
-      EImagePaths::SkyTwo => "textures/sky/sky.02.png",
-      EImagePaths::SkyBoxOne => "textures/sky/sky-box.01.png",
-      EImagePaths::SkyBoxTwo => "textures/sky/sky-box.02.png",
-      EImagePaths::SkyBox3 => "textures/sky/sky-box.03.png",
-      EImagePaths::SkySegDown => "textures/sky/sky-segments/down.png",
-      EImagePaths::SkySegEast => "textures/sky/sky-segments/east.png",
-      EImagePaths::SkySegNorth => "textures/sky/sky-segments/north.png",
-      EImagePaths::SkySegSouth => "textures/sky/sky-segments/south.png",
-      EImagePaths::SkySegUp => "textures/sky/sky-segments/up.png",
-      EImagePaths::SkySegWest => "textures/sky/sky-segments/west.png",
+    }
+  }
+}
 
-      EImagePaths::F0CrackedSand => "textures/terrain/f0/cracked_sand-1024x1024.png",
-      EImagePaths::F0CrackedTreeBark => "textures/terrain/f0/cracked_tree_bark-1024x1024.png",
-      EImagePaths::F0DirtySand => "textures/terrain/f0/dirty_sand-1024x1024.png",
-      EImagePaths::F0FantasyColoredRockStone => "textures/terrain/f0/fantasy_colored_rock_stone-1024x1024.png",
-      EImagePaths::F0GreenMoss => "textures/terrain/f0/green_moss-1024x1024.png",
-      EImagePaths::F0GrayMoss => "textures/terrain/f0/gray_moss-1024x1024.png",
-      EImagePaths::F0SilverMoss => "textures/terrain/f0/silver_moss-1024x1024.png",
-      EImagePaths::F0IceAndSnowGround => "textures/terrain/f0/ice_and_snow_ground-1024x1024.png",
-      EImagePaths::F0StoneRockMossMusk => "textures/terrain/f0/stone_rock_moss_musk-1024x1024.png",
+pub enum EImageWaterBase {
+  Walet1Base,
+  Walet1Normal,
+  Walet2Base,
+  Walet2Normal,
+}
 
-      EImagePaths::Walet1Base => "textures/water/water.01.base.png",
-      EImagePaths::Walet1Normal => "textures/water/water.01.normal.png",
-
-      // EImagePaths::Walet1Base => "textures/water/Water-base-0325.png",
-      // EImagePaths::Walet1Normal => "textures/water/Water-normal-0325.png",
-
-
+impl EImageWaterBase {
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      EImageWaterBase::Walet1Base => "textures/water/water.01.base.png",
+      EImageWaterBase::Walet1Normal => "textures/water/water.01.normal.png",
+      EImageWaterBase::Walet2Base => "textures/water/Water-base-0325.png",
+      EImageWaterBase::Walet2Normal => "textures/water/Water-normal-0325.png",
     }
   }
 }

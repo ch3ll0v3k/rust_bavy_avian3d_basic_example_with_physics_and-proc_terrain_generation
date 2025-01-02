@@ -52,8 +52,7 @@ use crate::{
   COLLISION_MARGIN,
 };
 
-use sys_paths::audio::EAudioPaths;
-use sys_paths::image::EImagePaths;
+use sys_paths::audio::EAudio;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct CameraMarker;
@@ -889,7 +888,7 @@ fn handle_left_click(
       let sound = cache_load_audio(
         audio_hashmap, 
         &asset_server, 
-        EAudioPaths::PaintballShoot.as_str(),
+        EAudio::PaintballShoot.as_str(),
         false
       );
 

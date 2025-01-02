@@ -6,6 +6,10 @@ use std::time::Duration;
 use bevy::pbr::{ MeshMaterial3d, StandardMaterial };
 use instant::Instant;
 
+use bevy::prelude::*;
+use avian3d::debug_render::{ PhysicsDebugPlugin, DebugRender };
+use avian3d::PhysicsPlugins;
+
 // use avian3d::parry::na::Transform;
 // use avian3d::prelude::*;
 use avian3d::prelude::{
@@ -13,10 +17,10 @@ use avian3d::prelude::{
   CoefficientCombine,
   Collider,
   CollisionMargin,
-  DebugRender,
   ExternalImpulse,
   LinearVelocity,
   Mass,
+  PhysicsGizmos,
   Restitution,
   RigidBody,
   SweptCcd,
@@ -50,6 +54,7 @@ use bevy::prelude::{
   Cuboid,
   Drag,
   Entity,
+  GizmoConfig,
   IntoSystemConfigs,
   KeyCode,
   Mesh,
@@ -76,7 +81,7 @@ use crate::{ dbgln, PhysicsDynamicObjectFloatable, COLLISION_MARGIN };
 
 use crate::markers::m_bevy::AnyObject;
 use crate::state::MGameState;
-use crate::sys_paths::font::EFontPaths;
+use crate::sys_paths::font::EFont;
 use crate::m_lib::physics;
 
 pub const ALLOWED_DEBUG_PHYSICS: bool = !true;
@@ -136,7 +141,7 @@ impl Plugin for DebugPlugin {
       })
       .add_systems(Startup, (
           startup,
-          // spawn_test_floating_objects,
+          spawn_test_floating_objects,
       ))
       .add_plugins((
           WireframePlugin,
@@ -161,6 +166,19 @@ impl Plugin for DebugPlugin {
         ).run_if(in_state(MGameState::Running))
       );
 
+    if( ALLOWED_DEBUG_PHYSICS ){
+
+      app
+      .insert_gizmo_config(
+        PhysicsGizmos {
+          aabb_color: Some(Color::WHITE),
+          ..default()
+        },
+        GizmoConfig::default()
+      )
+      .add_plugins(PhysicsDebugPlugin::default());
+    }
+
 
   }
 }
@@ -178,10 +196,10 @@ fn startup(
 
   let font_hashmap: &mut ResMut<FontCache> = res_mut_font_cache.as_mut().unwrap();
 
-  // let font_path = EFontPaths::QuartzoMain.as_str();
-  // let font_path = EFontPaths::Bigpartyo2GreenMain.as_str();
-  // let font_path = EFontPaths::LoveYouBlackSeeTrough.as_str();
-  let font_path = EFontPaths::LoveYouBlackSolid.as_str();
+  // let font_path = EFont::QuartzoMain.as_str();
+  // let font_path = EFont::Bigpartyo2GreenMain.as_str();
+  // let font_path = EFont::LoveYouBlackSeeTrough.as_str();
+  let font_path = EFont::LoveYouBlackSolid.as_str();
 
   let font_handler: Handle<Font> = cache_load_font(font_hashmap, &asset_server, font_path, false);
 
@@ -282,7 +300,6 @@ fn spawn_test_floating_objects(
           //   ccd_enabled: true,
           //   ..Default::default()
           // },
-
           CollisionMargin(COLLISION_MARGIN * 1.0),
           Collider::cuboid(size as f32, size as f32, size as f32),
           Restitution {

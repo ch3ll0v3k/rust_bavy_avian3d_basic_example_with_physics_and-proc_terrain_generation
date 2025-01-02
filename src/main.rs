@@ -81,14 +81,13 @@ mod asset_loader;
 mod m_lib;
 mod materials;
 
-use sys_paths::image::EImagePaths;
 use camera::CameraMarker;
 use debug::get_defaul_physic_debug_params;
 use lights::MPointLightMarker;
 use markers::{ m_avian::*, m_bevy::* };
 use constants::{ viewport_settings::*, physics_world::* };
 use terrain::MTerrainMarker;
-use sys_paths::audio::EAudioPaths;
+use sys_paths::audio::EAudio;
 use camera::CameraParentMarker;
 use m_lib::physics;
 
@@ -155,7 +154,7 @@ fn main() {
         ..Default::default()
       }), // .set(WindowPlugin {}),
       PhysicsPlugins::default(),
-      PhysicsDebugPlugin::default(),
+      // PhysicsDebugPlugin::default(),
       asset_loader::MAssetLoaderPlugin,
       cubes::CubesPlugin,
       debug::DebugPlugin,
@@ -167,13 +166,13 @@ fn main() {
       entities::with_children::MEntityWithChildrenPlugin,
       state::MGameStatePlugin,
     ))
-    .insert_gizmo_config(
-      PhysicsGizmos {
-        aabb_color: Some(Color::WHITE),
-        ..default()
-      },
-      GizmoConfig::default()
-    )
+    // .insert_gizmo_config(
+    //   PhysicsGizmos {
+    //     aabb_color: Some(Color::WHITE),
+    //     ..default()
+    //   },
+    //   GizmoConfig::default()
+    // )
     .add_systems(Startup, setup)
     .add_systems(Update, update.run_if(on_timer(Duration::from_millis(1000))))
     .insert_resource(Gravity(physics::get_gravity_vec3()))
@@ -194,7 +193,7 @@ fn setup(
   let track_1 = cache_load_audio(
     audio_hashmap, 
     &asset_server, 
-    EAudioPaths::EnvOne.as_str(),
+    EAudio::EnvOne.as_str(),
     false
   );
 

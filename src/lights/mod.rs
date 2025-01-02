@@ -24,7 +24,8 @@ impl Plugin for MLightsPlugin {
 }
 
 const POS: Vec3 = Vec3::new(0.0, 10.0, 0.0);
-const POS_2: Vec3 = Vec3::new(10000.0, 5500.0, 10000.0);
+// const POS_2: Vec3 = Vec3::new(10000.0, 5500.0, 10000.0);
+const POS_2: Vec3 = Vec3::new(10000.0, 8500.0, 10000.0);
 
 // prettier-ignore
 fn startup(

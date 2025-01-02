@@ -26,8 +26,8 @@ use crate::sys_paths;
 
 use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
 
-use sys_paths::audio::EAudioPaths;
-use sys_paths::image::EImagePaths;
+use sys_paths::audio::EAudio;
+use sys_paths::image::EImageSky;
 
 const SIZE_T: f32 = 100_000_000.0;
 const OFFSET_T: f32 = 0.0;
@@ -89,7 +89,7 @@ fn startup(
   // {
   //   let sky_seg_down: Handle<Image> = load_base_texture(
   //     &asset_server,
-  //     EImagePaths::SkySegDown.as_str()
+  //     EImageSky::SkySegDown.as_str()
   //   );
   // }
 
@@ -99,7 +99,7 @@ fn startup(
     let sky_seg_east: Handle<Image> = cache_load_image(
       image_hashmap,
       &asset_server,
-      EImagePaths::SkySegEast.as_str(),
+      EImageSky::SkySegEast.as_str(),
       false
     );
 
@@ -136,7 +136,7 @@ fn startup(
     let sky_seg_north: Handle<Image> = cache_load_image(
       image_hashmap,
       &asset_server,
-      EImagePaths::SkySegNorth.as_str(),
+      EImageSky::SkySegNorth.as_str(),
       false
     );
 
@@ -170,7 +170,7 @@ fn startup(
     let sky_seg_south: Handle<Image> = cache_load_image(
       image_hashmap,
       &asset_server,
-      EImagePaths::SkySegSouth.as_str(),
+      EImageSky::SkySegSouth.as_str(),
       false
     );
 
@@ -204,7 +204,7 @@ fn startup(
     let sky_seg_west: Handle<Image> = cache_load_image(
       image_hashmap,
       &asset_server,
-      EImagePaths::SkySegWest.as_str(),
+      EImageSky::SkySegWest.as_str(),
       false
     );
 
@@ -238,7 +238,7 @@ fn startup(
     let sky_seg_up: Handle<Image> = cache_load_image(
       image_hashmap,
       &asset_server,
-      EImagePaths::SkySegUp.as_str(),
+      EImageSky::SkySegUp.as_str(),
       false
     );
 

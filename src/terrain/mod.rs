@@ -37,8 +37,10 @@ use crate::sys_paths;
 use crate::terrain::terrain_lod_map::get_lod;
 use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
 
-use sys_paths::audio::EAudioPaths;
-use sys_paths::image::EImagePaths;
+use sys_paths::audio::EAudio;
+use sys_paths::image::EImageTerrainBase;
+use sys_paths::image::pbr;
+use sys_paths::image::EImageWaterBase;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MTerrainMarker;
@@ -109,36 +111,52 @@ fn startup(
 ) {
 
   let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
-  let terrain_texture_handle: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    EImagePaths::Base.as_str(),
-    true
-  );
 
-  // EImagePaths::Base
-  // EImagePaths::F0CrackedSand
-  // EImagePaths::F0CrackedTreeBark
-  // EImagePaths::F0DirtySand => NICE
-  // EImagePaths::F0FantasyColoredRockStone => OK
-  // EImagePaths::F0GreenMoss
-  // EImagePaths::F0GrayMoss
-  // EImagePaths::F0SilverMoss
-  // EImagePaths::F0IceAndSnowGround => GOOD
-  // EImagePaths::F0StoneRockMossMusk
-
-  const UV_SCALE: f32 = 8.0; 
+  const UV_SCALE: f32 = 1.0; // 8.0; 
   let lod: [[i16; 13]; 13] = get_lod();
   let mut _min: f32 = f32::MAX;
   let mut _max: f32 = -f32::MAX;
   let segments:i32 = 3;
 
+  let terrain_diff_map_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::DiffLight.as_str(),
+    true
+  );
+
+  let terrain_norm_map_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::NorGl.as_str(),
+    true
+  );
+
+  let terrain_rough_map_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::Rough.as_str(),
+    true
+  );
+
+  let terrain_ao_map_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::Ao.as_str(),
+    false
+  );
+
   let terrain_material: StandardMaterial = StandardMaterial {
-    // base_color: Color::BLACK,
-    base_color_texture: Some(terrain_texture_handle.clone()),
-    // https://bevyengine.org/examples/assets/repeated-texture/
-    // uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
+    base_color_texture: Some(terrain_diff_map_handle.clone()),
+    metallic_roughness_texture: Some(terrain_rough_map_handle.clone()),
+    normal_map_texture: Some(terrain_norm_map_handle.clone()),
+    occlusion_texture: Some(terrain_ao_map_handle.clone()),
+    // emissive_texture,
+    uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(8.0, 8.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
     // alpha_mode: AlphaMode::Blend,
     unlit: false,
     emissive: LinearRgba::BLACK,
@@ -152,36 +170,28 @@ fn startup(
 
   let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
-  let normal_map_texture: Handle<Image> = cache_load_image(
+  let water_diff_texture: Handle<Image> = cache_load_image(
     image_hashmap,
     &asset_server, 
-    EImagePaths::Walet1Normal.as_str(),
+    EImageWaterBase::Walet1Base.as_str(),
     true
   );
 
-  let occlusion_texture: Handle<Image> = cache_load_image(
+  let water_normal_map_texture: Handle<Image> = cache_load_image(
     image_hashmap,
     &asset_server, 
-    EImagePaths::Walet1Normal.as_str(),
+    EImageWaterBase::Walet1Normal.as_str(),
     true
   );
-
-  let base_color_texture: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    EImagePaths::Walet1Base.as_str(),
-    true
-  );
-
-
 
   let water_material = StandardMaterial{
-    base_color_texture: Some(base_color_texture.clone()),
-    normal_map_texture: Some(normal_map_texture.clone()),
-    uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
+    base_color_texture: Some(water_diff_texture.clone()),
+    normal_map_texture: Some(water_normal_map_texture.clone()),
+    // uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
+    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
-    // occlusion_texture: Some(normal_map_texture.clone()),
-    // emissive_texture: Some(normal_map_texture.clone()),
+    // occlusion_texture: Some(water_normal_map_texture.clone()),
+    // emissive_texture: Some(water_normal_map_texture.clone()),
     metallic: 0.3,
     base_color: BLUE_400.into(),
     // base_color: Color::srgba_u8(128, 197, 222, 30),
@@ -192,25 +202,25 @@ fn startup(
   };
   let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
-  let water_material = StandardMaterial {
-    base_color_texture: Some(base_color_texture.clone()),
-    normal_map_texture: Some(normal_map_texture.clone()),
-    // uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
-    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
-    // occlusion_texture: Some(normal_map_texture.clone()),
-    clearcoat: 0.1,
-    clearcoat_perceptual_roughness: 0.1,
-    metallic: 0.3,
-    base_color: BLUE_400.into(),
-    perceptual_roughness: 0.8,
-    opaque_render_method: OpaqueRendererMethod::Auto,
-    alpha_mode: AlphaMode::Blend,
-    ..default()
-  };
-  let water_material_handle = water_materials.add(ExtendedMaterial {
-    base: water_material,
-    extension: WaterExtension { quantize_steps: 30 },
-  });
+  // let water_material = StandardMaterial {
+  //   base_color_texture: Some(base_color_texture.clone()),
+  //   normal_map_texture: Some(water_normal_map_texture.clone()),
+  //   // uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
+  //   uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+  //   // occlusion_texture: Some(water_normal_map_texture.clone()),
+  //   clearcoat: 0.1,
+  //   clearcoat_perceptual_roughness: 0.1,
+  //   metallic: 0.3,
+  //   base_color: BLUE_400.into(),
+  //   perceptual_roughness: 0.8,
+  //   opaque_render_method: OpaqueRendererMethod::Auto,
+  //   alpha_mode: AlphaMode::Blend,
+  //   ..default()
+  // };
+  // let water_material_handle = water_materials.add(ExtendedMaterial {
+  //   base: water_material,
+  //   extension: WaterExtension { quantize_steps: 30 },
+  // });
   
   for z in -segments..=segments {
     for x in -segments..=segments {
@@ -268,9 +278,10 @@ fn startup(
             .mesh()
             // .size(TERRAIN_CHUNK_X-(TERRAIN_CHUNK_X/2.0), TERRAIN_CHUNK_Z-(TERRAIN_CHUNK_Z/2.0))
             .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
-            .subdivisions(4)
+            .subdivisions(0)
         )
-        .with_generated_tangents().unwrap();
+        .with_generated_tangents()
+        .unwrap();
 
         // if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = water.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
         //   for uv in uvs.iter_mut() {
@@ -441,7 +452,11 @@ fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32
       .mesh()
       .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
       .subdivisions(final_subdivisions)
-  );
+  )
+    .with_generated_tangents()
+    .unwrap();
+
+
   // dbgln!("chunk-size: {TERRAIN_CHUNK_X} => (base-subdiv: {TERRAIN_CHUNK_SUBDIVISIONS}, dyn_scale: {dyn_scale}) => final-subdiv: {final_subdivisions}");
 
   let use_segment_separator = false;
@@ -510,12 +525,12 @@ fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32
 
   }
 
-  if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = terrain.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
-    for uv in uvs.iter_mut() {
-      uv[0] *= uv_scale; // Scale U
-      uv[1] *= uv_scale; // Scale V
-    }
-  }
+  // if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = terrain.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
+  //   for uv in uvs.iter_mut() {
+  //     uv[0] *= uv_scale; // Scale U
+  //     uv[1] *= uv_scale; // Scale V
+  //   }
+  // }
 
   return (terrain, min, max);
 
@@ -573,15 +588,19 @@ fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 5.0 { // first TERRAIN_H_COLOR_STEP of mountens
     color = Color::from(GRAY_400).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.0 { // before mountens
-    color = Color::from(GREEN_500).to_linear().to_f32_array();
+    // color = Color::from(GREEN_500).to_linear().to_f32_array();
+    color = Color::from(GRAY_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.2 {
-    color = Color::from(GREEN_200).to_linear().to_f32_array();
+    // color = Color::from(GREEN_200).to_linear().to_f32_array();
+    color = Color::from(GRAY_200).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
-    color = Color::from(GREEN_100).to_linear().to_f32_array();
+    // color = Color::from(GREEN_100).to_linear().to_f32_array();
+    color = Color::from(GRAY_100).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 { 
     // color = Color::from(GRAY_300).to_linear().to_f32_array();
     // color = Color::from(RED_500).to_linear().to_f32_array();
-    color = Color::from(GREEN_100).to_linear().to_f32_array();
+    // color = Color::from(GREEN_100).to_linear().to_f32_array();
+    color = Color::from(GRAY_100).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.4 { // water-upper border
     color = Color::from(GRAY_300).to_linear().to_f32_array();
     // color = Color::from(RED_500).to_linear().to_f32_array();
@@ -597,11 +616,14 @@ fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
     // color = Color::from(BLUE_400).to_linear().to_f32_array();
     color = Color::from(GRAY_400).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {
-    color = Color::from(BLUE_400).to_linear().to_f32_array();
+    // color = Color::from(BLUE_400).to_linear().to_f32_array();
+    color = Color::from(GRAY_400).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.0 {
-    color = Color::from(BLUE_500).to_linear().to_f32_array();
+    // color = Color::from(BLUE_500).to_linear().to_f32_array();
+    color = Color::from(GRAY_500).to_linear().to_f32_array();
   } else {
-    color = Color::from(BLUE_600).to_linear().to_f32_array();
+    // color = Color::from(BLUE_600).to_linear().to_f32_array();
+    color = Color::from(GRAY_600).to_linear().to_f32_array();
   }
 
   return color;

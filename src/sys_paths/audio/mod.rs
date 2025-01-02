@@ -1,15 +1,15 @@
 // use bevy::image::Image;
 
-pub enum EAudioPaths {
+pub enum EAudio {
   EnvOne,
   PaintballShoot,
 }
 
-impl EAudioPaths {
+impl EAudio {
   pub fn as_str(&self) -> &'static str {
     match self {
-      EAudioPaths::EnvOne => "sounds/test.02.ogg",
-      EAudioPaths::PaintballShoot => "sounds/paintball_shoot.01.ogg",
+      EAudio::EnvOne => "sounds/test.02.ogg",
+      EAudio::PaintballShoot => "sounds/paintball_shoot.01.ogg",
     }
   }
 }
