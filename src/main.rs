@@ -67,6 +67,7 @@ mod entities;
 mod state;
 mod sys_paths;
 mod asset_loader;
+mod m_lib;
 
 use sys_paths::image::EImagePaths;
 use camera::CameraMarker;
@@ -77,6 +78,7 @@ use constants::{ viewport_settings::*, physics_world::* };
 use terrain::MTerrainMarker;
 use sys_paths::audio::EAudioPaths;
 use camera::CameraParentMarker;
+use m_lib::physics;
 
 const WINDOW_POSITIONS_DEV_SIDE_33_PERCENT: Vec2 = Vec2::new(800.0, 1100.0);
 const WINDOW_POSITIONS_DEV_SIDE_50_PERCENT: Vec2 = Vec2::new(950.0, 1100.0);
@@ -162,7 +164,7 @@ fn main() {
     )
     .add_systems(Startup, setup)
     .add_systems(Update, update.run_if(on_timer(Duration::from_millis(1000))))
-    .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
+    .insert_resource(Gravity(physics::get_gravity_vec3()))
     .run();
 }
 

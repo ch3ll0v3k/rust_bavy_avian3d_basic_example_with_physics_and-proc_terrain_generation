@@ -5,9 +5,7 @@ use std::{ borrow::BorrowMut, fmt, sync::Mutex };
 // use bevy::prelude::*;
 
 use avian3d::collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted };
-use avian3d::prelude::*;
 
-use avian3d::parry::na;
 use avian3d::prelude::{
   AngularVelocity,
   CoefficientCombine,
@@ -42,7 +40,9 @@ use bevy::{
 use crate::asset_loader::audio_cache::{ cache_load_audio, AudioCache };
 use crate::debug::ALLOWED_DEBUG_ENGINE;
 use crate::state::MGameState;
-use crate::{ dbgln, sys_paths, GRAVITY };
+use crate::m_lib::physics;
+
+use crate::{ dbgln, sys_paths };
 use crate::{
   debug::{ get_defaul_physic_debug_params, is_allowed_debug_engine },
   entities::with_children::MEntityBigSphere,
@@ -455,32 +455,6 @@ fn mk_jump(
   // }
 }
 
-// prettier-ignore
-fn get_external_impulse(impulse3: Vec3, is_persistent: bool) -> ExternalImpulse {
-  let mut force = ExternalImpulse::default();
-  force
-    .apply_impulse_at_point(
-      impulse3, 
-      Vec3::ZERO, 
-      Vec3::ZERO)
-    .with_persistence(is_persistent);
-
-  force
-}
-
-// prettier-ignore
-fn get_external_force(impulse3: Vec3, is_persistent: bool) -> ExternalForce {
-  let mut force = ExternalForce::default();
-  force
-    .apply_force_at_point(
-      impulse3, 
-      Vec3::ZERO, 
-      Vec3::ZERO)
-    .with_persistence(is_persistent);
-
-  force
-}
-
 fn constrain_linear_xz_speed(
   mut q_lin_velocity: Query<&mut LinearVelocity, With<CameraParentMarker>>,
   c_max_speed: Res<CMaxLinearSpeedXZ>
@@ -533,9 +507,9 @@ fn control_cam(
     // dbgln!("transform.translation.y: y {:.4}", transform.translation.y);
 
     if transform.translation.y < -2.0 {
-      commands.entity(entity).insert(GravityScale(0.0));
-      // commands.entity(entity).insert(GravityScale(0.06));
-      // commands.entity(entity).insert(GravityScale(0.1));
+      commands.entity(entity).insert(physics::get_gravity_scale(0.0));
+      // commands.entity(entity).insert(physics::get_gravity_scale(0.06));
+      // commands.entity(entity).insert(physics::get_gravity_scale(0.1));
 
       apply_force = true;
       let diff = transform.translation.y; //  - f;
@@ -564,18 +538,18 @@ fn control_cam(
       //   force
       // );
 
-      impulse3.y = GRAVITY * impulse;
-      // impulse3.y = GRAVITY * force;
+      impulse3.y = physics::get_gravity() * impulse;
+      // impulse3.y = physics::get_gravity() * force;
 
       // if transform.translation.y < -8.0 {
       //   transform.translation.y += inverse * 100.0;
       //   // impulse3.y *= 2.0;
       // }
     } else {
-      commands.entity(entity).insert(GravityScale(1.0));
+      commands.entity(entity).insert(physics::get_gravity_scale(1.0));
     }
   } else {
-    commands.entity(entity).insert(GravityScale(1.0));
+    commands.entity(entity).insert(physics::get_gravity_scale(1.0));
   }
 
   if
@@ -586,10 +560,10 @@ fn control_cam(
     !keys.pressed(KeyCode::Space)
   {
     // if apply_force {
-    let impulse = get_external_impulse(impulse3, false);
+    let impulse = physics::get_external_impulse(impulse3, false);
     commands.entity(entity).insert((RigidBody::Dynamic, impulse));
     // }
-    // let force = get_external_force(impulse3, false);
+    // let force = physics::get_external_force(impulse3, false);
     // commands.entity(entity).insert((RigidBody::Dynamic, force));
     return;
   }
@@ -614,7 +588,7 @@ fn control_cam(
   let mut l_max_speed: f32 = 10.0;
   let mut running_speed: f32 = 10.0; // 1.0;
   let mut jump_force: f32 = 0.0;
-  let use_physics = true;
+  let use_physics: bool = true;
 
   if !is_in_water && keys.pressed(KeyCode::KeyQ) {
     // running_speed = 2.0;
@@ -623,22 +597,22 @@ fn control_cam(
   }
 
   if !is_in_water && keys.pressed(KeyCode::Space) {
-    jump_force = 1500.0;
+    jump_force = 500.0;
   }
 
-  let m_state = g_state.get();
+  let m_state: &MGameState = g_state.get();
 
-  let is_paused = m_state == &MGameState::Paused;
+  let is_paused: bool = m_state == &MGameState::Paused;
 
   let force_scale_mul: f32 = 100.0 * running_speed;
   const FW_DIV_SCALE: f32 = 20.0;
   const LR_DIV_SCALE: f32 = 1.0;
   const BOOST_SPEED: f32 = 0.5;
 
-  let fw = transform.forward();
-  let mut x = fw.x / FW_DIV_SCALE;
-  let mut y = fw.y / FW_DIV_SCALE;
-  let mut z = fw.z / FW_DIV_SCALE;
+  let fw: Dir3 = transform.forward();
+  let mut x: f32 = fw.x / FW_DIV_SCALE;
+  let mut y: f32 = fw.y / FW_DIV_SCALE;
+  let mut z: f32 = fw.z / FW_DIV_SCALE;
 
   impulse3.y += jump_force;
 
@@ -689,7 +663,7 @@ fn control_cam(
     }
   }
 
-  let force = get_external_impulse(impulse3, false);
+  let force: ExternalImpulse = physics::get_external_impulse(impulse3, false);
   commands.entity(entity).insert((RigidBody::Dynamic, force));
 
   for mut velocity in q_lin_velocity.iter_mut() {
@@ -875,6 +849,13 @@ fn handle_left_click(
         RigidBody::Dynamic,
         Collider::sphere(0.25),
         CollisionMargin(COLLISION_MARGIN * 1.0),
+        // SweptCcd::default(),
+        // old version
+        // RigidBody {
+        //   ccd: SweptCcd::default(),
+        //   ..Default::default()
+        // },
+
         Transform::from_xyz(
           vec3_parent.x + (norm_vec_3.x * off_xz), 
           vec3_parent.y +2.0, 

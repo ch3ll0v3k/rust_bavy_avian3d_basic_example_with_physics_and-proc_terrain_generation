@@ -15,11 +15,11 @@ use avian3d::prelude::{
   CollisionMargin,
   DebugRender,
   ExternalImpulse,
-  GravityScale,
   LinearVelocity,
   Mass,
   Restitution,
   RigidBody,
+  SweptCcd,
 };
 
 use bevy::app::{ App, FixedUpdate, Plugin, Startup, Update };
@@ -48,6 +48,7 @@ use bevy::prelude::{
   Commands,
   Component,
   Cuboid,
+  Drag,
   Entity,
   IntoSystemConfigs,
   KeyCode,
@@ -71,11 +72,12 @@ use bevy::input::{ ButtonInput, common_conditions::input_just_pressed };
 use crate::asset_loader::font_cache::{ FontCache, cache_load_font };
 
 use crate::camera::CameraParentMarker;
-use crate::{ dbgln, PhysicsDynamicObjectFloatable, COLLISION_MARGIN, GRAVITY };
+use crate::{ dbgln, PhysicsDynamicObjectFloatable, COLLISION_MARGIN };
 
 use crate::markers::m_bevy::AnyObject;
 use crate::state::MGameState;
 use crate::sys_paths::font::EFontPaths;
+use crate::m_lib::physics;
 
 pub const ALLOWED_DEBUG_PHYSICS: bool = !true;
 pub const ALLOWED_DEBUG_ENGINE: bool = true;
@@ -172,42 +174,6 @@ fn startup(
   // prettier-ignore
   if !ALLOWED_DEBUG_FPS { return; }
 
-  let items = 5;
-  let size = 5;
-  let offset_x = 100;
-  let offset_y = 250;
-  let offset_z = 200; 
-  let spread_xyz = 10; 
-
-  for _y in 0..items {
-    for _x in 0..items {
-      for _z in 0..items {
-
-        let y = (_y * size + _y * spread_xyz + offset_y) as f32;
-        let x = (_x * size + _x * spread_xyz - offset_x) as f32;
-        let z = (_z * size + _z * spread_xyz - offset_z) as f32;
-
-        commands.spawn((
-          RigidBody::Dynamic,
-          CollisionMargin(COLLISION_MARGIN * 1.0),
-          Collider::cuboid(size as f32, size as f32, size as f32),
-          Restitution {
-            coefficient: 0.0,
-            combine_rule: CoefficientCombine::Min,
-          },
-          Transform::from_translation(Vec3::new(x, y, z)),
-          Mesh3d(meshes.add(Cuboid::new(size as f32, size as f32, size as f32))),
-          MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
-          Mass(100.0),
-          // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
-          // MaxLinearSpeed(5.0),
-          PhysicsDynamicObjectFloatable,
-        ));
-
-      } 
-    } 
-  } 
-
   let font_hashmap: &mut ResMut<FontCache> = res_mut_font_cache.as_mut().unwrap();
 
   // let font_path = EFontPaths::QuartzoMain.as_str();
@@ -282,16 +248,57 @@ fn update() {
 }
 
 // prettier-ignore
-fn get_external_impulse(impulse3: Vec3, is_persistent: bool) -> ExternalImpulse {
-  let mut force = ExternalImpulse::default();
-  force
-    .apply_impulse_at_point(
-      impulse3, 
-      Vec3::ZERO, 
-      Vec3::ZERO)
-    .with_persistence(is_persistent);
+fn spawn_test_floating_objects(
+  mut res_mut_font_cache: Option<ResMut</*res_mut_font_cache::*/ FontCache>>,
+  asset_server: Res<AssetServer>,
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>
+) {
+  // prettier-ignore
+  if !ALLOWED_DEBUG_FPS { return; }
 
-  force
+  let items = 5;
+  let size = 5;
+  let offset_x = 100;
+  let offset_y = 250;
+  let offset_z = 200; 
+  let spread_xyz = 10; 
+
+  for _y in 0..items {
+    for _x in 0..items {
+      for _z in 0..items {
+
+        let y = (_y * size + _y * spread_xyz + offset_y) as f32;
+        let x = (_x * size + _x * spread_xyz - offset_x) as f32;
+        let z = (_z * size + _z * spread_xyz - offset_z) as f32;
+
+        commands.spawn((
+          RigidBody::Dynamic,
+          // SweptCcd::default(),
+          // RigidBody {
+          //   ccd_enabled: true,
+          //   ..Default::default()
+          // },
+
+          CollisionMargin(COLLISION_MARGIN * 1.0),
+          Collider::cuboid(size as f32, size as f32, size as f32),
+          Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombine::Min,
+          },
+          Transform::from_translation(Vec3::new(x, y, z)),
+          Mesh3d(meshes.add(Cuboid::new(size as f32, size as f32, size as f32))),
+          MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
+          Mass(100.0),
+          // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
+          // MaxLinearSpeed(5.0),
+          PhysicsDynamicObjectFloatable,
+        ));
+
+      } 
+    } 
+  } 
 }
 
 // prettier-ignore
@@ -325,9 +332,15 @@ fn test_floating_items(
       is_in_water = true;
 
       if transform.translation.y < -2.0 {
-        commands.entity(entity).insert(GravityScale(0.0));
-        // commands.entity(entity).insert(GravityScale(0.06));
-        // commands.entity(entity).insert(GravityScale(0.1));
+        commands.entity(entity).insert(physics::get_gravity_scale(0.0));
+        // commands.entity(entity).insert(physics::get_gravity_scale(0.06));
+        // commands.entity(entity).insert(physics::get_gravity_scale(0.1));
+        
+        // commands.entity(entity).insert(    Drag {
+        //   button: PointerButton,
+        //   distance: Vec2,
+        //   delta: Vec2,
+        // });
 
         apply_force = true;
         let diff = transform.translation.y; //  - f;
@@ -349,21 +362,21 @@ fn test_floating_items(
         //   .insert(LinearVelocity(Vec3::ZERO))
         //   .insert(AngularVelocity(Vec3::ZERO));
 
-        impulse3.y = GRAVITY * impulse;
-        // impulse3.y = GRAVITY * force;
+        impulse3.y = physics::get_gravity() * impulse;
+        // impulse3.y = physics::get_gravity() * force;
 
         // if transform.translation.y < -8.0 {
         //   transform.translation.y += inverse * 100.0;
         //   // impulse3.y *= 2.0;
         // }
       } else {
-        commands.entity(entity).insert(GravityScale(1.0));
+        commands.entity(entity).insert(physics::get_gravity_scale(1.0));
       }
     } else {
-      commands.entity(entity).insert(GravityScale(1.0));
+      commands.entity(entity).insert(physics::get_gravity_scale(1.0));
     }
 
-    let impulse = get_external_impulse(impulse3, false);
+    let impulse = physics::get_external_impulse(impulse3, false);
     commands.entity(entity).insert((RigidBody::Dynamic, impulse));
   }
 }
