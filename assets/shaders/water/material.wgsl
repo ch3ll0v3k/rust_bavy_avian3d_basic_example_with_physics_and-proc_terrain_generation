@@ -152,9 +152,6 @@ fn vertex(vertex_no_morph: Vertex) -> VertexOutput {
     sin(pos.y + globals.time) / 6.0
   ) * 0.5;
 
-  // pos.x += sin(globals.time) * 10.0;
-  // pos.z += sin(globals.time) * 10.0;
-
   pos.x += (
     sin(pos.x + globals.time) / 2.0
     +
@@ -163,7 +160,7 @@ fn vertex(vertex_no_morph: Vertex) -> VertexOutput {
     sin(pos.x + globals.time) / 4.0
     +
     sin(pos.x + globals.time) / 6.0
-  ) * 5.0;
+  ) * 2.5; // 5.0 like ocean
 
   pos.z += (
     sin(pos.z + globals.time) / 2.0
@@ -173,7 +170,7 @@ fn vertex(vertex_no_morph: Vertex) -> VertexOutput {
     sin(pos.z + globals.time) / 4.0
     +
     sin(pos.z + globals.time) / 6.0
-  ) * 5.0;
+  ) * 2.5; // 5.0 like ocean
 
   out.world_position = mesh_functions::mesh_position_local_to_world(world_from_local, vec4<f32>(pos, 1.0));
   out.position = position_world_to_clip(out.world_position.xyz);
