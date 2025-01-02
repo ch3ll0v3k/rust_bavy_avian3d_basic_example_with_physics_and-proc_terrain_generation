@@ -134,13 +134,15 @@ impl Plugin for DebugPlugin {
         avg_index: 0,
         avg: [0.0; MEASURE_AVG_FPS_EACH as usize],
       })
-
-    .add_systems(Startup, startup)
+      .add_systems(Startup, (
+          startup,
+          // spawn_test_floating_objects,
+      ))
       .add_plugins((
-        WireframePlugin,
-        FrameTimeDiagnosticsPlugin,
-        EntityCountDiagnosticsPlugin,
-        SystemInformationDiagnosticsPlugin,
+          WireframePlugin,
+          FrameTimeDiagnosticsPlugin,
+          EntityCountDiagnosticsPlugin,
+          SystemInformationDiagnosticsPlugin,
       ))
       .register_diagnostic(Diagnostic::new(FPS_COUNTER_DIAG_)/*.with_suffix("can-be-anything")*/)
       .add_systems(FixedUpdate, (
@@ -150,15 +152,15 @@ impl Plugin for DebugPlugin {
         toggle_wireframe, 
       ).run_if(input_just_pressed(KeyCode::KeyL)))
       .add_systems(FixedUpdate, (
-          update_fps,
-          test_floating_items,
-          show_player_y_pos,
-        ).run_if(in_state(MGameState::Running))
-      )
+        update_fps,
+        test_floating_items,
+        show_player_y_pos,
+      ).run_if(in_state(MGameState::Running)))
       .add_systems(Update, (
           calculate_real_fps_and_throttle,
         ).run_if(in_state(MGameState::Running))
       );
+
 
   }
 }

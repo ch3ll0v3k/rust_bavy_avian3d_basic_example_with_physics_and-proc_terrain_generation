@@ -14,3 +14,9 @@ https://github.com/bevyengine/bevy/blob/v0.15.0/examples/audio/soundtrack.rs
 
 https://bevyengine.org/examples/assets/repeated-texture/
 
+
+// constrain linear-speed
+// >> https://chatgpt.com/c/676a596e-4fd4-8000-9c52-8e4661d5dc76
+
+// better option then Name::new("some tag")
+// >> https://chatgpt.com/c/6773dcd8-1cd4-8000-bd81-a2e2507b9f5f

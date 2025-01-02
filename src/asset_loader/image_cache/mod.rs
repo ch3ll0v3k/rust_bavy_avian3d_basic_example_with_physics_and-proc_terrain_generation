@@ -61,7 +61,7 @@ fn _load_image_with_common_settings(
 // prettier-ignore
 pub fn cache_load_image(
   // mut image_cache: Option<ResMut</*image_cache::*/ImageCache>>,
-  audio_hashmap: &mut ResMut<ImageCache>,
+  image_hashmap: &mut ResMut<ImageCache>,
   asset_server: &Res<AssetServer>,
   path: &str,
   with_settings: bool
@@ -69,35 +69,35 @@ pub fn cache_load_image(
    
   let mut image_handle: Handle<Image>;
   let cache_path: String = path.to_string();
-    // dbgln!("capacity: {:?}", audio_hashmap.hash_map.capacity());
+    // dbgln!("capacity: {:?}", image_hashmap.hash_map.capacity());
     
-  if let Some(handle_image) = audio_hashmap.image_cache.get(&cache_path) {
-    dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => found ...");
+  if let Some(handle_image) = image_hashmap.image_cache.get(&cache_path) {
+    dbgln!("image_hashmap.image_cache.get(&({cache_path}) => found ...");
     return handle_image.clone();      
   }
   
-  dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
+  dbgln!("image_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
-  audio_hashmap.image_cache.insert(cache_path, image_handle.clone());
+  image_hashmap.image_cache.insert(cache_path, image_handle.clone());
  
   image_handle
 
   // let mut image_handle: Handle<Image>;
   // let cache_path: String = path.to_string();
-  // if let Some(audio_hashmap) = &mut image_cache {
-  //   // dbgln!("capacity: {:?}", audio_hashmap.hash_map.capacity());
+  // if let Some(image_hashmap) = &mut image_cache {
+  //   // dbgln!("capacity: {:?}", image_hashmap.hash_map.capacity());
     
-  //   if let Some(handle_image) = audio_hashmap.image_cache.get(&cache_path) {
-  //     dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => found ...");
+  //   if let Some(handle_image) = image_hashmap.image_cache.get(&cache_path) {
+  //     dbgln!("image_hashmap.image_cache.get(&({cache_path}) => found ...");
   //     return handle_image.clone();      
   //   }
     
-  //   dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
+  //   dbgln!("image_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
   //   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
-  //   audio_hashmap.image_cache.insert(cache_path, image_handle.clone());
+  //   image_hashmap.image_cache.insert(cache_path, image_handle.clone());
     
   // }else{
-  //   dbgln!("audio_hashmap.image_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
+  //   dbgln!("image_hashmap.image_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
   //   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
   // }
 

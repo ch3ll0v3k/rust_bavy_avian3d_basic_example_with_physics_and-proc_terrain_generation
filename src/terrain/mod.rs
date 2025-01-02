@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::color::palettes::tailwind::*;
 use bevy::core_pipeline::Skybox;
 use bevy::image::{
@@ -7,7 +9,14 @@ use bevy::image::{
   ImageSampler,
   ImageSamplerDescriptor,
 };
-use bevy::pbr::{ NotShadowCaster, NotShadowReceiver };
+
+use bevy::math::Affine2;
+use bevy::{
+  // text::FontSmoothing,
+  prelude::*,
+};
+
+use bevy::pbr::{ ExtendedMaterial, NotShadowCaster, NotShadowReceiver, OpaqueRendererMethod };
 use bevy::render::mesh::*;
 use avian3d::prelude::*;
 use bevy::prelude::*;
@@ -21,6 +30,7 @@ use std::collections::HashMap;
 mod terrain_lod_map;
 
 use crate::camera::{ CameraMarker, CameraParentMarker };
+use crate::materials::water::*;
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
 use crate::{ dbgln, PhysicsStaticObjectTerrain, COLLISION_MARGIN };
 use crate::sys_paths;
@@ -72,12 +82,18 @@ impl InnerMapper {
   }
 }
 
+// prettier-ignore
 impl Plugin for MTerrainPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Startup, startup)
-      .add_systems(Update, update)
       .insert_resource(InnerMapper::new());
+
+    app.add_plugins((
+      MaterialPlugin::<ExtendedMaterial<StandardMaterial, WaterExtension>>::default(),
+    ));
+
+    app
+      .add_systems(Startup, startup).add_systems(Update, update);
   }
 }
 
@@ -88,7 +104,8 @@ fn startup(
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, WaterExtension>>>,
 ) {
 
   let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
@@ -99,11 +116,28 @@ fn startup(
     true
   );
 
+  // EImagePaths::Base
+  // EImagePaths::F0CrackedSand
+  // EImagePaths::F0CrackedTreeBark
+  // EImagePaths::F0DirtySand => NICE
+  // EImagePaths::F0FantasyColoredRockStone => OK
+  // EImagePaths::F0GreenMoss
+  // EImagePaths::F0GrayMoss
+  // EImagePaths::F0SilverMoss
+  // EImagePaths::F0IceAndSnowGround => GOOD
+  // EImagePaths::F0StoneRockMossMusk
+
+  const UV_SCALE: f32 = 8.0; 
+  let lod: [[i16; 13]; 13] = get_lod();
+  let mut _min: f32 = f32::MAX;
+  let mut _max: f32 = -f32::MAX;
+  let segments:i32 = 3;
+
   let terrain_material: StandardMaterial = StandardMaterial {
     // base_color: Color::BLACK,
     base_color_texture: Some(terrain_texture_handle.clone()),
     // https://bevyengine.org/examples/assets/repeated-texture/
-    // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
     // alpha_mode: AlphaMode::Blend,
     unlit: false,
@@ -118,12 +152,88 @@ fn startup(
 
   let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
-  let lod: [[i16; 13]; 13] = get_lod();
+  let normal_map_texture: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    EImagePaths::Walet1Normal.as_str(),
+    true
+  );
 
-  let mut _min: f32 = f32::MAX;
-  let mut _max: f32 = -f32::MAX;
+  let occlusion_texture: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    EImagePaths::Walet1Normal.as_str(),
+    true
+  );
 
-  let segments:i32 = 3;
+  let base_color_texture: Handle<Image> = cache_load_image(
+    image_hashmap,
+    &asset_server, 
+    EImagePaths::Walet1Base.as_str(),
+    true
+  );
+
+
+
+  let water_material = StandardMaterial{
+    normal_map_texture: Some(normal_map_texture.clone()),
+    occlusion_texture: Some(normal_map_texture.clone()),
+    // base_color_texture: Some(normal_map_texture.clone()),
+    // emissive_texture: Some(normal_map_texture.clone()),
+    // uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
+    metallic: 0.3,
+    base_color: BLUE_400.into(),
+    perceptual_roughness: 0.8,
+    // alpha_mode: AlphaMode::Blend,
+    // opaque_render_method: OpaqueRendererMethod::Auto,
+    ..default()
+  };
+
+  let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
+
+
+  // let water_material = MeshMaterial3d(water_materials.add(ExtendedMaterial {
+  let water_material_handle = water_materials.add(ExtendedMaterial {
+    base: StandardMaterial {
+      normal_map_texture: Some(base_color_texture.clone()),
+      occlusion_texture: Some(normal_map_texture.clone()),
+      // normal_map_texture: Some(asset_server.load(EImagePaths::Walet1Normal.as_str())),
+      // base_color_texture: Some(asset_server.load(EImagePaths::Walet1Base.as_str())),
+      clearcoat: 0.1,
+      clearcoat_perceptual_roughness: 0.1,
+      // clearcoat_normal_texture: Some(asset_server.load_with_settings(
+      //     "textures/ScratchedGold-Normal.png",
+      //     |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+      // )),
+      // metallic: 0.4,
+      metallic: 0.1,
+      base_color: BLUE_400.into(),
+      perceptual_roughness: 0.8,
+      // clearcoat: 1.0,
+      // ** clearcoat_perceptual_roughness: 0.3,
+      // ** // clearcoat_normal_texture: Some(asset_server.load_with_settings(
+      // ** //     "textures/ScratchedGold-Normal.png",
+      // ** //     |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+      // ** // )),
+      // ** metallic: 0.9,
+      // ** base_color: BLUE_400.into(),
+      // ** perceptual_roughness: 0.2,
+      // can be used in forward or deferred mode.
+      opaque_render_method: OpaqueRendererMethod::Auto,
+      // in deferred mode, only the PbrInput can be modified (uvs, color and other material properties),
+      // in forward mode, the output can also be modified after lighting is applied.
+      // see the fragment shader `extended_material.wgsl` for more info.
+      // Note: to run in deferred mode, you must also add a `DeferredPrepass` component to the camera and either
+      // change the above to `OpaqueRendererMethod::Deferred` or add the `DefaultOpaqueRendererMethod` resource.
+      alpha_mode: AlphaMode::Blend,
+      ..default()
+    },
+    extension: WaterExtension { quantize_steps: 10 },
+  // }));
+  });
+
+
+
   for z in -segments..=segments {
     for x in -segments..=segments {
 
@@ -135,7 +245,7 @@ fn startup(
       if dyn_scale <= 0 {
         continue;
       } 
-      let (terrain, min, max) = generate_chunk(x as f64, z as f64, dyn_scale);
+      let (terrain, min, max) = generate_chunk(x as f64, z as f64, UV_SCALE, dyn_scale);
 
       _min = if _min > min { min } else { _min };
       _max = if _max < max { max } else { _max };
@@ -173,7 +283,7 @@ fn startup(
         }
       }
 
-      if true {
+      if z >= -1 && z <= 1 && x >= -1 && x <= 1 {
         // let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z));
 
         let mut water = Mesh::from(
@@ -181,16 +291,26 @@ fn startup(
             .mesh()
             // .size(TERRAIN_CHUNK_X-(TERRAIN_CHUNK_X/2.0), TERRAIN_CHUNK_Z-(TERRAIN_CHUNK_Z/2.0))
             .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
-            .subdivisions(0)
+            .subdivisions(4)
         );
+
+        // if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = water.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
+        //   for uv in uvs.iter_mut() {
+        //     // uv[0] *= 64.0; // Scale U
+        //     // uv[1] *= 64.0; // Scale V
+        //     // uv[0] *= 32.0; // Scale U
+        //     // uv[1] *= 32.0; // Scale V
+        //     uv[0] *= 16.0; // Scale U
+        //     uv[1] *= 16.0; // Scale V
+        //     // uv[0] *= 8.0; // Scale U
+        //     // uv[1] *= 8.0; // Scale V
+        //   }
+        // }
+
         water.compute_normals();
 
-        if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = water.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
-          for uv in uvs.iter_mut() {
-            uv[0] *= 32.0; // Scale U
-            uv[1] *= 32.0; // Scale V
-          }
-        }
+        // let mat=materials.add(Color::srgba_u8(128, 197, 222,17));
+        let mat = water_material_handle.clone();
 
         commands.spawn((
           // RigidBody::Static,
@@ -210,11 +330,12 @@ fn startup(
             // .looking_at(Vec3::ZERO, Vec3::ZERO)
           ),
           Mesh3d(meshes.add(water)),
-          MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
+          // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 250))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,30))),
           // MeshMaterial3d(water_material_handle.clone()),
+          MeshMaterial3d(mat),
           // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
           // DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 1.0)),
           AnyObject,
@@ -332,7 +453,7 @@ fn calculate_final_subdivisions(dyn_scale: i16) -> u32 {
 }
 
 // prettier-ignore
-fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
+fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32, f32) {
   
   let noise: BasicMulti<Perlin> = BasicMulti::<Perlin>::default();
   let final_subdivisions: u32 = calculate_final_subdivisions(dyn_scale);
@@ -377,9 +498,9 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
     //   pos[1] += xi * TERRAIN_HEIGHT * 0.001;
     // }
 
-    // for pos in positions.iter_mut() {
-    //   pos[1] *= 1.0;
-    // }
+    for pos in positions.iter_mut() {
+      pos[1] *= 1.50;
+    }
 
     // waler down
     for pos in positions.iter_mut() {
@@ -413,8 +534,8 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
 
   if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = terrain.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
     for uv in uvs.iter_mut() {
-      uv[0] *= 8.0; // Scale U
-      uv[1] *= 8.0; // Scale V
+      uv[0] *= uv_scale; // Scale U
+      uv[1] *= uv_scale; // Scale V
     }
   }
 
@@ -480,24 +601,29 @@ fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
     color = Color::from(GREEN_100).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 { 
-    color = Color::from(GRAY_300).to_linear().to_f32_array();
+    // color = Color::from(GRAY_300).to_linear().to_f32_array();
+    // color = Color::from(RED_500).to_linear().to_f32_array();
+    color = Color::from(GREEN_100).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.4 { // water-upper border
     color = Color::from(GRAY_300).to_linear().to_f32_array();
     // color = Color::from(RED_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {// water-lower border
     color = Color::from(GRAY_300).to_linear().to_f32_array();
-    // color = Color::from(PURPLE_500).to_linear().to_f32_array();
+    // color = Color::from(RED_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.6 {
     color = Color::from(GRAY_400).to_linear().to_f32_array();
     // color = Color::from(RED_500).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.0 {
-    color = Color::from(BLUE_500).to_linear().to_f32_array();
+    // color = Color::from(BLUE_500).to_linear().to_f32_array();
+    // color = Color::from(RED_500).to_linear().to_f32_array();
+    // color = Color::from(BLUE_400).to_linear().to_f32_array();
+    color = Color::from(GRAY_400).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {
-    color = Color::from(BLUE_600).to_linear().to_f32_array();
+    color = Color::from(BLUE_400).to_linear().to_f32_array();
   } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.0 {
-    color = Color::from(BLUE_700).to_linear().to_f32_array();
+    color = Color::from(BLUE_500).to_linear().to_f32_array();
   } else {
-    color = Color::from(BLUE_800).to_linear().to_f32_array();
+    color = Color::from(BLUE_600).to_linear().to_f32_array();
   }
 
   return color;

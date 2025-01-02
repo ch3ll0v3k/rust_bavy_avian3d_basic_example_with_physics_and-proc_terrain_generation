@@ -45,6 +45,17 @@ use bevy_window::{
   WindowPosition,
 };
 
+use bevy::{
+  pbr::{ CascadeShadowConfigBuilder, ExtendedMaterial, OpaqueRendererMethod },
+  // core_pipeline::{
+  //     bloom::BloomSettings,
+  //     dof::{ DepthOfFieldMode, DepthOfFieldSettings },
+  //     prepass::{ DepthPrepass, NormalPrepass },
+  //     tonemapping::Tonemapping,
+  //     Skybox,
+  // },
+};
+
 use instant::Instant;
 use noise::{ BasicMulti, NoiseFn, Perlin };
 
@@ -68,6 +79,7 @@ mod state;
 mod sys_paths;
 mod asset_loader;
 mod m_lib;
+mod materials;
 
 use sys_paths::image::EImagePaths;
 use camera::CameraMarker;

@@ -22,6 +22,7 @@ use avian3d::prelude::{
   Restitution,
   RigidBody,
 };
+use bevy::core_pipeline::prepass::{ DepthPrepass, NormalPrepass };
 use bevy::text::cosmic_text::ttf_parser::Tag;
 use bevy::{
   animation::transition,
@@ -149,26 +150,21 @@ impl Plugin for CameraPlugin {
 const BULLET_MIN_Y_ALLOWED: f32 = -10.0;
 const MUL_POS: f32 = 5.0;
 const POS: Vec3 = Vec3::new(-2.5 * MUL_POS, 30.5 * MUL_POS, 9.0 * MUL_POS);
+// const POS: Vec3 = Vec3::new(-20.5 * MUL_POS, 30.5 * MUL_POS, -20.0 * MUL_POS);
 
 fn update() {}
 
-// constrain linear-speed
-// >> https://chatgpt.com/c/676a596e-4fd4-8000-9c52-8e4661d5dc76
-
-// better option then Name::new("some tag")
-// >> https://chatgpt.com/c/6773dcd8-1cd4-8000-bd81-a2e2507b9f5f
-
-fn test(commands: &mut Commands) -> Entity {
-  let id = commands.spawn(RigidBody::Dynamic).id();
-  id
-}
+// fn test(commands: &mut Commands) -> Entity {
+//   let id = commands.spawn(RigidBody::Dynamic).id();
+//   id
+// }
 
 fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
-  let id = test(&mut commands);
+  // let id = test(&mut commands);
 
   // commands.spawn((
   //   RigidBody::Dynamic,
@@ -209,8 +205,11 @@ fn startup(
       children.spawn((
         Name::new("p_player_cam_t"),
         Camera3d::default(),
-        Transform::from_xyz(0.0, 0.0, 0.0), // .looking_at(POS, Vec3::Y),
+        // Transform::from_xyz(0.0, 6.0, 0.0), // .looking_at(POS, Vec3::Y),
+        Transform::from_xyz(0.0, 1.0, 0.0), // .looking_at(POS, Vec3::Y),
         CameraMarker,
+        DepthPrepass,
+        // NormalPrepass,
       ));
     });
 }
