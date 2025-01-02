@@ -176,11 +176,11 @@ fn startup(
 
 
   let water_material = StandardMaterial{
+    base_color_texture: Some(base_color_texture.clone()),
     normal_map_texture: Some(normal_map_texture.clone()),
-    occlusion_texture: Some(normal_map_texture.clone()),
-    // base_color_texture: Some(normal_map_texture.clone()),
+    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+    // occlusion_texture: Some(normal_map_texture.clone()),
     // emissive_texture: Some(normal_map_texture.clone()),
-    // uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
     metallic: 0.3,
     base_color: BLUE_400.into(),
     perceptual_roughness: 0.8,
@@ -191,43 +191,23 @@ fn startup(
 
   let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
+  let water_material = StandardMaterial {
+    base_color_texture: Some(base_color_texture.clone()),
+    normal_map_texture: Some(normal_map_texture.clone()),
+    occlusion_texture: Some(normal_map_texture.clone()),
+    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+    clearcoat: 0.1,
+    clearcoat_perceptual_roughness: 0.1,
+    metallic: 0.1,
+    base_color: BLUE_400.into(),
+    perceptual_roughness: 0.8,
+    opaque_render_method: OpaqueRendererMethod::Auto,
+    alpha_mode: AlphaMode::Blend,
+    ..default()
+  };
 
-  // let water_material = MeshMaterial3d(water_materials.add(ExtendedMaterial {
   let water_material_handle = water_materials.add(ExtendedMaterial {
-    base: StandardMaterial {
-      normal_map_texture: Some(base_color_texture.clone()),
-      occlusion_texture: Some(normal_map_texture.clone()),
-      // normal_map_texture: Some(asset_server.load(EImagePaths::Walet1Normal.as_str())),
-      // base_color_texture: Some(asset_server.load(EImagePaths::Walet1Base.as_str())),
-      clearcoat: 0.1,
-      clearcoat_perceptual_roughness: 0.1,
-      // clearcoat_normal_texture: Some(asset_server.load_with_settings(
-      //     "textures/ScratchedGold-Normal.png",
-      //     |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
-      // )),
-      // metallic: 0.4,
-      metallic: 0.1,
-      base_color: BLUE_400.into(),
-      perceptual_roughness: 0.8,
-      // clearcoat: 1.0,
-      // ** clearcoat_perceptual_roughness: 0.3,
-      // ** // clearcoat_normal_texture: Some(asset_server.load_with_settings(
-      // ** //     "textures/ScratchedGold-Normal.png",
-      // ** //     |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
-      // ** // )),
-      // ** metallic: 0.9,
-      // ** base_color: BLUE_400.into(),
-      // ** perceptual_roughness: 0.2,
-      // can be used in forward or deferred mode.
-      opaque_render_method: OpaqueRendererMethod::Auto,
-      // in deferred mode, only the PbrInput can be modified (uvs, color and other material properties),
-      // in forward mode, the output can also be modified after lighting is applied.
-      // see the fragment shader `extended_material.wgsl` for more info.
-      // Note: to run in deferred mode, you must also add a `DeferredPrepass` component to the camera and either
-      // change the above to `OpaqueRendererMethod::Deferred` or add the `DefaultOpaqueRendererMethod` resource.
-      alpha_mode: AlphaMode::Blend,
-      ..default()
-    },
+    base: water_material,
     extension: WaterExtension { quantize_steps: 10 },
   // }));
   });
@@ -292,7 +272,8 @@ fn startup(
             // .size(TERRAIN_CHUNK_X-(TERRAIN_CHUNK_X/2.0), TERRAIN_CHUNK_Z-(TERRAIN_CHUNK_Z/2.0))
             .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
             .subdivisions(4)
-        );
+        )
+        .with_generated_tangents().unwrap();
 
         // if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = water.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
         //   for uv in uvs.iter_mut() {
