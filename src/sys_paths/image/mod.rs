@@ -58,6 +58,10 @@ impl EImagePaths {
       EImagePaths::Walet1Base => "textures/water/water.01.base.png",
       EImagePaths::Walet1Normal => "textures/water/water.01.normal.png",
 
+      // EImagePaths::Walet1Base => "textures/water/Water-base-0325.png",
+      // EImagePaths::Walet1Normal => "textures/water/Water-normal-0325.png",
+
+
     }
   }
 }

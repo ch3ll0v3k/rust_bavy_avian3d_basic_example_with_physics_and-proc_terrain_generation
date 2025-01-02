@@ -178,45 +178,42 @@ fn startup(
   let water_material = StandardMaterial{
     base_color_texture: Some(base_color_texture.clone()),
     normal_map_texture: Some(normal_map_texture.clone()),
-    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+    uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
     // occlusion_texture: Some(normal_map_texture.clone()),
     // emissive_texture: Some(normal_map_texture.clone()),
     metallic: 0.3,
     base_color: BLUE_400.into(),
+    // base_color: Color::srgba_u8(128, 197, 222, 30),
     perceptual_roughness: 0.8,
-    // alpha_mode: AlphaMode::Blend,
-    // opaque_render_method: OpaqueRendererMethod::Auto,
+    alpha_mode: AlphaMode::Blend,
+    opaque_render_method: OpaqueRendererMethod::Auto,
     ..default()
   };
-
   let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
   let water_material = StandardMaterial {
     base_color_texture: Some(base_color_texture.clone()),
     normal_map_texture: Some(normal_map_texture.clone()),
-    occlusion_texture: Some(normal_map_texture.clone()),
+    // uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
     uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+    // occlusion_texture: Some(normal_map_texture.clone()),
     clearcoat: 0.1,
     clearcoat_perceptual_roughness: 0.1,
-    metallic: 0.1,
+    metallic: 0.3,
     base_color: BLUE_400.into(),
     perceptual_roughness: 0.8,
     opaque_render_method: OpaqueRendererMethod::Auto,
     alpha_mode: AlphaMode::Blend,
     ..default()
   };
-
   let water_material_handle = water_materials.add(ExtendedMaterial {
     base: water_material,
-    extension: WaterExtension { quantize_steps: 10 },
-  // }));
+    extension: WaterExtension { quantize_steps: 30 },
   });
-
-
-
+  
   for z in -segments..=segments {
     for x in -segments..=segments {
-
 
       let on_z = ((lod.len() as i32) - 7 + z) as usize;
       let on_x = ((lod.len() as i32) - 7 + x) as usize;
