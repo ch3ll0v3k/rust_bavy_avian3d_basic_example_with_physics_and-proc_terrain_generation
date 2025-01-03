@@ -270,7 +270,11 @@ fn startup(
         // DepthPrepass,
         // NormalPrepass,
         PostProcessSettings {
-          intensity: 0.02,
+          // intensity: 0.05,
+          // set_r: 0.1,
+          // set_g: 0.2,
+          // set_b: 0.3,
+          cam_y: 0.5,
           ..default()
         },
       ));

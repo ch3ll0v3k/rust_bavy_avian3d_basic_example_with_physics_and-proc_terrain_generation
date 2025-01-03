@@ -153,17 +153,17 @@ impl Plugin for PostProcessPlugin {
       //
       // The [`ViewNodeRunner`] is a special [`Node`] that will automatically run the node for each view
       // matching the [`ViewQuery`]
-      .add_render_graph_node::<ViewNodeRunner<PostProcessNode>>(
+      .add_render_graph_node::<ViewNodeRunner<CustomPostProcessNode>>(
         // Specify the label of the graph, in this case we want the graph for 3d
         Core3d,
         // It also needs the label of the node
-        PostProcessLabel
+        CustomPostProcessLabel
       )
       .add_render_graph_edges(
         Core3d,
         // Specify the node ordering.
         // This will automatically create all required node edges to enforce the given ordering.
-        (Node3d::Tonemapping, PostProcessLabel, Node3d::EndMainPassPostProcessing)
+        (Node3d::Tonemapping, CustomPostProcessLabel, Node3d::EndMainPassPostProcessing)
       );
   }
 
@@ -180,14 +180,14 @@ impl Plugin for PostProcessPlugin {
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
-struct PostProcessLabel;
+struct CustomPostProcessLabel;
 
 // The post process node used for the render graph
 #[derive(Default)]
-struct PostProcessNode;
+struct CustomPostProcessNode;
 
 // The ViewNode trait is required by the ViewNodeRunner
-impl ViewNode for PostProcessNode {
+impl ViewNode for CustomPostProcessNode {
   // The node needs a query to gather data from the ECS in order to do its rendering,
   // but it's not a normal system so we need to define it manually.
   //
@@ -371,26 +371,38 @@ impl FromWorld for PostProcessPipeline {
   }
 }
 
-fn update_settings(mut settings: Query<&mut PostProcessSettings>, time: Res<Time>) {
-  for mut setting in &mut settings {
-    let mut intensity = ops::sin(time.elapsed_secs());
-    // Make it loop periodically
-    intensity = ops::sin(intensity);
-    // Remap it to 0..1 because the intensity can't be negative
-    intensity = intensity * 0.5 + 0.5;
-    // Scale it to a more reasonable level
-    intensity *= 0.015;
+// prettier-ignore
+fn update_settings(
+  q_cam_pos: Query<&Transform, With<CameraParentMarker>>,
+  mut settings: Query<&mut PostProcessSettings>, 
+  time: Res<Time>,
+) {
 
-    // Set the intensity.
-    // This will then be extracted to the render world and uploaded to the GPU automatically by the [`UniformComponentPlugin`]
-    setting.intensity = intensity;
-  }
+  
+  let mut setting = settings.single_mut();
+  let trans = q_cam_pos.single();
+  // setting.cam_y = (trans.translation.y+1.0) / 1000.0;
+  setting.cam_y = trans.translation.y;
+  
+  dbgln!("cam_y: {}", setting.cam_y);
+  // return;
+
+  // let mut intensity = ops::sin(time.elapsed_secs());
+  // intensity = ops::sin(intensity);
+  // intensity = intensity * 0.5 + 0.5;
+  // intensity *= 0.015;
+  // setting.intensity = intensity;
+
 }
 
 // This is the component that will get passed to the shader
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
 struct PostProcessSettings {
-  intensity: f32,
+  // intensity: f32,
+  // set_r: f32,
+  // set_g: f32,
+  // set_b: f32,
+  cam_y: f32,
   // WebGL2 structs must be 16 byte aligned.
   // #[cfg(feature = "webgl2")]
   // _webgl2_padding: Vec3,
