@@ -371,6 +371,22 @@ impl FromWorld for PostProcessPipeline {
   }
 }
 
+fn update_settings(mut settings: Query<&mut PostProcessSettings>, time: Res<Time>) {
+  for mut setting in &mut settings {
+    let mut intensity = ops::sin(time.elapsed_secs());
+    // Make it loop periodically
+    intensity = ops::sin(intensity);
+    // Remap it to 0..1 because the intensity can't be negative
+    intensity = intensity * 0.5 + 0.5;
+    // Scale it to a more reasonable level
+    intensity *= 0.015;
+
+    // Set the intensity.
+    // This will then be extracted to the render world and uploaded to the GPU automatically by the [`UniformComponentPlugin`]
+    setting.intensity = intensity;
+  }
+}
+
 // This is the component that will get passed to the shader
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
 struct PostProcessSettings {
@@ -462,6 +478,7 @@ fn main() {
     // )
     .add_systems(Startup, setup)
     .add_systems(Update, update.run_if(on_timer(Duration::from_millis(1000))))
+    .add_systems(Update, update_settings)
     .insert_resource(Gravity(physics::get_gravity_vec3()))
     .run();
 }
