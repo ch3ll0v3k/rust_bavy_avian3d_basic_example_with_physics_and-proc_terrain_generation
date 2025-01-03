@@ -1,6 +1,7 @@
 use std::{ borrow::BorrowMut, fmt, sync::Mutex };
 // use tracing::instrument;
 
+// use bevy::render::{ pipeline::RenderPipeline, shaders::ShaderStage };
 // use avian3d::prelude::*;
 // use bevy::prelude::*;
 
@@ -23,6 +24,7 @@ use avian3d::prelude::{
   RigidBody,
 };
 use bevy::core_pipeline::prepass::{ DepthPrepass, NormalPrepass };
+use bevy::pbr::{ NotShadowCaster, NotShadowReceiver };
 use bevy::text::cosmic_text::ttf_parser::Tag;
 use bevy::{
   animation::transition,
@@ -37,13 +39,16 @@ use bevy::{
   prelude::*,
   render::camera::PhysicalCameraParameters,
 };
+use bevy_render::mesh::Indices;
+use bevy_render::render_resource::{ AsBindGroup, RenderPipeline, ShaderRef };
+use wgpu::PrimitiveTopology;
 
 use crate::asset_loader::audio_cache::{ cache_load_audio, AudioCache };
 use crate::debug::ALLOWED_DEBUG_ENGINE;
 use crate::state::MGameState;
 use crate::m_lib::physics;
 
-use crate::{ dbgln, sys_paths };
+use crate::{ dbgln, sys_paths, PostProcessSettings };
 use crate::{
   debug::{ get_defaul_physic_debug_params, is_allowed_debug_engine },
   entities::with_children::MEntityBigSphere,
@@ -53,6 +58,9 @@ use crate::{
 };
 
 use sys_paths::audio::EAudio;
+
+#[derive(Component, Debug, PartialEq, Eq)]
+pub struct FullScreenShaderQuad;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct CameraMarker;
@@ -92,6 +100,7 @@ impl Plugin for CameraPlugin {
           cam_track_object,
           cam_track_object_origin,
           detect_bullet_collision,
+          // update_shader_quad_position,
         ).run_if(in_state(MGameState::Running))
       )
       .add_systems(Update,control_cam)
@@ -157,6 +166,57 @@ fn update() {}
 //   let id = commands.spawn(RigidBody::Dynamic).id();
 //   id
 // }
+// prettier-ignore
+// fn create_fullscreen_quad() -> Mesh {
+//     let mut mesh = Mesh::from(Plane3d {
+
+//     });
+
+//     // Define the four vertices of the quad in normalized device coordinates (NDC)
+//     let vertices = [
+//         // Position        // UV coordinates
+//         (Vec3::new(-1.0, -1.0, 0.0), Vec2::new(0.0, 0.0)), // Bottom-left
+//         (Vec3::new( 1.0, -1.0, 0.0), Vec2::new(1.0, 0.0)), // Bottom-right
+//         (Vec3::new( 1.0,  1.0, 0.0), Vec2::new(1.0, 1.0)), // Top-right
+//         (Vec3::new(-1.0,  1.0, 0.0), Vec2::new(0.0, 1.0)), // Top-left
+//     ];
+
+//     let indices = [
+//         0, 1, 2, 0, 2, 3, // Two triangles to form the quad
+//     ];
+
+//     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices.iter().map(|v| v.0).collect::<Vec<Vec3>>());
+//     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vertices.iter().map(|v| v.1).collect::<Vec<Vec2>>());
+//     mesh.set_indices(Some(Indices::U32(indices.to_vec())));
+
+//     mesh
+// }
+
+// https://bevyengine.org/examples/shaders/custom-post-processing/
+
+// fn update_camera_position(
+//     camera_query: Query<&Transform, With<Camera>>,
+//     // mut pipeline_query: Query<&mut RenderPipeline>,
+// ) {
+//     // if let Ok(camera_transform) = camera_query.single() {
+//     //     let camera_position = camera_transform.translation;
+
+//     //     // Update shader with the new camera position
+//     //     for mut pipeline in pipeline_query.iter_mut() {
+//     //         pipeline.set_uniform("camera_position", camera_position);
+//     //     }
+//     // }
+// }
+
+// use bevy::prelude::*;
+// use bevy::render::render_resource::{ Shader, SpecializedMeshPipeline };
+// use bevy::render::mesh::{ Mesh, VertexAttributeValues };
+// use bevy::asset::Handle;
+
+// #[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
+// struct CameraPositionMaterial {
+//   pub camera_position: Vec3,
+// }
 
 fn startup(
   mut commands: Commands,
@@ -207,16 +267,44 @@ fn startup(
         // Transform::from_xyz(0.0, 6.0, 0.0), // .looking_at(POS, Vec3::Y),
         Transform::from_xyz(0.0, 1.0, 0.0), // .looking_at(POS, Vec3::Y),
         CameraMarker,
-        DepthPrepass,
+        // DepthPrepass,
         // NormalPrepass,
+        PostProcessSettings {
+          intensity: 0.02,
+          ..default()
+        },
       ));
     });
+
 }
 
 // fn accelerate_bodies(mut query: Query<(&mut LinearVelocity, &mut AngularVelocity)>) {
 //   for (mut linear_velocity, mut angular_velocity) in query.iter_mut() {
 //     linear_velocity.x += 0.05;
 //     angular_velocity.z += 0.05;
+//   }
+// }
+
+// fn update_shader_quad_position(
+//   camera_query: Query<&Transform, (With<CameraParentMarker>, Without<FullScreenShaderQuad>)>,
+//   mut quad_query: Query<&mut Transform, (With<FullScreenShaderQuad>, Without<CameraParentMarker>)>
+// ) {
+
+//   let camera_transform = camera_query.single();
+
+//   // Get the camera's position
+//   let camera_position = camera_transform.translation;
+//   dbgln!("Camera position: {:?}", camera_position);
+
+//   // Update the position of the quad to be in front of the camera
+//   for mut quad_transform in quad_query.iter_mut() {
+//     // Position the quad directly in front of the camera at a fixed distance (e.g., 5 units)
+//     let quad_position = camera_position + camera_transform.forward() * 5.0; // 5.0 units in front of the camera
+
+//     quad_transform.translation = quad_position;
+
+//     // Optionally, make the quad always face the camera (if needed)
+//     quad_transform.rotation = Quat::from_rotation_y(camera_transform.rotation.y);
 //   }
 // }
 

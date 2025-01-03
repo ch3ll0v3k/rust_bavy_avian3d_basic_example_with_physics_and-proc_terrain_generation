@@ -1,5 +1,7 @@
 use std::f32::consts::PI;
 
+use bevy::render::render_resource::ShaderStages;
+
 use bevy::color::palettes::tailwind::*;
 use bevy::core_pipeline::Skybox;
 use bevy::image::{
@@ -30,12 +32,13 @@ use std::collections::HashMap;
 mod terrain_lod_map;
 
 use crate::camera::{ CameraMarker, CameraParentMarker };
-use crate::materials::water::*;
 use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
 use crate::{ dbgln, PhysicsStaticObjectTerrain, COLLISION_MARGIN };
 use crate::sys_paths;
 use crate::terrain::terrain_lod_map::get_lod;
 use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
+
+// use crate::materials::water::{ UnderWaterExtention, WaterExtension };
 
 use sys_paths::audio::EAudio;
 use sys_paths::image::EImageTerrainBase;
@@ -90,9 +93,11 @@ impl Plugin for MTerrainPlugin {
     app
       .insert_resource(InnerMapper::new());
 
-    app.add_plugins((
-      MaterialPlugin::<ExtendedMaterial<StandardMaterial, WaterExtension>>::default(),
-    ));
+    // app
+    //   .add_plugins((
+    //     MaterialPlugin::<ExtendedMaterial<StandardMaterial, WaterExtension>>::default(),
+    //     MaterialPlugin::<ExtendedMaterial<StandardMaterial, UnderWaterExtention>>::default(),
+    //   ));
 
     app
       .add_systems(Startup, startup).add_systems(Update, update);
@@ -107,7 +112,8 @@ fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, WaterExtension>>>,
+  // mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, WaterExtension>>>,
+  // mut wat_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, UnderWaterExtention>>>,
 ) {
 
   let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
@@ -118,45 +124,46 @@ fn startup(
   let mut _max: f32 = -f32::MAX;
   let segments:i32 = 3;
 
-  let terrain_diff_map_handle: Handle<Image> = cache_load_image(
+  let terrain_pbr_diff_handle: Handle<Image> = cache_load_image(
     image_hashmap,
     &asset_server, 
     pbr::aerial_grass_rock::AerialGrassRock::DiffLight.as_str(),
     true
   );
 
-  let terrain_norm_map_handle: Handle<Image> = cache_load_image(
+  let terrain_pbr_norm_handle: Handle<Image> = cache_load_image(
     image_hashmap,
     &asset_server, 
     pbr::aerial_grass_rock::AerialGrassRock::NorGl.as_str(),
     true
   );
 
-  let terrain_rough_map_handle: Handle<Image> = cache_load_image(
+  let terrain_pbr_rough_handle: Handle<Image> = cache_load_image(
     image_hashmap,
     &asset_server, 
     pbr::aerial_grass_rock::AerialGrassRock::Rough.as_str(),
     true
   );
 
-  let terrain_ao_map_handle: Handle<Image> = cache_load_image(
+  let terrain_pbr_ao_handle: Handle<Image> = cache_load_image(
     image_hashmap,
     &asset_server, 
     pbr::aerial_grass_rock::AerialGrassRock::Ao.as_str(),
     false
   );
 
-  let terrain_material: StandardMaterial = StandardMaterial {
-    base_color_texture: Some(terrain_diff_map_handle.clone()),
-    metallic_roughness_texture: Some(terrain_rough_map_handle.clone()),
-    normal_map_texture: Some(terrain_norm_map_handle.clone()),
-    occlusion_texture: Some(terrain_ao_map_handle.clone()),
+  let mut terrain_material: StandardMaterial = StandardMaterial {
+    base_color_texture: Some(terrain_pbr_diff_handle.clone()),
+    // metallic_roughness_texture: Some(terrain_pbr_rough_handle.clone()),
+    normal_map_texture: Some(terrain_pbr_norm_handle.clone()),
+    // occlusion_texture: Some(terrain_pbr_ao_handle.clone()),
     // emissive_texture,
-    uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(8.0, 8.0)),
-    // uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(2.0, 2.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(0.25, 0.25)),
     // alpha_mode: AlphaMode::Blend,
     unlit: false,
     emissive: LinearRgba::BLACK,
@@ -168,39 +175,98 @@ fn startup(
     ..default()
   };
 
+  // terrain_material.uv_transform = Affine2::from_scale(Vec2::new(1.0, 1.0));
   let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
-  let water_diff_texture: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    EImageWaterBase::Walet1Base.as_str(),
-    true
-  );
+  // let water_diff_texture: Handle<Image> = cache_load_image(
+  //   image_hashmap,
+  //   &asset_server, 
+  //   EImageWaterBase::Walet1Base.as_str(),
+  //   true
+  // );
 
-  let water_normal_map_texture: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    EImageWaterBase::Walet1Normal.as_str(),
-    true
-  );
+  // let water_normal_map_texture: Handle<Image> = cache_load_image(
+  //   image_hashmap,
+  //   &asset_server, 
+  //   EImageWaterBase::Walet1Normal.as_str(),
+  //   true
+  // );
 
-  let water_material = StandardMaterial{
-    base_color_texture: Some(water_diff_texture.clone()),
-    normal_map_texture: Some(water_normal_map_texture.clone()),
+  // let water_material = StandardMaterial{
+  //   // base_color_texture: Some(water_diff_texture.clone()),
+  //   // normal_map_texture: Some(water_normal_map_texture.clone()),
+  //   // uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+  //   // base_color: BLUE_400.into(),
+  //   metallic: 0.3,
+  //   base_color: Color::srgba_u8(128, 197, 222, 30),
+  //   perceptual_roughness: 0.8,
+  //   alpha_mode: AlphaMode::Blend,
+  //   opaque_render_method: OpaqueRendererMethod::Auto,
+  //   ..default()
+  // };
+  // let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
+  // let water_material_handle: Handle<StandardMaterial> = materials.add(UnderWaterExtention {
+  //   fog_height: 5.0,
+  //   fog_color: Vec4::new(0.0, 0.5, 1.0, 1.0), // Light blue fog
+  // });
+
+  // let mut water = Mesh::from(
+  //   Plane3d::default()
+  //     .mesh()
+  //     // .size(TERRAIN_CHUNK_X-(TERRAIN_CHUNK_X/2.0), TERRAIN_CHUNK_Z-(TERRAIN_CHUNK_Z/2.0))
+  //     .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
+  //     .subdivisions(0)
+  //   )
+  //   .with_generated_tangents()
+  //   .unwrap();
+  // water.compute_normals();
+
+  let mut water: Mesh = Mesh::from(
+    Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z))
+    .with_generated_tangents()
+    .unwrap();
+  water.compute_normals();
+
+  let water_material: StandardMaterial = StandardMaterial {
+    // base_color_texture: Some(base_color_texture.clone()),
+    // normal_map_texture: Some(water_normal_map_texture.clone()),
     // uv_transform: Affine2::from_scale(Vec2::new(4.0*4.0, 4.0*4.0)),
-    uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
-    // uv_transform: Affine2::from_scale(Vec2::new(1.0, 1.0)),
+    // uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
     // occlusion_texture: Some(water_normal_map_texture.clone()),
-    // emissive_texture: Some(water_normal_map_texture.clone()),
-    metallic: 0.3,
-    base_color: BLUE_400.into(),
-    // base_color: Color::srgba_u8(128, 197, 222, 30),
-    perceptual_roughness: 0.8,
-    alpha_mode: AlphaMode::Blend,
+    // clearcoat: 0.1,
+    // clearcoat_perceptual_roughness: 0.1,
+    // metallic: 0.3,
+    unlit: !false,
+    double_sided: true,
+    cull_mode: Some(Face::Front),
+    // cull_mode: Some(Face::Back),
+    base_color: Color::srgba_u8(128, 197, 222, 30),
+    // perceptual_roughness: 0.8,
     opaque_render_method: OpaqueRendererMethod::Auto,
+    alpha_mode: AlphaMode::Blend,
     ..default()
   };
-  let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
+
+  let water_material_handle = materials.add(water_material);
+  // let water_material_handle: Handle<ExtendedMaterial<StandardMaterial, UnderWaterExtention>> = wat_materials.add(ExtendedMaterial {
+  //   base: water_material,
+  //   extension: UnderWaterExtention { 
+  //     fog_height: 10.0, 
+  //     fog_color: Vec4::new(0.0, 0.5, 1.0, 0.25),
+  //     base_color: Vec4::new(0.5, 0.5, 0.5, 0.25),
+  //   },
+  // });
+  
+
+  // commands.spawn(PbrBundle {
+  //   mesh: meshes.add(Mesh::from(shape::Plane { size: 50.0 })),
+  //   material: materials.add(UnderWaterExtention {
+  //     fog_height: 5.0,
+  //     fog_color: Vec4::new(0.0, 0.5, 1.0, 1.0), // Light blue fog
+  //   }),
+  //   ..default()
+  // });
+
 
   // let water_material = StandardMaterial {
   //   base_color_texture: Some(base_color_texture.clone()),
@@ -222,6 +288,7 @@ fn startup(
   //   extension: WaterExtension { quantize_steps: 30 },
   // });
   
+
   for z in -segments..=segments {
     for x in -segments..=segments {
 
@@ -232,6 +299,7 @@ fn startup(
       if dyn_scale <= 0 {
         continue;
       } 
+
       let (terrain, min, max) = generate_chunk(x as f64, z as f64, UV_SCALE, dyn_scale);
 
       _min = if _min > min { min } else { _min };
@@ -270,18 +338,10 @@ fn startup(
         }
       }
 
-      if z >= -1 && z <= 1 && x >= -1 && x <= 1 {
-        // let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z));
+      let walter_f = 0;
 
-        let mut water = Mesh::from(
-          Plane3d::default()
-            .mesh()
-            // .size(TERRAIN_CHUNK_X-(TERRAIN_CHUNK_X/2.0), TERRAIN_CHUNK_Z-(TERRAIN_CHUNK_Z/2.0))
-            .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
-            .subdivisions(0)
-        )
-        .with_generated_tangents()
-        .unwrap();
+      if z >= -walter_f && z <= walter_f && x >= -walter_f && x <= walter_f {
+        // let mut water = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z));
 
         // if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = water.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
         //   for uv in uvs.iter_mut() {
@@ -296,10 +356,8 @@ fn startup(
         //   }
         // }
 
-        water.compute_normals();
 
         // let mat=materials.add(Color::srgba_u8(128, 197, 222,17));
-        let mat = water_material_handle.clone();
 
         commands.spawn((
           // RigidBody::Static,
@@ -318,13 +376,13 @@ fn startup(
             (z * TERRAIN_CHUNK_Z as i32) as f32
             // .looking_at(Vec3::ZERO, Vec3::ZERO)
           ),
-          Mesh3d(meshes.add(water)),
+          Mesh3d(meshes.add(water.clone())),
           // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 250))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
           // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,30))),
           // MeshMaterial3d(water_material_handle.clone()),
-          MeshMaterial3d(mat),
+          MeshMaterial3d(water_material_handle.clone()),
           // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
           // DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 1.0)),
           AnyObject,
@@ -496,10 +554,13 @@ fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32
     }
 
     // waler down
-    for pos in positions.iter_mut() {
-      // pos[1] -= 10000.0; // def: 1.0
-      pos[1] += 0.0; // def: 1.0
-    }
+    // for pos in positions.iter_mut() {
+    //   pos[1] -= 10000.0; // def: 1.0
+    // }
+
+    // for pos in positions.iter_mut() {
+    //   pos[1] += 0.0; // def: 1.0
+    // }
 
     let sub = 7.0; // -10.0;
 

@@ -103,8 +103,8 @@ fn startup(
       false
     );
 
-    let sky_seg_east_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
     // let sky_seg_east_mash = Mesh::from(Plane3d::new(Vec3::Z, Vec2::new(SIZE_T, SIZE_T)));
+    let sky_seg_east_mash = Mesh::from(Cuboid::new(SIZE_T, SIZE_T, 1.0));
     commands.spawn((
       NotShadowCaster,
       NotShadowReceiver,

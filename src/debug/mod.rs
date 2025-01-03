@@ -141,7 +141,7 @@ impl Plugin for DebugPlugin {
       })
       .add_systems(Startup, (
           startup,
-          spawn_test_floating_objects,
+          // spawn_test_floating_objects,
       ))
       .add_plugins((
           WireframePlugin,
@@ -278,8 +278,8 @@ fn spawn_test_floating_objects(
   // prettier-ignore
   if !ALLOWED_DEBUG_FPS { return; }
 
-  let items = 5;
-  let size = 5;
+  let items = 3;
+  let size = 10;
   let offset_x = 100;
   let offset_y = 250;
   let offset_z = 200; 

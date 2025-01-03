@@ -1843,6 +1843,8 @@ dependencies = [
  "bevy",
  "bevy_dev_tools",
  "bevy_diagnostic",
+ "bevy_reflect",
+ "bevy_render",
  "bevy_window",
  "chrono",
  "instant",
