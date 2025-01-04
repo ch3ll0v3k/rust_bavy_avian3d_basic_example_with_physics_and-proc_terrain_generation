@@ -460,13 +460,13 @@ fn calculate_real_fps_and_throttle(
   let fixed: f64 = fixed_time.delta_secs_f64();
   let real: f64 = real_time.delta_secs_f64();
   let virt: f64 = virt_time.delta_secs_f64();
-  // println!("elapsed: {:.5}, fixed: {:.5}, real: {:.5}, virt: {:.5}", elapsed, fixed, real, virt);
+  // dbgln!("elapsed: {:.5}, fixed: {:.5}, real: {:.5}, virt: {:.5}", elapsed, fixed, real, virt);
 
   let elapsed_fps = (1000.0 / (elapsed * 1000.0));
   // let fixed_fps = (1000.0 / (fixed * 1000.0));
   // let real_fps = (1000.0 / (real * 1000.0));
   // let virt_fps = (1000.0 / (virt * 1000.0));
-  // println!("elapsed: {:.2}, fixed: {:.2}, real: {:.2}, virt: {:.2}", elapsed_fps, fixed_fps, real_fps, virt_fps);
+  // dbgln!("elapsed: {:.2}, fixed: {:.2}, real: {:.2}, virt: {:.2}", elapsed_fps, fixed_fps, real_fps, virt_fps);
 
   let fps_to_use = elapsed_fps;
 
