@@ -405,7 +405,6 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
     .with_generated_tangents()
     .unwrap();
 
-
   // dbgln!("chunk-size: {TERRAIN_CHUNK_X} => (base-subdiv: {TERRAIN_CHUNK_SUBDIVISIONS}, dyn_scale: {dyn_scale}) => final-subdiv: {final_subdivisions}");
 
   let use_segment_separator = false;
