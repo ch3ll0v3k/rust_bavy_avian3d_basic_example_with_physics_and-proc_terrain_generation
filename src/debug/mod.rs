@@ -1,98 +1,49 @@
 // use std::time::Instant;
 
-use std::ops::{ Add, Sub };
-use std::time::Duration;
-
-use bevy::pbr::{ MeshMaterial3d, StandardMaterial };
 use instant::Instant;
 
-use bevy::prelude::*;
-use avian3d::debug_render::{ PhysicsDebugPlugin, DebugRender };
-use avian3d::PhysicsPlugins;
-
-// use avian3d::parry::na::Transform;
-// use avian3d::prelude::*;
-use avian3d::prelude::{
-  AngularVelocity,
-  CoefficientCombine,
-  Collider,
-  CollisionMargin,
-  ExternalImpulse,
-  LinearVelocity,
-  Mass,
-  PhysicsGizmos,
-  Restitution,
-  RigidBody,
-  SweptCcd,
+// prettier-ignore
+use std::{
+  ops::{ Add, Sub },
+  time::Duration,
 };
 
-use bevy::app::{ App, FixedUpdate, Plugin, Startup, Update };
-use bevy::asset::{ AssetServer, Assets, Handle };
-use bevy::color::palettes::css::*;
-use bevy::color::{ Color, palettes::tailwind::* };
+// prettier-ignore
+use avian3d::{
+  PhysicsPlugins,
+  debug_render::{ PhysicsDebugPlugin, DebugRender },
+  prelude::{ 
+    AngularVelocity, CoefficientCombine, Collider, CollisionMargin, ExternalImpulse, 
+    LinearVelocity, Mass, PhysicsGizmos, Restitution, RigidBody, SweptCcd,
+  },
+};
 
-use bevy::ui::{ Node, PositionType, Val };
-use bevy::utils::default;
+// prettier-ignore
+use bevy::{
+  app::{ App, FixedUpdate, Plugin, PostUpdate, Startup, Update }, asset::{ AssetServer, Assets, Handle }, color::{ palettes::{ css::*, tailwind::* }, Color }, diagnostic::{ 
+    Diagnostic, DiagnosticPath, DiagnosticsStore, EntityCountDiagnosticsPlugin, 
+    FrameTimeDiagnosticsPlugin, RegisterDiagnostic, SystemInformationDiagnosticsPlugin,
+  }, input::{ common_conditions::input_just_pressed, ButtonInput }, math::Vec3, pbr::{ wireframe::{ Wireframe, WireframeConfig, WireframePlugin }, MeshMaterial3d, StandardMaterial }, prelude::{ 
+    in_state, AppGizmoBuilder, Capsule3d, Commands, Component, Cuboid, Drag, Entity, GizmoConfig, IntoSystemConfigs, KeyCode, Mesh, Mesh3d, Query, Res, ResMut, Resource, Text, Transform, With, Without
+  }, text::{ Font, TextColor, TextFont }, time::{ Fixed, Real, Time, Virtual }, ui::{ Node, PositionType, Val }, utils::default
+};
+
 use bevy_diagnostic::LogDiagnosticsPlugin;
 
-use bevy::diagnostic::{
-  Diagnostic,
-  DiagnosticPath,
-  DiagnosticsStore,
-  EntityCountDiagnosticsPlugin,
-  FrameTimeDiagnosticsPlugin,
-  RegisterDiagnostic,
-  SystemInformationDiagnosticsPlugin,
+// prettier-ignore
+use crate::{ 
+  app_config::{ self, *, debug::DebugConfig }, 
+  asset_loader::font_cache::{ cache_load_font, FontCache },
+  player::PlayerMarker,
+  dbgln, PhysicsDynamicObjectFloatable, COLLISION_MARGIN,
+  markers::m_bevy::AnyObject,
+  state::MGameState,
+  sys_paths::font::EFont,
+  m_lib::physics,
 };
 
-// use bevy::prelude::*;
-use bevy::prelude::{
-  in_state,
-  Capsule3d,
-  Commands,
-  Component,
-  Cuboid,
-  Drag,
-  Entity,
-  GizmoConfig,
-  IntoSystemConfigs,
-  KeyCode,
-  Mesh,
-  Mesh3d,
-  Query,
-  Res,
-  ResMut,
-  Resource,
-  Text,
-  Transform,
-  With,
-  Without,
-};
-
-use bevy::math::Vec3;
-use bevy::pbr::wireframe::{ Wireframe, WireframePlugin, WireframeConfig };
-use bevy::text::{ Font, TextColor, TextFont };
-use bevy::time::{ Fixed, Real, Time, Virtual };
-use bevy::input::{ ButtonInput, common_conditions::input_just_pressed };
-use crate::asset_loader::font_cache::{ FontCache, cache_load_font };
-
-use crate::camera::CameraParentMarker;
-use crate::{ dbgln, PhysicsDynamicObjectFloatable, COLLISION_MARGIN };
-
-use crate::markers::m_bevy::AnyObject;
-use crate::state::MGameState;
-use crate::sys_paths::font::EFont;
-use crate::m_lib::physics;
-
-pub const ALLOWED_DEBUG_PHYSICS: bool = !true;
-pub const ALLOWED_DEBUG_ENGINE: bool = true;
-pub const ALLOWED_DEBUG_FPS: bool = true;
-pub const IS_WIREFRAME_DEFAULT_ON: bool = false;
-
-const FPS_COUNTER_DIAG_: DiagnosticPath = DiagnosticPath::const_new("fps_counter");
-const FIXED_PFS: f64 = 60.0;
-const FRAMERATE_LIMIT: f64 = 1.0 / FIXED_PFS;
 const MEASURE_AVG_FPS_EACH: u32 = 15;
+const FPS_COUNTER_DIAG_PATH: DiagnosticPath = DiagnosticPath::const_new("fps_counter");
 
 #[derive(Component, Debug, PartialEq, Eq)]
 struct FpsTextMarker;
@@ -122,6 +73,10 @@ pub struct DebugPlugin;
 impl Plugin for DebugPlugin {
   fn build(&self, app: &mut App) {
 
+  let debug_config = app_config::debug::config();
+
+  let framerate_limit: f64 = 1.0 / debug_config.fixed_pfs;
+
     app
       // Wireframes can be configured with this resource. This can be changed at runtime.
       // .insert_resource(WireframeConfig {
@@ -131,11 +86,11 @@ impl Plugin for DebugPlugin {
       //   global: false,
       //   default_color: Color::from(GREEN_100),
       // })
-      .insert_resource(IWireframeOn { is_on: IS_WIREFRAME_DEFAULT_ON })
-      .insert_resource(Time::<Fixed>::from_hz(FIXED_PFS))
+      .insert_resource(IWireframeOn { is_on: debug_config.is_wireframe_default_on })
+      .insert_resource(Time::<Fixed>::from_hz(debug_config.fixed_pfs))
       .insert_resource(FrameLimiter {
         last_frame: Instant::now(),
-        frame_duration: Duration::from_secs_f64(FRAMERATE_LIMIT), // Target 60 FPS
+        frame_duration: Duration::from_secs_f64(framerate_limit), // Target 60 FPS
         avg_index: 0,
         avg: [0.0; MEASURE_AVG_FPS_EACH as usize],
       })
@@ -149,13 +104,18 @@ impl Plugin for DebugPlugin {
           EntityCountDiagnosticsPlugin,
           SystemInformationDiagnosticsPlugin,
       ))
-      .register_diagnostic(Diagnostic::new(FPS_COUNTER_DIAG_)/*.with_suffix("can-be-anything")*/)
+      .register_diagnostic(Diagnostic::new(FPS_COUNTER_DIAG_PATH)/*.with_suffix("can-be-anything")*/)
       .add_systems(FixedUpdate, (
         update
       ))
-      .add_systems(FixedUpdate, (
+
+      .add_systems(PostUpdate, (
         toggle_wireframe, 
       ).run_if(input_just_pressed(KeyCode::KeyL)))
+      // .add_systems(FixedUpdate, (
+      //   toggle_wireframe, 
+      // ).run_if(input_just_pressed(KeyCode::KeyL)))
+
       .add_systems(FixedUpdate, (
         update_fps,
         test_floating_items,
@@ -166,7 +126,7 @@ impl Plugin for DebugPlugin {
         ).run_if(in_state(MGameState::Running))
       );
 
-    if( ALLOWED_DEBUG_PHYSICS ){
+    if( debug_config.allowed_debug_physics ){
 
       app
       .insert_gizmo_config(
@@ -185,14 +145,18 @@ impl Plugin for DebugPlugin {
 
 // prettier-ignore
 fn startup(
+
   mut res_mut_font_cache: Option<ResMut</*res_mut_font_cache::*/ FontCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
+
+  let debug_config = app_config::debug::config();
+
   // prettier-ignore
-  if !ALLOWED_DEBUG_FPS { return; }
+  if !debug_config.allowed_debug_fps { return; }
 
   let font_hashmap: &mut ResMut<FontCache> = res_mut_font_cache.as_mut().unwrap();
 
@@ -269,14 +233,18 @@ fn update() {
 
 // prettier-ignore
 fn spawn_test_floating_objects(
+
   mut res_mut_font_cache: Option<ResMut</*res_mut_font_cache::*/ FontCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
+
+  let debug_config = app_config::debug::config();
+
   // prettier-ignore
-  if !ALLOWED_DEBUG_FPS { return; }
+  if !debug_config.allowed_debug_fps { return; }
 
   let items = 3;
   let size = 10;
@@ -322,6 +290,7 @@ fn spawn_test_floating_objects(
 
 // prettier-ignore
 fn test_floating_items(
+  debug_config: Res<DebugConfig>,
   mut commands: Commands,
   // mut q_lin_velocity: Query<&mut LinearVelocity, With<PhysicsDynamicObjectFloatable>>,
   mut q_selector: Query<
@@ -329,6 +298,9 @@ fn test_floating_items(
     With<PhysicsDynamicObjectFloatable>
   >
 ) {
+
+  if !debug_config.allowed_debug_fps { return; }
+
   let extara_down = -10.0;
   let f = -10.0 - 2.0 - extara_down;
   let df = 1000.0;
@@ -343,7 +315,6 @@ fn test_floating_items(
     mut lin_vel,
     mut ang_vel
   ) in q_selector.iter_mut() {
-
     
     if transform.translation.y < -f {
       // dbgln!("transform.translation.y: y {:.4}", transform.translation.y);
@@ -354,12 +325,6 @@ fn test_floating_items(
         commands.entity(entity).insert(physics::get_gravity_scale(0.0));
         // commands.entity(entity).insert(physics::get_gravity_scale(0.06));
         // commands.entity(entity).insert(physics::get_gravity_scale(0.1));
-        
-        // commands.entity(entity).insert(    Drag {
-        //   button: PointerButton,
-        //   distance: Vec2,
-        //   delta: Vec2,
-        // });
 
         apply_force = true;
         let diff = transform.translation.y; //  - f;
@@ -401,15 +366,27 @@ fn test_floating_items(
 }
 
 // prettier-ignore
-pub fn is_allowed_debug_physics() -> bool { ALLOWED_DEBUG_PHYSICS }
+pub fn is_allowed_debug_physics() -> bool {
+  let debug_config = app_config::debug::config();
+  debug_config.allowed_debug_physics
+}
 // prettier-ignore
-pub fn is_allowed_debug_engine() -> bool { ALLOWED_DEBUG_ENGINE }
+pub fn is_allowed_debug_engine() -> bool {
+  let debug_config = app_config::debug::config();
+  debug_config.allowed_debug_engine
+}
 // prettier-ignore
-pub fn is_allowed_debug_fps() -> bool { ALLOWED_DEBUG_FPS }
+pub fn is_allowed_debug_fps() -> bool {
+  let debug_config = app_config::debug::config();
+  debug_config.allowed_debug_fps
+}
 
 // prettier-ignore
 pub fn get_defaul_physic_debug_params() -> DebugRender {
-  if ALLOWED_DEBUG_PHYSICS {
+
+  let debug_config = app_config::debug::config();
+
+  if debug_config.allowed_debug_physics {
     DebugRender::default()
       .with_collider_color(Color::srgb(1.0, 255.0, 1.0))
       .with_axes(Vec3::new(2.0, 2.0, 2.0))
@@ -425,8 +402,9 @@ fn update_fps(
   diagnostics: Res<DiagnosticsStore>,
   fixed_time: Res<Time<Fixed>>
 ) {
-  // prettier-ignore
-  if !ALLOWED_DEBUG_FPS { return; }
+  
+  let debug_config = app_config::debug::config();
+  if !debug_config.allowed_debug_fps { return; }
 
   if let Some(diag_type) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
     let mut writer = text.single_mut();
@@ -440,11 +418,11 @@ fn update_fps(
 // prettier-ignore
 fn show_player_y_pos(
   mut text: Query<&mut Text, With<PlayerYPosTextMarker>>,
-  q_camera_parent: Query<(& Transform), (With<CameraParentMarker>)>
+  q_camera_parent: Query<(& Transform), (With<PlayerMarker>)>
 ) {
 
-  // prettier-ignore
-  if !ALLOWED_DEBUG_FPS { return; }
+  let debug_config = app_config::debug::config();
+  if !debug_config.allowed_debug_fps { return; }
   
   let trans = q_camera_parent.single();
   let y = trans.translation.y;
@@ -462,7 +440,6 @@ fn calculate_real_fps_and_throttle(
   virt_time: Res<Time<Virtual>>
 ) {
 
-  // prettier-ignore
   let now: std::time::Instant = Instant::now();
   let elapsed: Duration = now.duration_since(mut_frame_limiter.last_frame);
 
@@ -476,7 +453,8 @@ fn calculate_real_fps_and_throttle(
 
   mut_frame_limiter.last_frame = Instant::now();
 
-  if !ALLOWED_DEBUG_FPS { return; }
+  let debug_config = app_config::debug::config();
+  if !debug_config.allowed_debug_fps { return; }
 
   let elapsed: f64 = elapsed.as_secs_f64();
   let fixed: f64 = fixed_time.delta_secs_f64();
@@ -485,9 +463,9 @@ fn calculate_real_fps_and_throttle(
   // println!("elapsed: {:.5}, fixed: {:.5}, real: {:.5}, virt: {:.5}", elapsed, fixed, real, virt);
 
   let elapsed_fps = (1000.0 / (elapsed * 1000.0));
-  let fixed_fps = (1000.0 / (fixed * 1000.0));
-  let real_fps = (1000.0 / (real * 1000.0));
-  let virt_fps = (1000.0 / (virt * 1000.0));
+  // let fixed_fps = (1000.0 / (fixed * 1000.0));
+  // let real_fps = (1000.0 / (real * 1000.0));
+  // let virt_fps = (1000.0 / (virt * 1000.0));
   // println!("elapsed: {:.2}, fixed: {:.2}, real: {:.2}, virt: {:.2}", elapsed_fps, fixed_fps, real_fps, virt_fps);
 
   let fps_to_use = elapsed_fps;
@@ -514,8 +492,11 @@ fn toggle_wireframe(
   all_no_wireframe: Query<Entity, (With<AnyObject>, Without<Wireframe>)>,
   input: Res<ButtonInput<KeyCode>>
 ) {
+
+  let debug_config = app_config::debug::config();
+
   // prettier-ignore
-  if !ALLOWED_DEBUG_ENGINE { return; }
+  if !debug_config.allowed_debug_engine { return; }
 
   is_wireframe_on.is_on = !is_wireframe_on.is_on;
   dbgln!("is_wireframe_on: {}", is_wireframe_on.is_on);

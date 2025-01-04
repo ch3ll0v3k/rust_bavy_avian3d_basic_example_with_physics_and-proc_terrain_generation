@@ -1,49 +1,66 @@
 use std::f32::consts::PI;
 
-use bevy::render::render_resource::ShaderStages;
-
-use bevy::color::palettes::tailwind::*;
-use bevy::core_pipeline::Skybox;
-use bevy::image::{
-  ImageAddressMode,
-  ImageFilterMode,
-  ImageLoaderSettings,
-  ImageSampler,
-  ImageSamplerDescriptor,
+// prettier-ignore
+use avian3d::prelude::{ 
+  AngularVelocity, Collider, RigidBody, PhysicsSet, CollisionMargin,
 };
 
-use bevy::math::Affine2;
+// prettier-ignore
 use bevy::{
-  // text::FontSmoothing,
   prelude::*,
+  utils::default,
+  gizmos::AppGizmoBuilder,
+  asset::{ AssetServer, Assets, Handle },
+  app::{ ScheduleRunnerPlugin, App, Startup, Update },
+  audio::{ AudioPlugin, AudioPlayer, AudioSource, PlaybackSettings, PlaybackMode, Volume },
+  image::{ ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor },
+  color::{ Color, palettes::css::*, palettes::tailwind::* },
+  time::{ Time, Fixed, common_conditions::on_timer },
+  math::{ IVec2, Vec2, Vec3, Affine2 },
+  window::WindowMode::*,
+  pbr::{ StandardMaterial, CascadeShadowConfigBuilder, ExtendedMaterial, OpaqueRendererMethod },
+  ecs::query::{ QueryItem, QuerySingleError },
+  core_pipeline::{
+    core_3d::graph::{ Core3d, Node3d },
+    fullscreen_vertex_shader::fullscreen_shader_vertex_state,
+  },
+  render::{
+    mesh::VertexAttributeValues,
+    extract_component::{ ComponentUniforms, DynamicUniformIndex, ExtractComponent, ExtractComponentPlugin, UniformComponentPlugin },
+    render_graph::{ NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner },
+    render_resource::{ binding_types::{ sampler, texture_2d, uniform_buffer } },
+    renderer::{ RenderContext, RenderDevice },
+    view::ViewTarget,
+    RenderApp,
+  },
 };
 
-use bevy::pbr::{ ExtendedMaterial, NotShadowCaster, NotShadowReceiver, OpaqueRendererMethod };
-use bevy::render::mesh::*;
-use avian3d::prelude::*;
-use bevy::prelude::*;
 use wgpu::Face;
 use noise::{ BasicMulti, NoiseFn, Perlin };
-
 use std::collections::HashMap;
-// use avian3d::prelude::{AngularVelocity, Collider, RigidBody};
-// use avian3d::prelude::{PhysicsSet};
 
 mod terrain_lod_map;
 
-use crate::camera::{ CameraMarker, CameraParentMarker };
-use crate::{ debug::get_defaul_physic_debug_params, AnyObject, PhysicsStaticObject };
-use crate::{ dbgln, PhysicsStaticObjectTerrain, COLLISION_MARGIN };
-use crate::sys_paths;
-use crate::terrain::terrain_lod_map::get_lod;
-use crate::asset_loader::image_cache::{ cache_load_image, ImageCache };
+// prettier-ignore
+use crate::{
+  player::{ PlayerMarker },
+  debug::get_defaul_physic_debug_params,
+  AnyObject,
+  PhysicsStaticObject,
+  dbgln,
+  PhysicsStaticObjectTerrain,
+  COLLISION_MARGIN,
+  sys_paths,
+  terrain::terrain_lod_map::get_lod,
+  asset_loader::image_cache::{ cache_load_image, ImageCache },
+  // materials::water::{ UnderWaterExtention, WaterExtension },
+};
 
-// use crate::materials::water::{ UnderWaterExtention, WaterExtension };
-
-use sys_paths::audio::EAudio;
-use sys_paths::image::EImageTerrainBase;
-use sys_paths::image::pbr;
-use sys_paths::image::EImageWaterBase;
+// prettier-ignore
+use sys_paths::{
+  audio::EAudio,
+  image::{EImageWaterBase,EImageTerrainBase, pbr},
+};
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MTerrainMarker;
@@ -154,9 +171,9 @@ fn startup(
 
   let mut terrain_material: StandardMaterial = StandardMaterial {
     base_color_texture: Some(terrain_pbr_diff_handle.clone()),
-    // metallic_roughness_texture: Some(terrain_pbr_rough_handle.clone()),
     normal_map_texture: Some(terrain_pbr_norm_handle.clone()),
-    // occlusion_texture: Some(terrain_pbr_ao_handle.clone()),
+    metallic_roughness_texture: Some(terrain_pbr_rough_handle.clone()),
+    occlusion_texture: Some(terrain_pbr_ao_handle.clone()),
     // emissive_texture,
     // uv_transform: Affine2::from_scale(Vec2::new(16.0, 16.0)),
     // uv_transform: Affine2::from_scale(Vec2::new(8.0, 8.0)),
@@ -240,7 +257,8 @@ fn startup(
     double_sided: true,
     cull_mode: Some(Face::Front),
     // cull_mode: Some(Face::Back),
-    base_color: Color::srgba_u8(128, 197, 222, 30),
+    // base_color: Color::srgba_u8(128, 197, 222, 30),
+    base_color: Color::srgba_u8(70, 70, 180, 17),
     // perceptual_roughness: 0.8,
     opaque_render_method: OpaqueRendererMethod::Auto,
     alpha_mode: AlphaMode::Blend,
@@ -404,13 +422,13 @@ fn update(
   mut inner_mapper_mut: Option<ResMut<InnerMapper>>,
   // inner_mapper_read: Res<InnerMapper>,
   // inner_mapper: Res<InnerMapper>,
-  // mut q_terrain: Query<&mut Transform, (With<MTerrainMarker>, Without<CameraMarker>)>,
+  // mut q_terrain: Query<&mut Transform, (With<MTerrainMarker>, Without<PlayerMarker>)>,
   q_name: Query<&Name>,
   mut commands: Commands,
-  mut q_player: Query<&mut Transform, (With<CameraParentMarker>, Without<MTerrainMarker>)>,
+  mut q_player: Query<&mut Transform, (With<PlayerMarker>, Without<MTerrainMarker>)>,
   mut q_terrain: Query<
     (Entity, &mut RigidBody, &mut Transform),
-    (With<MTerrainMarker>, Without<CameraMarker>)
+    (With<MTerrainMarker>, Without<PlayerMarker>)
   >,
 ) {
 
@@ -558,11 +576,12 @@ fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32
     //   pos[1] -= 10000.0; // def: 1.0
     // }
 
-    // for pos in positions.iter_mut() {
-    //   pos[1] += 0.0; // def: 1.0
-    // }
+    for pos in positions.iter_mut() {
+      pos[1] += 20.0; // def: 1.0
+    }
 
-    let sub = 7.0; // -10.0;
+    // let sub = 7.0; // -10.0;
+    let sub = 15.0; // -10.0;
 
     let colors: Vec<[f32; 4]> = positions
       .iter()
@@ -601,6 +620,25 @@ fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32
 fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
 
   let mut color: [f32; 4];
+
+  if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.0 { 
+    color = Color::from(WHITE).to_linear().to_f32_array();
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.3 {
+    color = Color::from(GRAY_200).to_linear().to_f32_array();
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.8 {
+    color = Color::from(GRAY_300).to_linear().to_f32_array();
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 {
+    color = Color::from(GRAY_400).to_linear().to_f32_array();
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.6 {
+    color = Color::from(BLUE_500).to_linear().to_f32_array();
+  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.9 {
+    color = Color::from(BLUE_600).to_linear().to_f32_array();
+
+  } else { // water-upper border
+    color = Color::from(BLUE_600).to_linear().to_f32_array();
+  }
+
+  return color;
 
   // if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 1.5 {
   //   color = Color::from(BLACK).to_linear().to_f32_array();
