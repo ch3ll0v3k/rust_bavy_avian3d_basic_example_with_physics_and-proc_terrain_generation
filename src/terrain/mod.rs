@@ -580,8 +580,8 @@ fn generate_chunk( x: f64, z: f64, uv_scale: f32, dyn_scale: i16 ) -> (Mesh, f32
       pos[1] += 20.0; // def: 1.0
     }
 
-    // let sub = 7.0; // -10.0;
-    let sub = 15.0; // -10.0;
+    let sub = 7.0; // -10.0;
+    // let sub = 15.0; // -10.0;
 
     let colors: Vec<[f32; 4]> = positions
       .iter()
