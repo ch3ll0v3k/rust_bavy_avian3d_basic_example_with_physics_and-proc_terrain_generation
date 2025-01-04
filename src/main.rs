@@ -171,7 +171,9 @@ fn main() {
       GizmoConfig::default()
     )
     .add_systems(Startup, setup)
-    .add_systems(Update, update.run_if(on_timer(Duration::from_millis(1000))))
+    .add_systems(Update, update.run_if(
+      on_timer(Duration::from_millis(1000))
+    ))
     // .add_systems(Update, update_settings)
     .run();
 }

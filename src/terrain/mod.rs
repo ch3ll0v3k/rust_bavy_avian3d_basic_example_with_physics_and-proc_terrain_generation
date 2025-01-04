@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{ f32::consts::PI, time::Duration };
 
 // prettier-ignore
 use avian3d::prelude::{ 
@@ -73,7 +73,7 @@ const TERRAIN_USE_LOWER_Y_ON_FAR_DISTANCE: bool = false;
 const TERRAIN_XZ_TO_Y_SCALLER: f32 = 4.0; // 4.0;
 const TERRAIN_HEIGHT: f32 = 70.0 * 2.0; // 70.0 * 2.0
 const TERRAIN_CHUNK_X: f32 = (1024.0 / TERRAIN_XZ_TO_Y_SCALLER) * 4.0; // 4.0
-const TERRAIN_CHUNK_Z: f32 = (1024.0 / TERRAIN_XZ_TO_Y_SCALLER) * 4.0; // 4.0
+const TERRAIN_CHUNK_X_HALF: f32 = TERRAIN_CHUNK_X / 2.0;
 const TERRAIN_CHUNK_SUBDIVISIONS_SPLIT: u32 = 32; // 32
 const SUBDIVISION_SUB_FACTOR: u32 = 1;
 const TERRAIN_CHUNK_SCALLER: f64 = 1000.0; // 3à0.0
@@ -122,10 +122,16 @@ impl Plugin for MTerrainPlugin {
 
     app
       .add_systems(Startup, startup)
+      // .add_systems(Update, (
+      //   update_terrain_on_player_position,
+      //   // modify_mesh_at_runtime,
+      // ))
       .add_systems(Update, (
-        update,
-        // modify_mesh_at_runtime,
+        update_terrain_on_player_position
+      ).run_if(
+        on_timer(Duration::from_millis(500))
       ));
+
   }
 }
 
@@ -141,10 +147,31 @@ fn startup(
 
   let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
 
+ 
+  let mut water: Mesh = Mesh::from(
+    Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_X))
+    .with_generated_tangents()
+    .unwrap();
+    water.compute_normals();
+
+  let water_material: StandardMaterial = StandardMaterial {
+    unlit: !false,
+    double_sided: true,
+    cull_mode: Some(Face::Front),
+    base_color: Color::srgba_u8(70, 70, 180, 17),
+    opaque_render_method: OpaqueRendererMethod::Auto,
+    alpha_mode: AlphaMode::Blend,
+    ..default()
+  };
+
+  let water_material_handle = materials.add(water_material);
+
+ 
+ 
   let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
   let mut _min: f32 = f32::MAX;
   let mut _max: f32 = -f32::MAX;
-  let segments:i32 = 0;
+  let segments:i32 = 2;
 
   let uv_transform: Vec2 = Vec2::new(
     TERRAIN_STATIC_ON_MATERIAL_UV_SCALE, 
@@ -203,24 +230,6 @@ fn startup(
   // ));
 
   let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
-
-  let mut water: Mesh = Mesh::from(
-    Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_Z))
-    .with_generated_tangents()
-    .unwrap();
-  water.compute_normals();
-
-  let water_material: StandardMaterial = StandardMaterial {
-    unlit: !false,
-    double_sided: true,
-    cull_mode: Some(Face::Front),
-    base_color: Color::srgba_u8(70, 70, 180, 17),
-    opaque_render_method: OpaqueRendererMethod::Auto,
-    alpha_mode: AlphaMode::Blend,
-    ..default()
-  };
-
-  let water_material_handle = materials.add(water_material);
 
   for z in -segments..=segments {
     for x in -segments..=segments {
@@ -282,7 +291,7 @@ fn startup(
           Transform::from_xyz(
             (x * TERRAIN_CHUNK_X as i32) as f32, 
              -3.0, // -13
-            (z * TERRAIN_CHUNK_Z as i32) as f32
+            (z * TERRAIN_CHUNK_X as i32) as f32
             // .looking_at(Vec3::ZERO, Vec3::ZERO)
           ),
           Mesh3d(meshes.add(water.clone())),
@@ -302,8 +311,13 @@ fn startup(
 
 }
 
+fn round_upto(num: f64, upto: i8) -> f64 {
+  let pow = (10.0 as f64).powi(upto as i32);
+  (num * pow).round() / pow
+}
+
 // prettier-ignore
-fn update(
+fn update_terrain_on_player_position(
   mut inner_mapper_mut: Option<ResMut<InnerMapper>>,
   q_name: Query<&Name>,
   mut commands: Commands,
@@ -316,10 +330,48 @@ fn update(
 
   // return;
 
+
   let o_player = q_player.single_mut();
   let pos = o_player.translation;
-  let m_x = ( (pos.x + (TERRAIN_CHUNK_X / 2.0)) / TERRAIN_CHUNK_X) as i32;
-  let m_z = ( (pos.z + (TERRAIN_CHUNK_Z / 2.0)) / TERRAIN_CHUNK_Z) as i32;
+
+  let add_x = if pos.x < 0.0 { -TERRAIN_CHUNK_X_HALF } else { TERRAIN_CHUNK_X_HALF };
+  let add_z = if pos.z < 0.0 { -TERRAIN_CHUNK_X_HALF } else { TERRAIN_CHUNK_X_HALF };
+  let x = ( (pos.x + add_x) / TERRAIN_CHUNK_X) as i32;
+  let z = ( (pos.z + add_z) / TERRAIN_CHUNK_X) as i32;
+  let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
+
+  let on_z = 1;
+  let on_x = 1;
+
+  let dyn_scale = lod[ on_z ][ on_x ];
+
+  if dyn_scale <= 0 {
+    // dbgln!("dyn_scale: (HC) {dyn_scale}");
+  } 
+
+  let p_z = round_upto(pos.z as f64, 3);
+  let p_x = round_upto(pos.x as f64, 3);
+
+  dbgln!(" CH ({TERRAIN_CHUNK_X}) => lod: (z: {} / x: {}) => pos: (z: {} / x: {})", z, x, p_z, p_x);
+  
+  if let Some(res_mut) = &mut inner_mapper_mut {
+    // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
+    if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
+      // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
+    }else{
+      // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
+      // let capacity = res_mut.hash_map.insert(
+      //   (z as i16, x as i16), 
+      //   IInnerMap{ 
+      //       // entity: terrain_id, 
+      //       entity: Entity::from( terrain_id ), 
+      //       // entity: Entity::from_raw(42s31231231), 
+      //       lod: dyn_scale
+      //     }
+      // );
+    }
+  }
+
 
   // if let Some(res_mut) = &mut inner_mapper_mut {
   //   dbgln!("----------------------------------------------");
@@ -329,49 +381,6 @@ fn update(
   //     dbgln!("z: {z} / x: {x}");
   //   }
   // }
-
-  unsafe {
-  // dbgln!("player @: => {TERRAIN_CHUNK_X} => +>  (x: {m_x} z: {m_z} => p x/z => {}/{}", pos.x, pos.z);      
-
-    if m_x != M_X || m_z != M_Y {
-      M_X = m_x;
-      M_Y = m_z;
-      // dbgln!("player @: (x: {m_x} y: {m_z})");      
-      dbgln!("player @: => {TERRAIN_CHUNK_X} => +>  (x: {m_x} z: {m_z} => p x/z => {}/{}", pos.x, pos.z);      
-
-      // if let Some(res_mut) = &mut inner_mapper {
-      //   // let mut res_mut = inner_mapper.unwrap
-      //   let r = res_mut.state.get(&(0, 0)); // .unwrap();
-      //   // res_mut.lod= 12;
-      //   if let Some(in_map) = r {
-      //       let item = in_map.get(&(0,0));
-      //   }
-      // }
-
-      // inner_mapper.state.insert((0, 0), IInnerMap{ entity: Entity::from_bits(12), lod: 123});
-      // let some = inner_mapper.state.get(&(0, 0)).unwrap();
-      
-      // let some = inner_mapper.state.get(&(0, 0));
-      //   match Some(some)  {
-      //   None => {
-      //     dbgln!("inner_mapper.state.get(&(0, 0)): None");
-      //     inner_mapper.state.insert((0, 0), IInnerMap{ entity: Entity::from_bits(12), lod: 123});
-      //   }
-      //   Some(x) => {
-      //     let en = x.unwrap();
-      //     dbgln!("inner_mapper.state.get(&(0, 0)): entity: {:?}, lod: {:?}", en.entity, en.lod);
-      //   },
-      // }
-
-      // if let Some(x) = inner_mapper.state.get(&(0, 0)){
-      //   dbgln!("inner_mapper.state.get(&(0, 0)): entity: {:?}, lod: {:?}", x.entity, x.lod);
-      // }
-
-      // let Option<&(Entity, i16)> = inner_mapper.state.get(&(0, 0));
-      // let t: Option<&(Entity, i16)> = inner_mapper.state.get(&(0, 0));
-
-    }
-  }
 
 }
 
@@ -390,7 +399,7 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
   let mut terrain = Mesh::from(
     Plane3d::default()
       .mesh()
-      .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_Z)
+      .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_X)
       .subdivisions(final_subdivisions)
   )
     .with_generated_tangents()
@@ -408,13 +417,13 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
     for pos in positions.iter_mut() {
       let xi: f32 = noise.get([
         (((pos[0] as f64) + (TERRAIN_CHUNK_X as f64) * x) as f64) / TERRAIN_CHUNK_SCALLER,
-        (((pos[2] as f64) + (TERRAIN_CHUNK_Z as f64) * z) as f64) / TERRAIN_CHUNK_SCALLER,
+        (((pos[2] as f64) + (TERRAIN_CHUNK_X as f64) * z) as f64) / TERRAIN_CHUNK_SCALLER,
         0.0 as f64,
       ]) as f32;
       pos[0] += (TERRAIN_CHUNK_X * (x as f32)) as f32; // + ((x / 1.0) as f32);
       pos[1] = xi * TERRAIN_HEIGHT * 1.0;
       // pos[1] = 0.0;
-      pos[2] += (TERRAIN_CHUNK_Z * (z as f32)) as f32; // + ((z / 1.0) as f32);
+      pos[2] += (TERRAIN_CHUNK_X * (z as f32)) as f32; // + ((z / 1.0) as f32);
       if use_segment_separator {
         pos[0] += (x / 1.0) as f32;
         pos[2] += (z / 1.0) as f32;
@@ -425,7 +434,7 @@ fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, f32, f32) {
     // for pos in positions.iter_mut() {
     //   let xi: f32 = noise.get([
     //     (((pos[0] as f64) + (TERRAIN_CHUNK_X as f64) * x) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
-    //     (((pos[2] as f64) + (TERRAIN_CHUNK_Z as f64) * z) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
+    //     (((pos[2] as f64) + (TERRAIN_CHUNK_X as f64) * z) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
     //     0.0 as f64,
     //   ]) as f32;
     //   pos[1] += xi * TERRAIN_HEIGHT * 0.001;
@@ -611,9 +620,9 @@ fn modify_mesh_at_runtime(
   
   map.x = round_to_two_digits(map.x - 0.00000001);
   // map.z = round_to_two_digits(map.z + 0.00000001);
-  println!("map shift: (x: {} z: {})", map.x, map.z);
+  dbgln!("map shift: (x: {} z: {})", map.x, map.z);
   
-  // println!(" ----------------------------------------------- ");
+  // dbgln!(" ----------------------------------------------- ");
   // meshes.iter_mut().for_each(|(handle, mesh)| {
   //   dbgln!("mesh: {handle} => {:?}", mesh);
   // });
@@ -625,7 +634,7 @@ fn modify_mesh_at_runtime(
 
   let mut x = map.x;
   let mut z = map.z;
-  println!("map shift: (x: {} z: {})", x, z);
+  dbgln!("map shift: (x: {} z: {})", x, z);
   // let x = 0.0;
   // let z = 0.0;
 
@@ -643,13 +652,13 @@ fn modify_mesh_at_runtime(
         for pos in positions.iter_mut() {
           let xi: f32 = noise.get([
             (((pos[0] as f64) + (TERRAIN_CHUNK_X as f64) * x) as f64) / TERRAIN_CHUNK_SCALLER,
-            (((pos[2] as f64) + (TERRAIN_CHUNK_Z as f64) * z) as f64) / TERRAIN_CHUNK_SCALLER,
+            (((pos[2] as f64) + (TERRAIN_CHUNK_X as f64) * z) as f64) / TERRAIN_CHUNK_SCALLER,
             0.0 as f64,
           ]) as f32;
           pos[0] += (TERRAIN_CHUNK_X * (x as f32)) as f32; // + ((x / 1.0) as f32);
           pos[1] = xi * TERRAIN_HEIGHT * 1.0;
           // pos[1] = 0.0;
-          pos[2] += (TERRAIN_CHUNK_Z * (z as f32)) as f32; // + ((z / 1.0) as f32);
+          pos[2] += (TERRAIN_CHUNK_X * (z as f32)) as f32; // + ((z / 1.0) as f32);
           // if use_segment_separator {
           //   pos[0] += (x / 1.0) as f32;
           //   pos[2] += (z / 1.0) as f32;

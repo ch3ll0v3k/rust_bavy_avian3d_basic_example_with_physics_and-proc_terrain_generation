@@ -151,7 +151,8 @@ impl Plugin for PlayerPlugin {
       //   )
       // )
       .add_systems(Update,constrain_linear_xz_speed)
-      .insert_resource(CMaxLinearSpeedXZ(30.0));
+      .insert_resource(CMaxLinearSpeedXZ(150.0));
+      // .insert_resource(CMaxLinearSpeedXZ(30.0));
 
     }
 }
@@ -614,6 +615,8 @@ fn control_cam(
       //   force
       // );
 
+      // XXX
+
       impulse3.y = physics::get_gravity() * impulse;
       // impulse3.y = physics::get_gravity() * force;
 
@@ -669,7 +672,8 @@ fn control_cam(
   if !is_in_water && keys.pressed(KeyCode::KeyQ) {
     // running_speed = 2.0;
     // l_max_speed *= 3.0; // normal (prod);
-    l_max_speed *= 30.0; // debug (dev);
+    // l_max_speed *= 30.0; // debug (dev);
+    l_max_speed *= 100.0; // debug (dev);
   }
 
   if !is_in_water && keys.pressed(KeyCode::Space) {
@@ -686,17 +690,21 @@ fn control_cam(
   const BOOST_SPEED: f32 = 0.5;
 
   let fw: Dir3 = transform.forward();
-  let mut x: f32 = fw.x / FW_DIV_SCALE;
-  let mut y: f32 = fw.y / FW_DIV_SCALE;
-  let mut z: f32 = fw.z / FW_DIV_SCALE;
+  let mut x: f32 = ((fw.x / FW_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+  let mut y: f32 = ((fw.y / FW_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+  let mut z: f32 = ((fw.z / FW_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+
+  assert!(
+    x.abs() <= 1.0 && y.abs() <= 1.0 && z.abs() <= 1.0,
+    "FW/BW: (x: {:.6}, y: {:.6}, z: {:.6})",
+    x,
+    y,
+    z
+  );
 
   impulse3.y += jump_force;
 
   if use_physics && !is_paused {
-    let impl_x: f32 = x;
-    let impl_y: f32 = y;
-    let impl_z: f32 = z;
-
     if keys.pressed(KeyCode::KeyW) {
       impulse3 += Vec3::new(x, y, z) * force_scale_mul * 20.0 * BOOST_SPEED;
     } else if keys.pressed(KeyCode::KeyS) {
@@ -704,9 +712,10 @@ fn control_cam(
     }
 
     let right = transform.right();
-    x = (x - right.x) / LR_DIV_SCALE;
-    y = (y - right.y) / LR_DIV_SCALE;
-    z = (z - right.z) / LR_DIV_SCALE;
+    x = (((x - right.x) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+    y = (((y - right.y) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+    z = (((z - right.z) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+
     if keys.pressed(KeyCode::KeyA) {
       impulse3 += Vec3::new(x, y, z) * force_scale_mul * BOOST_SPEED;
     } else if keys.pressed(KeyCode::KeyD) {
@@ -725,9 +734,10 @@ fn control_cam(
     }
 
     let right = transform.right();
-    x = (x - right.x) / LR_DIV_SCALE;
-    y = (y - right.y) / LR_DIV_SCALE;
-    z = (z - right.z) / 20.0;
+    x = (((x - right.x) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+    y = (((y - right.y) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
+    z = (((z - right.z) / 20.0) as f64).clamp(-1.0, 1.0) as f32;
+
     if keys.pressed(KeyCode::KeyA) {
       transform.translation.x += x;
       transform.translation.y += y;
