@@ -119,7 +119,7 @@ fn main() {
 
   App::new()
     .add_plugins(app_config::AppConfigPlugin)
-    .insert_resource(ClearColor(Color::from(BLUE_200)))
+    .insert_resource(ClearColor(Color::from(BLUE_300)))
     .insert_resource(Gravity(physics::get_gravity_vec3()))
     // .add_plugins(
     //   ScheduleRunnerPlugin::run_loop(
