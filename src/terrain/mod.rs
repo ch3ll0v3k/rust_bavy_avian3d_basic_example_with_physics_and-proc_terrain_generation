@@ -86,6 +86,8 @@ const TERRAIN_H_COLOR_STEP: f32 = (MAX_TERRAIN_H_FOR_COLOR - MIN_TERRAIN_H_FOR_C
 const TERRAIN_STATIC_ON_MATERIAL_UV_SCALE: f32 = 4.0;
 const TERRAIN_DYNAMIC_ON_MESH_UV_SCALE: f32 = 1.0;
 
+const TERRAIN_SEGMENTS_TO_GEN: i32 = 2;
+
 static mut M_X: i32 = -10_000_000;
 static mut M_Y: i32 = -10_000_000;
 
@@ -136,6 +138,73 @@ impl Plugin for MTerrainPlugin {
 }
 
 // prettier-ignore
+fn get_terrain_bpr(
+  asset_server: &Res<AssetServer>,
+  image_hashmap: &mut ResMut<ImageCache>,
+) -> StandardMaterial{
+
+  let uv_transform: Vec2 = Vec2::new(
+    TERRAIN_STATIC_ON_MATERIAL_UV_SCALE, 
+    TERRAIN_STATIC_ON_MATERIAL_UV_SCALE
+  );
+
+  let terrain_pbr_diff_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::DiffLight.as_str(),
+    true
+  );
+
+  let terrain_pbr_norm_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::NorGl.as_str(),
+    true
+  );
+
+  let terrain_pbr_rough_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::Rough.as_str(),
+    true
+  );
+
+  let terrain_pbr_ao_handle: Handle<Image> = cache_load_image(
+    image_hashmap,
+    asset_server, 
+    pbr::aerial_grass_rock::AerialGrassRock::Ao.as_str(),
+    true
+  );
+
+  let mut terrain_material: StandardMaterial = StandardMaterial {
+    base_color_texture: Some(terrain_pbr_diff_handle.clone()),
+    normal_map_texture: Some(terrain_pbr_norm_handle.clone()),
+    metallic_roughness_texture: Some(terrain_pbr_rough_handle.clone()),
+    occlusion_texture: Some(terrain_pbr_ao_handle.clone()),
+    // emissive_texture,
+    uv_transform: Affine2::from_scale(uv_transform),
+    // alpha_mode: AlphaMode::Blend,
+    unlit: false,
+    emissive: LinearRgba::BLACK,
+    // emissive_exposure_weight: 1.0,
+    perceptual_roughness: 0.85,
+    // metallic: 0.0,
+    reflectance: 0.05,
+    // ior: 1.47,
+    ..default()
+  };
+
+  // terrain_material.uv_transform = Affine2::from_scale(Vec2::new(
+  //   TERRAIN_STATIC_ON_MATERIAL_UV_SCALE, 
+  //   TERRAIN_STATIC_ON_MATERIAL_UV_SCALE
+  // ));
+
+  terrain_material
+
+
+}
+
+// prettier-ignore
 fn startup(
   mut res_mut_texture_cache: Option<ResMut</*res_mut_texture_cache::*/ImageCache>>,
   mut inner_mapper_mut: Option<ResMut<InnerMapper>>,
@@ -166,73 +235,19 @@ fn startup(
 
   let water_material_handle = materials.add(water_material);
 
- 
- 
+  let mut inner_map = inner_mapper_mut.as_mut().unwrap();
+
+  // XXX
+
+  let terrain_material: StandardMaterial = get_terrain_bpr(&asset_server, image_hashmap);
+  let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
+
   let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
   let mut _min: f32 = f32::MAX;
   let mut _max: f32 = -f32::MAX;
-  let segments:i32 = 2;
 
-  let uv_transform: Vec2 = Vec2::new(
-    TERRAIN_STATIC_ON_MATERIAL_UV_SCALE, 
-    TERRAIN_STATIC_ON_MATERIAL_UV_SCALE
-  );
-
-  let terrain_pbr_diff_handle: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    pbr::aerial_grass_rock::AerialGrassRock::DiffLight.as_str(),
-    true
-  );
-
-  let terrain_pbr_norm_handle: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    pbr::aerial_grass_rock::AerialGrassRock::NorGl.as_str(),
-    true
-  );
-
-  let terrain_pbr_rough_handle: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    pbr::aerial_grass_rock::AerialGrassRock::Rough.as_str(),
-    true
-  );
-
-  let terrain_pbr_ao_handle: Handle<Image> = cache_load_image(
-    image_hashmap,
-    &asset_server, 
-    pbr::aerial_grass_rock::AerialGrassRock::Ao.as_str(),
-    true
-  );
-
-  let mut terrain_material: StandardMaterial = StandardMaterial {
-    base_color_texture: Some(terrain_pbr_diff_handle.clone()),
-    normal_map_texture: Some(terrain_pbr_norm_handle.clone()),
-    metallic_roughness_texture: Some(terrain_pbr_rough_handle.clone()),
-    occlusion_texture: Some(terrain_pbr_ao_handle.clone()),
-    // emissive_texture,
-    uv_transform: Affine2::from_scale(uv_transform),
-    // alpha_mode: AlphaMode::Blend,
-    unlit: false,
-    emissive: LinearRgba::BLACK,
-    // emissive_exposure_weight: 1.0,
-    perceptual_roughness: 0.85,
-    // metallic: 0.0,
-    reflectance: 0.05,
-    // ior: 1.47,
-    ..default()
-  };
-
-  // terrain_material.uv_transform = Affine2::from_scale(Vec2::new(
-  //   TERRAIN_STATIC_ON_MATERIAL_UV_SCALE, 
-  //   TERRAIN_STATIC_ON_MATERIAL_UV_SCALE
-  // ));
-
-  let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
-
-  for z in -segments..=segments {
-    for x in -segments..=segments {
+  for z in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
+    for x in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
 
       let on_z = ((lod.len() as i32) - 7 + z) as usize;
       let on_x = ((lod.len() as i32) - 7 + x) as usize;
@@ -262,23 +277,38 @@ fn startup(
         Name::new("terrain_t"),
       )).id();
 
-      if let Some(res_mut) = &mut inner_mapper_mut {
-        // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
-        if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
-          // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
-        }else{
-          // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
-          let capacity = res_mut.hash_map.insert(
-            (z as i16, x as i16), 
-            IInnerMap{ 
-                // entity: terrain_id, 
-                entity: Entity::from( terrain_id ), 
-                // entity: Entity::from_raw(42s31231231), 
-                lod: dyn_scale
-              }
-          );
-        }
+
+      if let Some(res) = inner_map.hash_map.get(&(z as i16, x as i16)) {
+        dbgln!("inner_map.hash_map.get(&({z}, {x})) => lod (load): {}", res.lod);
+      }else{
+        dbgln!("inner_map.hash_map.insert(&({z}, {x})) => lod (dyn): {dyn_scale}");
+        let capacity = inner_map.hash_map.insert(
+          (z as i16, x as i16), 
+          IInnerMap{ 
+              // entity: terrain_id, 
+              entity: Entity::from( terrain_id ), 
+              lod: dyn_scale
+            }
+        );
       }
+
+      // if let Some(res_mut) = &mut inner_mapper_mut {
+      //   // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
+      //   if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
+      //     // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
+      //   }else{
+      //     // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
+      //     let capacity = res_mut.hash_map.insert(
+      //       (z as i16, x as i16), 
+      //       IInnerMap{ 
+      //           // entity: terrain_id, 
+      //           entity: Entity::from( terrain_id ), 
+      //           // entity: Entity::from_raw(42s31231231), 
+      //           lod: dyn_scale
+      //         }
+      //     );
+      //   }
+      // }
 
       let walter_f = 0;
 
@@ -355,9 +385,9 @@ fn update_terrain_on_player_position(
   dbgln!(" CH ({TERRAIN_CHUNK_X}) => lod: (z: {} / x: {}) => pos: (z: {} / x: {})", z, x, p_z, p_x);
   
   if let Some(res_mut) = &mut inner_mapper_mut {
-    // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
+    dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
     if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
-      // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
+      dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
     }else{
       // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
       // let capacity = res_mut.hash_map.insert(
