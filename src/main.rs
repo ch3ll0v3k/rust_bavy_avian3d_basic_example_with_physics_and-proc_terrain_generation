@@ -8,8 +8,11 @@
 #![allow(unused_parens)]
 
 use app_config::window;
+use bevy_render::{ settings::WgpuSettings, RenderPlugin };
 use instant::Instant;
 use noise::{ BasicMulti, NoiseFn, Perlin };
+use wgpu::PowerPreference;
+
 use std::{ collections::HashMap, time::Duration };
 
 // prettier-ignore
@@ -105,6 +108,9 @@ use constants::{ viewport_settings::*, physics_world::* };
 use terrain::MTerrainMarker;
 use m_lib::{ colors, physics };
 
+use bevy::prelude::*;
+use bevy::render::settings::{ Backends };
+
 // prettier-ignore
 fn main() {
   dbgln!("App stating...");
@@ -148,10 +154,10 @@ fn main() {
           resizable,
           // fit_canvas_to_parent: true,
           // fullsize_content_view: true,
-          ..Default::default()
+          ..default()
         }),
-        ..Default::default()
-      }), 
+        ..default()
+      }),
       PhysicsPlugins::default(),
       camera::CameraPlugin,
       asset_loader::MAssetLoaderPlugin,
@@ -164,6 +170,20 @@ fn main() {
       entities::base::MEntityBasePlugin,
       entities::with_children::MEntityWithChildrenPlugin,
       state::MGameStatePlugin,
+      // WgpuPlugin {
+      //       settings: WgpuSettings {
+      //           backends: Some(Backends::VULKAN), // Replace with your desired backend.
+      //           ..default()
+      //       },
+      //   }
+      RenderPlugin {
+        render_creation: WgpuSettings {
+        // power_preference: PowerPreference::LowPower,
+        backends: Some(Backends::DX12),
+          ..default()
+        }.into(),
+        ..default()
+      }
     ))
     .insert_gizmo_config(
       PhysicsGizmos {
