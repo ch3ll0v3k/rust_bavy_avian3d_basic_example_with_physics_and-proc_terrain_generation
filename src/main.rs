@@ -170,20 +170,14 @@ fn main() {
       entities::base::MEntityBasePlugin,
       entities::with_children::MEntityWithChildrenPlugin,
       state::MGameStatePlugin,
-      // WgpuPlugin {
-      //       settings: WgpuSettings {
-      //           backends: Some(Backends::VULKAN), // Replace with your desired backend.
-      //           ..default()
-      //       },
-      //   }
-      RenderPlugin {
-        render_creation: WgpuSettings {
-        // power_preference: PowerPreference::LowPower,
-        backends: Some(Backends::DX12),
-          ..default()
-        }.into(),
-        ..default()
-      }
+      // RenderPlugin {
+      //   render_creation: WgpuSettings {
+      //   // power_preference: PowerPreference::LowPower,
+      //   backends: Some(Backends::VULKAN),
+      //     ..default()
+      //   }.into(),
+      //   ..default()
+      // }
     ))
     .insert_gizmo_config(
       PhysicsGizmos {
