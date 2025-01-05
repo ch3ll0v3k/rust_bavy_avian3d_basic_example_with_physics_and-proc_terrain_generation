@@ -694,13 +694,7 @@ fn control_cam(
   let mut y: f32 = ((fw.y / FW_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
   let mut z: f32 = ((fw.z / FW_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
 
-  assert!(
-    x.abs() <= 1.0 && y.abs() <= 1.0 && z.abs() <= 1.0,
-    "FW/BW: (x: {:.6}, y: {:.6}, z: {:.6})",
-    x,
-    y,
-    z
-  );
+  // assert!( x.abs() <= 1.0 && y.abs() <= 1.0 && z.abs() <= 1.0, "FW/BW: (x: {:.6}, y: {:.6}, z: {:.6})", x, y, z );
 
   impulse3.y += jump_force;
 
@@ -724,16 +718,16 @@ fn control_cam(
   } else {
     // dbgln!("Camera is paused");
     if keys.pressed(KeyCode::KeyW) {
-      transform.translation.x += x * 100.0;
-      transform.translation.y += y * 100.0;
-      transform.translation.z += z * 100.0;
+      transform.translation.x += x * (100.0 + l_max_speed / 5.0);
+      transform.translation.y += y * (100.0 + l_max_speed / 5.0);
+      transform.translation.z += z * (100.0 + l_max_speed / 5.0);
     } else if keys.pressed(KeyCode::KeyS) {
-      transform.translation.x -= x * 100.0;
-      transform.translation.y -= y * 100.0;
-      transform.translation.z -= z * 100.0;
+      transform.translation.x -= x * (100.0 + l_max_speed / 5.0);
+      transform.translation.y -= y * (100.0 + l_max_speed / 5.0);
+      transform.translation.z -= z * (100.0 + l_max_speed / 5.0);
     }
 
-    let right = transform.right();
+    let right: Dir3 = transform.right();
     x = (((x - right.x) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
     y = (((y - right.y) / LR_DIV_SCALE) as f64).clamp(-1.0, 1.0) as f32;
     z = (((z - right.z) / 20.0) as f64).clamp(-1.0, 1.0) as f32;
@@ -743,9 +737,9 @@ fn control_cam(
       transform.translation.y += y * 20.0;
       transform.translation.z += z * 20.0;
     } else if keys.pressed(KeyCode::KeyD) {
-      transform.translation.x -= x * 10.0;
-      transform.translation.y -= y * 10.0;
-      transform.translation.z -= z * 10.0;
+      transform.translation.x -= x * 20.0;
+      transform.translation.y -= y * 20.0;
+      transform.translation.z -= z * 20.0;
     }
   }
 

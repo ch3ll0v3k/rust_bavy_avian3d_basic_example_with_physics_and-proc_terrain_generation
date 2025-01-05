@@ -8,12 +8,41 @@ use avian3d::prelude::{
 
 // prettier-ignore
 use bevy::{
-  app::{ App, ScheduleRunnerPlugin, Startup, Update }, asset::{ AssetServer, Assets, Handle }, audio::{ AudioPlayer, AudioPlugin, AudioSource, PlaybackMode, PlaybackSettings, Volume }, color::{ palettes::{css::*, tailwind::*}, Color }, core_pipeline::{
+  app::{ App, ScheduleRunnerPlugin, Startup, Update }, 
+  asset::{ AssetServer, Assets, Handle }, 
+  audio::{ AudioPlayer, AudioPlugin, AudioSource, PlaybackMode, PlaybackSettings, Volume }, 
+  color::{ 
+    palettes::{css::*, tailwind::*}, 
+    Color 
+  }, 
+  core_pipeline::{
     core_3d::graph::{ Core3d, Node3d },
     fullscreen_vertex_shader::fullscreen_shader_vertex_state,
-  }, ecs::query::{ QueryItem, QuerySingleError }, gizmos::AppGizmoBuilder, image::{ ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor }, math::{ Affine2, IVec2, Vec2, Vec3 }, pbr::{ wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial, OpaqueRendererMethod, StandardMaterial }, prelude::*, render::{
-    extract_component::{ ComponentUniforms, DynamicUniformIndex, ExtractComponent, ExtractComponentPlugin, UniformComponentPlugin }, mesh::VertexAttributeValues, render_graph::{ NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner }, render_resource::binding_types::{ sampler, texture_2d, uniform_buffer }, renderer::{ RenderContext, RenderDevice }, view::ViewTarget, RenderApp
-  }, time::{ common_conditions::on_timer, Fixed, Time }, utils::{default, hashbrown::hash_map}, window::WindowMode::*
+  }, ecs::query::{ QueryItem, QuerySingleError }, 
+  gizmos::AppGizmoBuilder, image::{ ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor }, 
+  math::{ Affine2, IVec2, Vec2, Vec3 }, 
+  pbr::{ wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial, OpaqueRendererMethod, StandardMaterial }, 
+  prelude::*, render::{
+    extract_component::{ 
+      ComponentUniforms, DynamicUniformIndex, ExtractComponent, ExtractComponentPlugin, UniformComponentPlugin 
+    }, 
+    mesh::VertexAttributeValues, render_graph::{ 
+      NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner 
+    }, 
+    render_resource::binding_types::{ 
+      sampler, texture_2d, uniform_buffer 
+    }, 
+    renderer::{ 
+      RenderContext, RenderDevice 
+    }, 
+    view::ViewTarget, 
+    RenderApp
+  }, 
+  time::{ 
+    common_conditions::on_timer, Fixed, Time 
+  }, utils::{ 
+    default, hashbrown::hash_map
+  }, window::WindowMode::*
 };
 
 mod terrain_lod_map;
@@ -84,116 +113,116 @@ fn startup(
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 
-  return;
+  // return;
 
-  // XXX
-  let mut inner_map: &mut ResMut<'_, InnerMapper> = inner_mapper_mut.as_mut().unwrap();
-  let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
-  let (water_material, water ) = get_water_pbr_and_mesh();
-  let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
+  // // XXX
+  // let mut inner_map: &mut ResMut<'_, InnerMapper> = inner_mapper_mut.as_mut().unwrap();
+  // let image_hashmap: &mut ResMut<ImageCache> = res_mut_texture_cache.as_mut().unwrap();
+  // let (water_material, water ) = get_water_pbr_and_mesh();
+  // let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
-  let terrain_material: StandardMaterial = get_terrain_bpr(&asset_server, image_hashmap);
-  let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
+  // let terrain_material: StandardMaterial = get_terrain_bpr(&asset_server, image_hashmap);
+  // let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
-  let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
+  // let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
   
-  for z in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
-    for x in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
+  // for z in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
+  //   for x in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
       
-      let on_z = ((TERRAIN_LOD_MAP_SIZE as i32 - 7) + z) as usize;
-      let on_x = ((TERRAIN_LOD_MAP_SIZE as i32 - 7) + x) as usize;
+  //     let on_z = ((TERRAIN_LOD_MAP_SIZE as i32 - 7) + z) as usize;
+  //     let on_x = ((TERRAIN_LOD_MAP_SIZE as i32 - 7) + x) as usize;
 
-      let dyn_scale = lod[ on_z ][ on_x ] as i16;
+  //     let dyn_scale = lod[ on_z ][ on_x ] as i16;
 
-      if dyn_scale <= 0 { continue; } 
-      let terrain: Mesh = generate_chunk(x as f64, z as f64, dyn_scale);
+  //     if dyn_scale <= 0 { continue; } 
+  //     let terrain: Mesh = generate_chunk(x as f64, z as f64, dyn_scale);
 
-      let terrain_id: Entity = commands.spawn((
-        RigidBody::Static,
-        CollisionMargin(COLLISION_MARGIN),
-        Collider::trimesh_from_mesh(&terrain).unwrap(),
-        Mesh3d(meshes.add(terrain)),
-        MeshMaterial3d(terrain_material_handle.clone()),
-        // MeshMaterial3d(materials.add(Color::srgb_u8(255, 255, 255))),
-        MTerrainMarker,
-        PhysicsStaticObject,
-        PhysicsStaticObjectTerrain,
-        get_defaul_physic_debug_params(),
-        AnyObject,
-        Name::new("terrain_t"),
-      )).id();
+  //     let terrain_id: Entity = commands.spawn((
+  //       RigidBody::Static,
+  //       CollisionMargin(COLLISION_MARGIN),
+  //       Collider::trimesh_from_mesh(&terrain).unwrap(),
+  //       Mesh3d(meshes.add(terrain)),
+  //       MeshMaterial3d(terrain_material_handle.clone()),
+  //       // MeshMaterial3d(materials.add(Color::srgb_u8(255, 255, 255))),
+  //       MTerrainMarker,
+  //       PhysicsStaticObject,
+  //       PhysicsStaticObjectTerrain,
+  //       get_defaul_physic_debug_params(),
+  //       AnyObject,
+  //       Name::new("terrain_t"),
+  //     )).id();
 
-      let mut spawn: bool = false;
+  //     let mut spawn: bool = false;
 
-      if let Some(res) = inner_map.hash_map.get(&(z as i16, x as i16)) {
-        dbgln!("inner_map.hash_map.get(&({z}, {x})) => lod (load): {}", res.lod);
+  //     if let Some(res) = inner_map.hash_map.get(&(z as i16, x as i16)) {
+  //       dbgln!("inner_map.hash_map.get(&({z}, {x})) => lod (load): {}", res.lod);
 
-        if( res.lod != dyn_scale ){
-          dbgln!("inner_map.hash_map.get(&({z}, {x})) => lod (dyn) => commands.entity({}).despawn: {}", res.entity, dyn_scale);
-          spawn = true;
-          commands.entity(res.entity).despawn();
-        }
+  //       if( res.lod != dyn_scale ){
+  //         dbgln!("inner_map.hash_map.get(&({z}, {x})) => lod (dyn) => commands.entity({}).despawn: {}", res.entity, dyn_scale);
+  //         spawn = true;
+  //         commands.entity(res.entity).despawn();
+  //       }
 
-      }else{
-        dbgln!("inner_map.hash_map.insert(&({z}, {x})) => lod (dyn): {dyn_scale}");
-        spawn = true;
-      }
+  //     }else{
+  //       dbgln!("inner_map.hash_map.insert(&({z}, {x})) => lod (dyn): {dyn_scale}");
+  //       spawn = true;
+  //     }
 
-      if( spawn ){
-        let capacity: Option<IInnerMap> = inner_map.hash_map.insert(
-          (z as i16, x as i16), 
-          IInnerMap{ 
-              // entity: terrain_id, 
-              entity: Entity::from( terrain_id ), 
-              lod: dyn_scale
-            }
-        );
-      }
+  //     if( spawn ){
+  //       let capacity: Option<IInnerMap> = inner_map.hash_map.insert(
+  //         (z as i16, x as i16), 
+  //         IInnerMap{ 
+  //             // entity: terrain_id, 
+  //             entity: Entity::from( terrain_id ), 
+  //             lod: dyn_scale
+  //           }
+  //       );
+  //     }
 
-      // if let Some(res_mut) = &mut inner_mapper_mut {
-      //   // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
-      //   if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
-      //     // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
-      //   }else{
-      //     // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
-      //     let capacity = res_mut.hash_map.insert(
-      //       (z as i16, x as i16), 
-      //       IInnerMap{ 
-      //           // entity: terrain_id, 
-      //           entity: Entity::from( terrain_id ), 
-      //           // entity: Entity::from_raw(42s31231231), 
-      //           lod: dyn_scale
-      //         }
-      //     );
-      //   }
-      // }
+  //     // if let Some(res_mut) = &mut inner_mapper_mut {
+  //     //   // dbgln!("capacity: {:?}", res_mut.hash_map.capacity());
+  //     //   if let Some(res) = res_mut.hash_map.get(&(z as i16, x as i16)) {
+  //     //     // dbgln!("res_mut.hash_map.get(&({z}, {x})) => lod: {}", res.lod);
+  //     //   }else{
+  //     //     // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
+  //     //     let capacity = res_mut.hash_map.insert(
+  //     //       (z as i16, x as i16), 
+  //     //       IInnerMap{ 
+  //     //           // entity: terrain_id, 
+  //     //           entity: Entity::from( terrain_id ), 
+  //     //           // entity: Entity::from_raw(42s31231231), 
+  //     //           lod: dyn_scale
+  //     //         }
+  //     //     );
+  //     //   }
+  //     // }
 
-      let walter_f: i32 = 0;
+  //     let walter_f: i32 = 0;
 
-      if z >= -walter_f && z <= walter_f && x >= -walter_f && x <= walter_f {
+  //     if z >= -walter_f && z <= walter_f && x >= -walter_f && x <= walter_f {
 
-        commands.spawn((
-          // RigidBody::Static,
-          // Collider::trimesh_from_mesh(&water).unwrap(),
-          // Sensor,
-          Transform::from_xyz(
-            (x * TERRAIN_CHUNK_X as i32) as f32, 
-             -3.0, // -13
-            (z * TERRAIN_CHUNK_X as i32) as f32
-            // .looking_at(Vec3::ZERO, Vec3::ZERO)
-          ),
-          Mesh3d(meshes.add(water.clone())),
-          // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
-          // MeshMaterial3d(water_material_handle.clone()),
-          MeshMaterial3d(water_material_handle.clone()),
-          // DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 1.0)),
-          AnyObject,
-          Name::new("water_t"),
-        ));
-      }
+  //       commands.spawn((
+  //         // RigidBody::Static,
+  //         // Collider::trimesh_from_mesh(&water).unwrap(),
+  //         // Sensor,
+  //         Transform::from_xyz(
+  //           (x * TERRAIN_CHUNK_X as i32) as f32, 
+  //            -3.0, // -13
+  //           (z * TERRAIN_CHUNK_X as i32) as f32
+  //           // .looking_at(Vec3::ZERO, Vec3::ZERO)
+  //         ),
+  //         Mesh3d(meshes.add(water.clone())),
+  //         // MeshMaterial3d(materials.add(Color::srgba_u8(128, 197, 222,17))),
+  //         // MeshMaterial3d(water_material_handle.clone()),
+  //         MeshMaterial3d(water_material_handle.clone()),
+  //         // DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 1.0)),
+  //         AnyObject,
+  //         Name::new("water_t"),
+  //       ));
+  //     }
       
-    }
-  }
+  //   }
+  // }
 
 }
 
@@ -237,7 +266,7 @@ fn update_terrain_on_player_position(
   let g_z: i32 = ((pos.z + add_z) / TERRAIN_CHUNK_X) as i32;
   let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
 
-  const SIZE_SIZE_T: i32 = 4;
+  const SIZE_SIZE_T: i32 = 6;
 
   for l_z in -SIZE_SIZE_T..=SIZE_SIZE_T {
     for l_x in -SIZE_SIZE_T..=SIZE_SIZE_T {
@@ -289,7 +318,7 @@ fn update_terrain_on_player_position(
         // dbgln!("  => SPAWN @(&({abs_z}, {abs_x})) => lod (dyn): {dyn_scale}");
 
         let terrain: Mesh = generate_chunk(abs_x as f64, abs_z as f64, dyn_scale);
-        let terrain_material: StandardMaterial = get_terrain_bpr(&asset_server, image_hashmap);
+        let terrain_material: StandardMaterial = get_terrain_bpr(&asset_server, image_hashmap, dyn_scale);
         let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
         let terrain_id: Entity = commands
@@ -389,213 +418,6 @@ fn update_terrain_on_player_position(
       }
     }
   }
-}
-
-fn calculate_final_subdivisions(dyn_scale: i16) -> u32 {
-  let final_subdivisions: u32 =
-    TERRAIN_CHUNK_SUBDIVISIONS / (dyn_scale as u32) - SUBDIVISION_SUB_FACTOR;
-  return final_subdivisions;
-}
-
-// prettier-ignore
-fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
-  
-  let noise: BasicMulti<Perlin> = BasicMulti::<Perlin>::default();
-  let final_subdivisions: u32 = calculate_final_subdivisions(dyn_scale);
-
-  let mut terrain = Mesh::from(
-    Plane3d::default()
-      .mesh()
-      .size(TERRAIN_CHUNK_X, TERRAIN_CHUNK_X)
-      .subdivisions(final_subdivisions)
-  )
-    .with_generated_tangents()
-    .unwrap();
-
-
-  if let Some(VertexAttributeValues::Float32x3(positions)) = terrain.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
-
-    // main terrain topology
-    for pos in positions.iter_mut() {
-      let xi: f32 = noise.get([
-        (((pos[0] as f64) + (TERRAIN_CHUNK_X as f64) * x) as f64) / TERRAIN_CHUNK_SCALLER,
-        (((pos[2] as f64) + (TERRAIN_CHUNK_X as f64) * z) as f64) / TERRAIN_CHUNK_SCALLER,
-        0.0 as f64,
-      ]) as f32;
-      pos[0] += (TERRAIN_CHUNK_X * (x as f32)) as f32; // + ((x / 1.0) as f32);
-      pos[1] = xi * TERRAIN_HEIGHT * 1.0;
-      // pos[1] = 0.0;
-      pos[2] += (TERRAIN_CHUNK_X * (z as f32)) as f32; // + ((z / 1.0) as f32);
-      if USE_SEGMENT_SEPARATOR {
-        pos[0] += (x / 1.0) as f32;
-        pos[2] += (z / 1.0) as f32;
-      }
-    }
-
-    // seconds pass
-    // for pos in positions.iter_mut() {
-    //   let xi: f32 = noise.get([
-    //     (((pos[0] as f64) + (TERRAIN_CHUNK_X as f64) * x) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
-    //     (((pos[2] as f64) + (TERRAIN_CHUNK_X as f64) * z) as f64) / (TERRAIN_CHUNK_SCALLER / 100.0),
-    //     0.0 as f64,
-    //   ]) as f32;
-    //   pos[1] += xi * TERRAIN_HEIGHT * 0.001;
-    // }
-
-    for pos in positions.iter_mut() {
-      pos[1] *= 1.50;
-      pos[1] += 20.0; // def: 1.0
-    }
-
-    let sub = 7.0; // 15.0; // -10.0;
-
-    let colors: Vec<[f32; 4]> = positions
-      .iter()
-      .map(|[_, g, _]| {
-        let g: f32 = ((*g-sub) + TERRAIN_HEIGHT) / (TERRAIN_HEIGHT * 2.0); //  * 2.0 + 2.0; // * 26.0;
-        return terrain_cal_color_on_g(g);
-      })
-      .collect();
-    terrain.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
-    terrain.compute_normals();
-
-    if TERRAIN_USE_LOWER_Y_ON_FAR_DISTANCE && dyn_scale != 2 {
-      if let Some(VertexAttributeValues::Float32x3(positions)) = terrain.attribute_mut(Mesh::ATTRIBUTE_POSITION ){
-        for pos in positions.iter_mut() {
-          // pos[1] -= (((dyn_scale.abs() as f32) - 4.0) * 1.0) / 2.0;
-          // pos[1] -= (((dyn_scale.abs() as f32) - 10.0) * 1.0) / 1.0;
-          // pos[1] *= (((dyn_scale.abs() as f32 / 2.0))); // - 10.0) * 1.0) / 1.0;
-          // pos[1] -= (((dyn_scale.abs() as f32 * 20.0))); // - 10.0) * 1.0) / 1.0;
-          pos[1] -= (((dyn_scale.abs() as f32 * 2.0))); // - 10.0) * 1.0) / 1.0;
-        }
-      }
-    }
-
-  }
-
-  // if( TERRAIN_DYNAMIC_ON_MESH_UV_SCALE > 1.0 ){
-  //   if let Some(VertexAttributeValues::Float32x2(ref mut uvs)) = terrain.attribute_mut( Mesh::ATTRIBUTE_UV_0 ) {
-  //     for uv in uvs.iter_mut() {
-  //       uv[0] *= TERRAIN_DYNAMIC_ON_MESH_UV_SCALE; // Scale U
-  //       uv[1] *= TERRAIN_DYNAMIC_ON_MESH_UV_SCALE; // Scale V
-  //     }
-  //   }
-  // }
-
-  return terrain;
-
-}
-
-// prettier-ignore
-fn terrain_cal_color_on_g(g: f32) -> [f32; 4] {
-
-  let mut color: [f32; 4];
-
-  if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.0 { 
-    color = Color::from(WHITE).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.3 {
-    color = Color::from(GRAY_200).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.8 {
-    color = Color::from(GRAY_300).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 {
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.6 {
-    color = Color::from(BLUE_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.9 {
-    color = Color::from(BLUE_600).to_linear().to_f32_array();
-
-  } else { // water-upper border
-    color = Color::from(BLUE_600).to_linear().to_f32_array();
-  }
-
-  return color;
-
-  // if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 1.5 {
-  //   color = Color::from(BLACK).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.5 {
-  //   color = Color::from(RED_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 3.5 {
-  //   color = Color::from(GREEN_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 4.5 {
-  //   color = Color::from(BLUE_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 5.5 {
-  //   color = Color::from(BLACK).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
-  //   color = Color::from(RED_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {
-  //   color = Color::from(GREEN_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.0 {
-  //   color = Color::from(BLUE_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {
-  //   color = Color::from(BLACK).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.0 {
-  //   color = Color::from(RED_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.5 {
-  //   color = Color::from(GREEN_500).to_linear().to_f32_array();
-  // } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 10.0 {
-  //   color = Color::from(BLUE_500).to_linear().to_f32_array();
-  // } else {
-  //   color = Color::from(BLACK).to_linear().to_f32_array();
-  // }
-  // // color[3] = 0.1;
-  // return color;
-
-  if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.0 {
-    color = Color::from(GRAY_100).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.1 {
-    color = Color::from(GRAY_200).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.2 {
-    color = Color::from(GRAY_300).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.3 {
-    color = Color::from(GRAY_300).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.4 {
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 2.5 {
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 3.0 {
-    color = Color::from(GRAY_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 5.0 { // first TERRAIN_H_COLOR_STEP of mountens
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.0 { // before mountens
-    // color = Color::from(GREEN_500).to_linear().to_f32_array();
-    color = Color::from(GRAY_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.2 {
-    // color = Color::from(GREEN_200).to_linear().to_f32_array();
-    color = Color::from(GRAY_200).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 6.5 {
-    // color = Color::from(GREEN_100).to_linear().to_f32_array();
-    color = Color::from(GRAY_100).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.3 { 
-    // color = Color::from(GRAY_300).to_linear().to_f32_array();
-    // color = Color::from(RED_500).to_linear().to_f32_array();
-    // color = Color::from(GREEN_100).to_linear().to_f32_array();
-    color = Color::from(GRAY_100).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.4 { // water-upper border
-    color = Color::from(GRAY_300).to_linear().to_f32_array();
-    // color = Color::from(RED_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.5 {// water-lower border
-    color = Color::from(GRAY_300).to_linear().to_f32_array();
-    // color = Color::from(RED_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 7.6 {
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-    // color = Color::from(RED_500).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.0 {
-    // color = Color::from(BLUE_500).to_linear().to_f32_array();
-    // color = Color::from(RED_500).to_linear().to_f32_array();
-    // color = Color::from(BLUE_400).to_linear().to_f32_array();
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 8.5 {
-    // color = Color::from(BLUE_400).to_linear().to_f32_array();
-    color = Color::from(GRAY_400).to_linear().to_f32_array();
-  } else if g > MAX_TERRAIN_H_FOR_COLOR - TERRAIN_H_COLOR_STEP * 9.0 {
-    // color = Color::from(BLUE_500).to_linear().to_f32_array();
-    color = Color::from(GRAY_500).to_linear().to_f32_array();
-  } else {
-    // color = Color::from(BLUE_600).to_linear().to_f32_array();
-    color = Color::from(GRAY_600).to_linear().to_f32_array();
-  }
-
-  return color;
 }
 
 // prettier-ignore

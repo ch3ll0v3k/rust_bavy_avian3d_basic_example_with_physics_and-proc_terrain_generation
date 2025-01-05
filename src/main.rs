@@ -103,7 +103,7 @@ use lights::MPointLightMarker;
 use markers::{ m_avian::*, m_bevy::* };
 use constants::{ viewport_settings::*, physics_world::* };
 use terrain::MTerrainMarker;
-use m_lib::physics;
+use m_lib::{ colors, physics };
 
 // prettier-ignore
 fn main() {
@@ -119,7 +119,9 @@ fn main() {
 
   App::new()
     .add_plugins(app_config::AppConfigPlugin)
-    .insert_resource(ClearColor(Color::from(BLUE_300)))
+    .insert_resource(ClearColor(
+      colors::hex_to_rgb("#624e02")
+    ))
     .insert_resource(Gravity(physics::get_gravity_vec3()))
     // .add_plugins(
     //   ScheduleRunnerPlugin::run_loop(
