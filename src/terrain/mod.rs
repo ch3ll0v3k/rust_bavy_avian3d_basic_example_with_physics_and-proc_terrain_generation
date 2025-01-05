@@ -327,29 +327,41 @@ fn update_terrain_on_player_position(
           true
         );
 
-        let water_material = StandardMaterial{
-          // base_color_texture: Some(water_diff_texture.clone()),
-          // normal_map_texture: Some(water_normal_map_texture.clone()),
-          // uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
-          // base_color: BLUE_400.into(),
-          metallic: 0.3,
-          base_color: Color::srgba_u8(128, 197, 222, 30),
-          perceptual_roughness: 0.8,
-          alpha_mode: AlphaMode::Blend,
-          opaque_render_method: OpaqueRendererMethod::Auto,
-          ..default()
-        };
-        // let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
+        // shaders with DepthPrepass => very slow
+        // {
+        //   let water_material = StandardMaterial{
+        //     // base_color_texture: Some(water_diff_texture.clone()),
+        //     // normal_map_texture: Some(water_normal_map_texture.clone()),
+        //     // uv_transform: Affine2::from_scale(Vec2::new(4.0, 4.0)),
+        //     // base_color: BLUE_400.into(),
+        //     metallic: 0.3,
+        //     base_color: Color::srgba_u8(128, 197, 222, 30),
+        //     perceptual_roughness: 0.8,
+        //     alpha_mode: AlphaMode::Blend,
+        //     opaque_render_method: OpaqueRendererMethod::Auto,
+        //     ..default()
+        //   };
+        //   let water_material_handle: Handle<ExtendedMaterial<StandardMaterial, WaterExtension>> = water_materials.add(ExtendedMaterial {
+        //     base: water_material,
+        //     extension: WaterExtension { 
+        //       quantize_steps: 30
+        //     },
+        //   });
+        // }
 
-        let water_material_handle: Handle<ExtendedMaterial<StandardMaterial, WaterExtension>> = water_materials.add(ExtendedMaterial {
-          base: water_material,
-          extension: WaterExtension { 
-            quantize_steps: 30
-          },
-        });
+        let capacity: Option<IInnerMap> = inner_map_mut.hash_map.insert(
+          (abs_z as i16, abs_x as i16),
+          IInnerMap{
+            // entity: terrain_id,
+            entity: Entity::from( terrain_id ),
+            lod: dyn_scale
+          }
+        );
 
-        let (water_material___, water ) = get_water_pbr_and_mesh();
-        // let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
+        continue;
+        // basic material
+        let (water_material, water ) = get_water_pbr_and_mesh();
+        let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
         // if z >= -walter_f && z <= walter_f && x >= -walter_f && x <= walter_f {}
         if g_x == 0 && g_z == 0 {
@@ -374,14 +386,6 @@ fn update_terrain_on_player_position(
           ));
         }
 
-        let capacity: Option<IInnerMap> = inner_map_mut.hash_map.insert(
-          (abs_z as i16, abs_x as i16),
-          IInnerMap{
-              // entity: terrain_id,
-              entity: Entity::from( terrain_id ),
-              lod: dyn_scale
-            }
-        );
       }
     }
   }

@@ -96,7 +96,7 @@ impl Plugin for DebugPlugin {
       })
       .add_systems(Startup, (
           startup,
-          spawn_test_floating_objects,
+          // spawn_test_floating_objects,
       ))
       .add_plugins((
           WireframePlugin,

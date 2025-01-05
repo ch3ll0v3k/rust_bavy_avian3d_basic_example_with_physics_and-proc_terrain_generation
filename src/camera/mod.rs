@@ -1,6 +1,6 @@
 // prettier-ignore
 use bevy::{ 
-  app::{ App, Plugin, Startup, Update }, core::Name, core_pipeline::prepass::DepthPrepass, prelude::{ Camera3d, Component, Deref, DerefMut, Resource, Transform }, utils::default
+  app::{ App, Plugin, Startup, Update }, core::Name, core_pipeline::prepass::{DepthPrepass, NormalPrepass}, prelude::{ Camera3d, Component, Deref, DerefMut, Resource, Transform }, utils::default
 };
 
 // prettier-ignore
@@ -56,7 +56,14 @@ impl Plugin for CameraPlugin {
 }
 
 // prettier-ignore
-pub fn get_camera() -> (Name, Camera3d, Transform, CameraMarker, DepthPrepass, CustomPostProcessSettings) {
+pub fn get_camera() -> (
+  Name, 
+  Camera3d, 
+  Transform, 
+  CameraMarker, 
+  DepthPrepass, 
+  NormalPrepass,
+  CustomPostProcessSettings) {
   (
     Name::new("p_player_camera_t"),
     Camera3d::default(),
@@ -64,7 +71,7 @@ pub fn get_camera() -> (Name, Camera3d, Transform, CameraMarker, DepthPrepass, C
     Transform::from_xyz(0.0, 1.0, 0.0), // .looking_at(POS, Vec3::Y),
     CameraMarker,
     DepthPrepass,
-    // NormalPrepass,
+    NormalPrepass,
     CustomPostProcessSettings {
       // intensity: 0.05,
       // set_r: 0.1,

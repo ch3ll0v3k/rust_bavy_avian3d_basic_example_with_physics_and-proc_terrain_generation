@@ -115,8 +115,8 @@ pub fn get_water_pbr_and_mesh() -> (StandardMaterial, Mesh) {
     // double_sided: true,
     cull_mode: Some(Face::Front),
     base_color: Color::srgba_u8(70, 70, 180, 5),
-    opaque_render_method: OpaqueRendererMethod::Auto,
-    alpha_mode: AlphaMode::Blend,
+    // opaque_render_method: OpaqueRendererMethod::Auto,
+    // alpha_mode: AlphaMode::Blend,
     ..default()
   };
 
