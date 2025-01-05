@@ -11,7 +11,11 @@ use bevy::{
 };
 use wgpu::Face;
 
-use crate::{ asset_loader::image_cache::{ cache_load_image, ImageCache }, sys_paths::image::pbr };
+use crate::{
+  asset_loader::image_cache::{ cache_load_image, ImageCache },
+  materials::water::WaterExtension,
+  sys_paths::image::pbr,
+};
 
 use super::terrain_constants::*;
 
@@ -108,9 +112,9 @@ pub fn get_water_pbr_and_mesh() -> (StandardMaterial, Mesh) {
 
   let water_material: StandardMaterial = StandardMaterial {
     unlit: !false,
-    double_sided: true,
+    // double_sided: true,
     cull_mode: Some(Face::Front),
-    base_color: Color::srgba_u8(70, 70, 180, 17),
+    base_color: Color::srgba_u8(70, 70, 180, 5),
     opaque_render_method: OpaqueRendererMethod::Auto,
     alpha_mode: AlphaMode::Blend,
     ..default()

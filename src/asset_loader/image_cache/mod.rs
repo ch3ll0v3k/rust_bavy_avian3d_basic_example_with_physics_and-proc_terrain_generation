@@ -72,35 +72,14 @@ pub fn cache_load_image(
     // dbgln!("capacity: {:?}", image_hashmap.hash_map.capacity());
     
   if let Some(handle_image) = image_hashmap.image_cache.get(&cache_path) {
-    dbgln!("image_hashmap.image_cache.get(&({cache_path}) => found ...");
+    // dbgln!("image_hashmap.image_cache.get(&({cache_path}) => found ...");
     return handle_image.clone();      
   }
   
-  dbgln!("image_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
+  // dbgln!("image_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
   image_hashmap.image_cache.insert(cache_path, image_handle.clone());
  
   image_handle
-
-  // let mut image_handle: Handle<Image>;
-  // let cache_path: String = path.to_string();
-  // if let Some(image_hashmap) = &mut image_cache {
-  //   // dbgln!("capacity: {:?}", image_hashmap.hash_map.capacity());
-    
-  //   if let Some(handle_image) = image_hashmap.image_cache.get(&cache_path) {
-  //     dbgln!("image_hashmap.image_cache.get(&({cache_path}) => found ...");
-  //     return handle_image.clone();      
-  //   }
-    
-  //   dbgln!("image_hashmap.image_cache.get(&({cache_path}) => not found: update cache ...");
-  //   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
-  //   image_hashmap.image_cache.insert(cache_path, image_handle.clone());
-    
-  // }else{
-  //   dbgln!("image_hashmap.image_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
-  //   image_handle = _load_image_with_common_settings(asset_server, path, with_settings);
-  // }
-
-  // image_handle
   
 }

@@ -64,35 +64,14 @@ pub fn cache_load_font(
     // dbgln!("capacity: {:?}", font_hashmap.hash_map.capacity());
     
   if let Some(handle_font) = font_hashmap.font_cache.get(&cache_path) {
-    dbgln!("font_hashmap.font_cache.get(&({cache_path}) => found ...");
+    // dbgln!("font_hashmap.font_cache.get(&({cache_path}) => found ...");
     return handle_font.clone();      
   }
   
-  dbgln!("font_hashmap.font_cache.get(&({cache_path}) => not found: update cache ...");
+  // dbgln!("font_hashmap.font_cache.get(&({cache_path}) => not found: update cache ...");
   font_handle = _load_font_with_common_settings(asset_server, path, with_settings);
   font_hashmap.font_cache.insert(cache_path, font_handle.clone());
  
   font_handle
-
-  // let mut font_handle: Handle<Image>;
-  // let cache_path: String = path.to_string();
-  // if let Some(font_hashmap) = &mut font_cache {
-  //   // dbgln!("capacity: {:?}", font_hashmap.hash_map.capacity());
-    
-  //   if let Some(handle_font) = font_hashmap.font_cache.get(&cache_path) {
-  //     dbgln!("font_hashmap.font_cache.get(&({cache_path}) => found ...");
-  //     return handle_font.clone();      
-  //   }
-    
-  //   dbgln!("font_hashmap.font_cache.get(&({cache_path}) => not found: update cache ...");
-  //   font_handle = _load_font_with_common_settings(asset_server, path, with_settings);
-  //   font_hashmap.font_cache.insert(cache_path, font_handle.clone());
-    
-  // }else{
-  //   dbgln!("font_hashmap.font_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
-  //   font_handle = _load_font_with_common_settings(asset_server, path, with_settings);
-  // }
-
-  // font_handle
   
 }

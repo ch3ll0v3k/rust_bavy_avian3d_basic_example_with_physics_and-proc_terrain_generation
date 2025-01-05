@@ -724,13 +724,13 @@ fn control_cam(
   } else {
     // dbgln!("Camera is paused");
     if keys.pressed(KeyCode::KeyW) {
-      transform.translation.x += x * 10.0;
-      transform.translation.y += y * 10.0;
-      transform.translation.z += z * 10.0;
+      transform.translation.x += x * 100.0;
+      transform.translation.y += y * 100.0;
+      transform.translation.z += z * 100.0;
     } else if keys.pressed(KeyCode::KeyS) {
-      transform.translation.x -= x * 10.0;
-      transform.translation.y -= y * 10.0;
-      transform.translation.z -= z * 10.0;
+      transform.translation.x -= x * 100.0;
+      transform.translation.y -= y * 100.0;
+      transform.translation.z -= z * 100.0;
     }
 
     let right = transform.right();
@@ -739,13 +739,13 @@ fn control_cam(
     z = (((z - right.z) / 20.0) as f64).clamp(-1.0, 1.0) as f32;
 
     if keys.pressed(KeyCode::KeyA) {
-      transform.translation.x += x;
-      transform.translation.y += y;
-      transform.translation.z += z;
+      transform.translation.x += x * 20.0;
+      transform.translation.y += y * 20.0;
+      transform.translation.z += z * 20.0;
     } else if keys.pressed(KeyCode::KeyD) {
-      transform.translation.x -= x;
-      transform.translation.y -= y;
-      transform.translation.z -= z;
+      transform.translation.x -= x * 10.0;
+      transform.translation.y -= y * 10.0;
+      transform.translation.z -= z * 10.0;
     }
   }
 

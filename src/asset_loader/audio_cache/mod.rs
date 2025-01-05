@@ -66,35 +66,14 @@ pub fn cache_load_audio(
     // dbgln!("capacity: {:?}", audio_hashmap.hash_map.capacity());
     
   if let Some(handle_audio) = audio_hashmap.audio_cache.get(&cache_path) {
-    dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
+    // dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
     return handle_audio.clone();      
   }
   
-  dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
+  // dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
   audio_handle = _load_audio_with_common_settings(asset_server, path, with_settings);
   audio_hashmap.audio_cache.insert(cache_path, audio_handle.clone());
  
   audio_handle
-
-  // let mut audio_handle: Handle<Image>;
-  // let cache_path: String = path.to_string();
-  // if let Some(audio_hashmap) = &mut audio_cache {
-  //   // dbgln!("capacity: {:?}", audio_hashmap.hash_map.capacity());
-    
-  //   if let Some(handle_audio) = audio_hashmap.audio_cache.get(&cache_path) {
-  //     dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => found ...");
-  //     return handle_audio.clone();      
-  //   }
-    
-  //   dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => not found: update cache ...");
-  //   audio_handle = _load_audio_with_common_settings(asset_server, path, with_settings);
-  //   audio_hashmap.audio_cache.insert(cache_path, audio_handle.clone());
-    
-  // }else{
-  //   dbgln!("audio_hashmap.audio_cache.get(&({cache_path}) => hash-map resource is not available: fallback to regular asset_loader::<T>() ...");
-  //   audio_handle = _load_audio_with_common_settings(asset_server, path, with_settings);
-  // }
-
-  // audio_handle
   
 }

@@ -1,4 +1,4 @@
-pub const TERRAIN_USE_LOWER_Y_ON_FAR_DISTANCE: bool = false;
+pub const TERRAIN_USE_LOWER_Y_ON_FAR_DISTANCE: bool = true;
 pub const TERRAIN_XZ_TO_Y_SCALLER: f32 = 4.0; // 4.0;
 pub const TERRAIN_HEIGHT: f32 = 70.0 * 2.0; // 70.0 * 2.0
 pub const TERRAIN_CHUNK_X: f32 = (1024.0 / TERRAIN_XZ_TO_Y_SCALLER) * 4.0; // 4.0
