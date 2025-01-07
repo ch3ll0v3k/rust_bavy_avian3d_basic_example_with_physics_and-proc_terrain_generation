@@ -20,13 +20,17 @@ fn fragment(
   // @location(1) uv: vec2<f32> // UV coordinates from vertex shader,
 ) -> @location(0) vec4<f32> {
 
-  let distortion = sin(time_t + position.x * 1.0) * 0.05;
+  var distortion = sin(time_t + position.x * 1.0) * 0.1 / 2.0;
+    distortion += sin(time_t + position.x * 1.0) * 0.05 / 2.0;
+    distortion += sin(time_t + position.x * 1.0) * 0.025 / 2.0;
+    distortion += sin(time_t + position.x * 1.0) * 0.0125 / 2.0;
+
   let distorted_y = position.y + distortion;  
   let base_y = 0.22;
   let y_add = 0.02;
 
   if( distorted_y > -2.25+y_add ){
-    return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    return vec4<f32>(1.0, 1.0, 1.0, 0.0);
   }
 
   if( distorted_y > -2.27+y_add ){
@@ -34,7 +38,7 @@ fn fragment(
   }
 
   if( distorted_y > -2.29+y_add ){
-    return vec4<f32>(0.35, 0.35, 0.5,  0.05);
+    return vec4<f32>(0.35, 0.45, 0.5,  0.05);
   }
 
   // if( distorted_y > -2.27+y_add ){

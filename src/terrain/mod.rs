@@ -391,7 +391,7 @@ fn update_terrain_on_player_position(
           }
         );
 
-        continue;
+        // continue;
         // basic material
         let (water_material, water ) = get_water_pbr_and_mesh();
         let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);

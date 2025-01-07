@@ -311,7 +311,7 @@ fn startup(
     unlit: !false,
     // double_sided: true,
     cull_mode: Some(Face::Front),
-    // base_color: Color::srgba_u8(70, 70, 180, 5),
+    base_color: Color::srgba_u8(255, 40, 40, 20),
     // base_color: Color::srgba_u8(255, 255, 255, 255),
     opaque_render_method: OpaqueRendererMethod::Auto,
     alpha_mode: AlphaMode::Blend,
@@ -354,6 +354,8 @@ fn startup(
           MeshMaterial3d(water_material_handle),
           // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
           // AnyObject,
+          NotShadowCaster,
+          NotShadowReceiver,
         ));
       });
     });

@@ -69,7 +69,7 @@ pub fn get_camera() -> (
     Name::new("p_player_camera_t"),
     Camera3d::default(),
     // Transform::from_xyz(0.0, 6.0, 0.0), // .looking_at(POS, Vec3::Y),
-    Transform::from_xyz(0.0, 1.0, 0.0), // .looking_at(POS, Vec3::Y),
+    Transform::from_xyz(0.0, 1.0, -5.0), // .looking_at(POS, Vec3::Y),
     CameraMarker,
     DepthPrepass,
     NormalPrepass,
