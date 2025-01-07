@@ -24,7 +24,7 @@ pub struct CameraMarker;
 
 pub struct CameraPlugin;
 
-const USE_PIPELINE: bool = true;
+const USE_PIPELINE: bool = false;
 
 // prettier-ignore
 impl Plugin for CameraPlugin {
@@ -63,7 +63,8 @@ pub fn get_camera() -> (
   CameraMarker, 
   DepthPrepass, 
   NormalPrepass,
-  CustomPostProcessSettings) {
+  CustomPostProcessSettings
+) {
   (
     Name::new("p_player_camera_t"),
     Camera3d::default(),

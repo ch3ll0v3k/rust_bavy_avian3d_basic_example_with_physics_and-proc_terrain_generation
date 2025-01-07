@@ -59,7 +59,17 @@ use tools::*;
 
 // prettier-ignore
 use crate::{
-  asset_loader::image_cache::{ cache_load_image, ImageCache }, dbgln, debug::get_defaul_physic_debug_params, materials::{post_processing::water, water::WaterExtension}, player::PlayerMarker, sys_paths, terrain::terrain_lod_map::get_lod, AnyObject, PhysicsStaticObject, PhysicsStaticObjectTerrain, COLLISION_MARGIN
+  asset_loader::image_cache::{ cache_load_image, ImageCache }, 
+  dbgln, 
+  debug::get_defaul_physic_debug_params, 
+  materials::{post_processing::water, water::WaterExtension}, 
+  player::PlayerMarker, 
+  sys_paths, 
+  terrain::terrain_lod_map::get_lod, 
+  AnyObject, 
+  PhysicsStaticObject, 
+  PhysicsStaticObjectTerrain, 
+  COLLISION_MARGIN
   // materials::water::{ UnderWaterExtention, WaterExtension },
 };
 
@@ -81,7 +91,6 @@ impl Plugin for MTerrainPlugin {
     app
       .insert_resource(InnerMapper::new());
       // .insert_resource(IMapTestShift{ x: 0.0, z: 0.0 });
-
 
     app
       .add_plugins((
@@ -251,7 +260,6 @@ fn update_terrain_on_player_position(
   // return;
 
   // dbgln!(" ---------- ---------- ---------- ---------- ---------- ");
-
   let mut inner_map_mut = &mut inner_mapper_mut.as_mut().unwrap();
   // let mut inner_map_read = &inner_mapper_read;
 
@@ -276,12 +284,8 @@ fn update_terrain_on_player_position(
       let abs_z: i32 = g_z + l_z;
       let dyn_scale: i16 = lod[lod_on_z][lod_on_x] as i16;
 
-      // dbgln!("  (g: {g_z}/{g_x}) => (l: {l_z}/{l_x}) =>  (abs: {abs_z}/{abs_x}) => dyn_scale: {dyn_scale}");
-
       let mut spawn: bool = false;
       let mut remove_from_map: bool = false;
-
-      // let map_item = map_item_test.hash_map.get(&(abs_z as i16, abs_x as i16));
 
       let map_item_item = inner_map_mut.hash_map.get(&(abs_z as i16, abs_x as i16));
 
@@ -289,13 +293,13 @@ fn update_terrain_on_player_position(
         // dbgln!("  => found (&({abs_z}, {abs_x})) => lod ({}), dyn_scale: {}", res.lod, dyn_scale);
 
         if 0 == dyn_scale {
-          dbgln!("  (g: {g_z}/{g_x}) => (l: {l_z}/{l_x}) =>  (abs: {abs_z}/{abs_x}) => dyn_scale: {dyn_scale}");
-          dbgln!("  => [0] commands.entity(res.entity).despawn(&({abs_z}, {abs_x})) => despawn");
+          // dbgln!("  (g: {g_z}/{g_x}) => (l: {l_z}/{l_x}) =>  (abs: {abs_z}/{abs_x}) => dyn_scale: {dyn_scale}");
+          // dbgln!("  => [0] commands.entity(res.entity).despawn(&({abs_z}, {abs_x})) => despawn");
           remove_from_map = true;
           commands.entity(res.entity).despawn();
         } else if res.lod != dyn_scale {
-          dbgln!("  (g: {g_z}/{g_x}) => (l: {l_z}/{l_x}) =>  (abs: {abs_z}/{abs_x}) => dyn_scale: {dyn_scale}");
-          dbgln!("  => [1] commands.entity(res.entity).despawn(&({abs_z}, {abs_x})) => despawn");
+          // dbgln!("  (g: {g_z}/{g_x}) => (l: {l_z}/{l_x}) =>  (abs: {abs_z}/{abs_x}) => dyn_scale: {dyn_scale}");
+          // dbgln!("  => [1] commands.entity(res.entity).despawn(&({abs_z}, {abs_x})) => despawn");
           // inner_map_mut.hash_map.remove(&(abs_z as i16, abs_x as i16));
           remove_from_map = true;
           commands.entity(res.entity).despawn();

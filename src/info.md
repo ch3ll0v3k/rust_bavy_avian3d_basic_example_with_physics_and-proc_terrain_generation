@@ -12,3 +12,4 @@ https://www.youtube.com/watch?v=cwRcup_jz0s?si=p6-_FzYXlK-YNihI&t=10771
 [textureheaven](https://polyhaven.com/)
 [poliigon](https://www.poliigon.com/)
 
+[load gltfand more](https://bevyengine.org/examples/3d-rendering/load-gltf/)

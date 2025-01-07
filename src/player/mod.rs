@@ -1,43 +1,57 @@
 // use tracing::instrument;
 
-use wgpu::PrimitiveTopology;
+use wgpu::{ Face, PrimitiveTopology };
 
 // prettier-ignore
-use avian3d::prelude::{
+use avian3d::{parry::{na::Scale3}, prelude::{
   collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted }, 
   AngularVelocity, CoefficientCombine, Collider, CollisionMargin, ExternalAngularImpulse, 
   ExternalForce, ExternalImpulse, ExternalTorque, LinearVelocity, LockedAxes, Mass, 
   MaxLinearSpeed, Restitution, RigidBody,
+}};
+
+// prettier-ignore
+use bevy::{animation::transition, asset::Handle, color::palettes::tailwind::*, math::{Affine2, Vec2}, pbr::OpaqueRendererMethod, prelude::AlphaMode, time::{Real, Time}};
+
+// prettier-ignore
+use bevy::app::{ App, 
+  FixedUpdate, Plugin, PostUpdate, Startup, Update
+};
+
+// prettier-ignore
+use bevy::input::{
+  common_conditions::{ input_just_pressed, input_just_released },
+  keyboard::KeyboardInput,
+  mouse::{ MouseButtonInput, MouseScrollUnit, MouseWheel },
+  ButtonInput,
+  ButtonState,
+};
+
+// prettier-ignore
+use bevy::pbr::{ 
+  wireframe::Wireframe, ExtendedMaterial, MaterialPlugin, MeshMaterial3d, 
+  NotShadowCaster, NotShadowReceiver, StandardMaterial,
+};
+
+// prettier-ignore
+use bevy::prelude::{ 
+  in_state, BuildChildren, Camera3d, Capsule3d, ChildBuild, Commands, Component, 
+  Cuboid, Deref, DerefMut, Entity, EventReader, IntoSystemConfigs, KeyCode, Mesh, 
+  Mesh3d, MouseButton, Projection, Query, Res, ResMut, Resource, Sphere, State, 
+  Transform, With, Without,
 };
 
 // prettier-ignore
 use bevy::{
-  animation::transition,
-  app::{ App, FixedUpdate, Plugin, PostUpdate, Startup, Update },
   asset::{ AssetServer, Assets },
   audio::{ AudioPlayer, PlaybackSettings },
   color::Color,
   core::Name,
   core_pipeline::prepass::{ DepthPrepass, NormalPrepass },
-  input::{
-    common_conditions::{ input_just_pressed, input_just_released },
-    keyboard::KeyboardInput,
-    mouse::{ MouseButtonInput, MouseScrollUnit, MouseWheel },
-    ButtonInput,
-    ButtonState,
-  },
+  gltf::GltfAssetLabel,
   math::{ Dir3, Vec3, VectorSpace },
-  pbr::{ 
-    wireframe::Wireframe, MeshMaterial3d, NotShadowCaster, NotShadowReceiver, 
-    StandardMaterial,
-  },
-  prelude::{ 
-    in_state, BuildChildren, Camera3d, Capsule3d, ChildBuild, Commands, Component, 
-    Deref, DerefMut, Entity, EventReader, IntoSystemConfigs, KeyCode, Mesh, Mesh3d, 
-    MouseButton, Projection, Query, Res, ResMut, Resource, Sphere, State, Transform, 
-    With, Without,
-  },
   render::camera::PhysicalCameraParameters,
+  scene::SceneRoot,
   text::cosmic_text::ttf_parser::Tag,
   utils::default,
 };
@@ -48,23 +62,29 @@ use bevy_render::{
   render_resource::{ AsBindGroup, RenderPipeline, ShaderRef }, 
 };
 
+pub mod animation_ids;
+
 // prettier-ignore
 use crate::{
-  app_config::{self, debug::DebugConfig, *},
-  asset_loader::audio_cache::{ cache_load_audio, AudioCache }, 
-  camera::{get_camera, CameraMarker}, 
   dbgln, 
   debug::{ 
     get_defaul_physic_debug_params, is_allowed_debug_engine, 
     is_allowed_debug_fps, is_allowed_debug_physics 
   }, 
+};
+
+// prettier-ignore
+use crate::{
+  app_config::{self, debug::DebugConfig, *}, 
+  asset_loader::audio_cache::{ cache_load_audio, AudioCache }, 
+  camera::{get_camera, CameraMarker}, 
   entities::with_children::MEntityBigSphere, 
-  lights::{ MPointLightFromMarker, MPointLightMarker, MPointLightToMarker }, 
-  m_lib::physics, 
+  lights::{ MDirLightMarker, MPointLightFromMarker, MPointLightMarker, MPointLightToMarker }, 
+  m_lib::physics, materials::cam_pos_1::CamPosExtension, 
   post_processing_pipiline::test_example::CustomPostProcessSettings, 
   state::MGameState, 
-  sys_paths, 
-  AnyObject, COLLISION_MARGIN
+  sys_paths, AnyObject, 
+  COLLISION_MARGIN
 };
 
 use sys_paths::audio::EAudio;
@@ -114,6 +134,7 @@ impl Plugin for PlayerPlugin {
           cam_track_object_origin,
           detect_bullet_collision,
           // update_shader_quad_position,
+          update_extended_material,
         ).run_if(in_state(MGameState::Running))
       )
       .add_systems(Update,(control_cam, zoom_on_scroll, handle_drag))
@@ -133,7 +154,7 @@ impl Plugin for PlayerPlugin {
       )
       .add_systems(Update,
         (
-          mk_jump
+          mk_jump,
         )
           .run_if(in_state(MGameState::Running))
           .run_if(input_just_pressed(KeyCode::Space))
@@ -151,11 +172,29 @@ impl Plugin for PlayerPlugin {
       //   )
       // )
       .add_systems(Update,constrain_linear_xz_speed)
-      .insert_resource(CMaxLinearSpeedXZ(150.0));
-      // .insert_resource(CMaxLinearSpeedXZ(30.0));
+      .insert_resource(CMaxLinearSpeedXZ(150.0))
+      // .insert_resource(CMaxLinearSpeedXZ(30.0))
+
+      .add_plugins((
+        MaterialPlugin::<ExtendedMaterial<StandardMaterial, CamPosExtension>>::default()
+      ));
 
     }
 }
+
+// fn update_camera_height(
+//   camera_query: Query<&Transform, With<CameraMarker>>,
+//   mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, CamPosExtension>>>
+// ) {
+//   let x = water_materials.as_mut();
+
+//   if let Ok(camera_transform) = camera_query.get_single() {
+//     let height = camera_transform.translation.y;
+//     for mut material in material_query.iter_mut() {
+//       material.height = height;
+//     }
+//   }
+// }
 
 const BULLET_MIN_Y_ALLOWED: f32 = -10.0;
 const MUL_POS: f32 = 5.0;
@@ -220,27 +259,72 @@ fn update() {}
 //   pub camera_position: Vec3,
 // }
 
+fn update_extended_material(
+  mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, CamPosExtension>>>,
+  // material_query: Query<&Handle<CamPosExtension>>,
+  camera_query: Query<&Transform, With<PlayerMarker>>,
+  time: Res<Time<Real>>
+) {
+
+  let mut mat = materials.as_mut();
+  let trans = camera_query.get_single().unwrap();
+
+  mat.iter_mut().for_each(|(k, v)| {
+    // dbgln!("trans.translation.y: {}", trans.translation.y);
+    v.extension.height = trans.translation.y;
+    v.extension.time_t += (time.delta_secs_f64() as f32); //  /100.0;
+    // dbgln!("v.extension.time_t: {}", v.extension.time_t); 
+    // v.extension.some_value = 10.0;
+    // v.base.base_color = Color::srgba_u8(70, 70, 180, 5);
+  });
+
+}
+
 fn startup(
+  asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, CamPosExtension>>>
 ) {
   // let id = test(&mut commands);
 
-  // commands.spawn((
-  //   RigidBody::Dynamic,
-  //   // Collider::sphere(1.65),
-  //   Collider::sphere(2.0),
-  //   CollisionMargin(COLLISION_MARGIN * 1.0),
-  //   Transform::from_xyz(-20.0, 20.0, 20.0).looking_at(Vec3::ZERO, Vec3::ZERO),
-  //   Mesh3d(meshes.add(Sphere::new(2.0))),
-  //   MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
-  //   // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
-  //   Mass(10.0),
-  //   Name::new("player_bal_t"),
-  //   get_defaul_physic_debug_params(),
-  //   AnyObject,
-  // ));
+  commands.spawn((
+    SceneRoot(
+      asset_server.load(
+        GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported-3-0-deg.glb")
+        // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.glb"),
+        // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported.glb"),
+      )
+    ),
+    // Transform::from_xyz(POS.x, POS.y + 5.0, POS.z), // .looking_at(POS, Vec3::Y),
+    // Transform::from_scale(Vec3::new(2.0, 2.0, 2.0)),
+    Transform {
+      // translation: Vec3::new(POS.x, POS.y, POS.z),
+      translation: Vec3::new(POS.x, 30.0, POS.z),
+      scale: Vec3::new(5.0, 5.0, 5.0),
+      ..Default::default()
+    },
+  ));
+
+  let water_base_material: StandardMaterial = StandardMaterial {
+    unlit: !false,
+    // double_sided: true,
+    cull_mode: Some(Face::Front),
+    // base_color: Color::srgba_u8(70, 70, 180, 5),
+    // base_color: Color::srgba_u8(255, 255, 255, 255),
+    opaque_render_method: OpaqueRendererMethod::Auto,
+    alpha_mode: AlphaMode::Blend,
+    ..default()
+  };
+
+  let water_material_handle = water_materials.add(ExtendedMaterial {
+    base: water_base_material,
+    extension: CamPosExtension {
+      height: 0.0,
+      time_t: 0.0,
+    },
+  });
 
   commands
     .spawn((
@@ -252,7 +336,7 @@ fn startup(
         coefficient: 0.0,
         combine_rule: CoefficientCombine::Min,
       },
-      Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(POS, Vec3::Y),
+      Transform::from_xyz(POS.x, POS.y, POS.z), // .looking_at(POS, Vec3::Y),
       Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
       MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
       Mass(100.0),
@@ -261,10 +345,18 @@ fn startup(
       // MaxLinearSpeed(5.0),
       PlayerMarker,
       Name::new("p_player_t"),
-    )).with_children(|children| {
-        children.spawn(get_camera());
+    ))
+    .with_children(|children| {
+      children.spawn(get_camera()).with_children(|parent| {
+        parent.spawn((
+          Transform::from_xyz(0.0, 0.0, -1.0), // .looking_at(POS, Vec3::Y),
+          Mesh3d(meshes.add(Cuboid::new(3.0, 3.0, 0.1))),
+          MeshMaterial3d(water_material_handle),
+          // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
+          // AnyObject,
+        ));
       });
-
+    });
 }
 
 // fn accelerate_bodies(mut query: Query<(&mut LinearVelocity, &mut AngularVelocity)>) {
@@ -583,7 +675,7 @@ fn control_cam(
   if transform.translation.y < -f {
     // dbgln!("transform.translation.y: y {:.4}", transform.translation.y);
 
-    if transform.translation.y < -2.0 {
+    if transform.translation.y < -1.75 {
       commands.entity(entity).insert(physics::get_gravity_scale(0.0));
       // commands.entity(entity).insert(physics::get_gravity_scale(0.06));
       // commands.entity(entity).insert(physics::get_gravity_scale(0.1));
@@ -598,7 +690,8 @@ fn control_cam(
       // dbgln!("diff: y {:.4}", diff);
 
       let mut vel = q_lin_velocity.single_mut();
-      vel.0 *= 0.98;
+      vel.0 *= 0.99;
+      // vel.0 *= 0.95;
 
       // commands
       //   .entity(entity)

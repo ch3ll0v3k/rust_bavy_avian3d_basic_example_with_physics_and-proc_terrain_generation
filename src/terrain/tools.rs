@@ -256,7 +256,8 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
 
       {
         // base terrain height adjustment
-        pos[1] *= 1.50;
+        // pos[1] *= 1.50;
+        pos[1] *= 4.0;
         pos[1] += 20.0; // def: 1.0
       }
 

@@ -102,7 +102,7 @@ mod post_processing_pipiline;
 use camera::{ CameraMarker };
 use player::{ PlayerMarker };
 use debug::{ get_defaul_physic_debug_params };
-use lights::MPointLightMarker;
+use lights::{ MPointLightMarker, MDirLightMarker };
 use markers::{ m_avian::*, m_bevy::* };
 use constants::{ viewport_settings::*, physics_world::* };
 use terrain::MTerrainMarker;
@@ -146,8 +146,7 @@ fn main() {
             use_win_size.x,
             use_win_size.y
           ).with_scale_factor_override(window_scale_factor_override),
-          present_mode: present_mode,
-          // present_mode: PresentMode::Immediate,
+          present_mode,
           // mode: Fullscreen(MonitorSelection::Primary),
           // mode: BorderlessFullscreen(MonitorSelection::Primary),
           mode: window_mode,
@@ -187,7 +186,9 @@ fn main() {
       GizmoConfig::default()
     )
     .add_systems(Startup, setup)
-    .add_systems(Update, update.run_if(
+    .add_systems(Update, (
+      update
+    ).run_if(
       on_timer(Duration::from_millis(1000))
     ))
     // .add_systems(Update, update_settings)

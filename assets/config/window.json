@@ -9,6 +9,6 @@
   },
   "scale_factor_override": 1.0,
   "use_auto_vsyn": false,
-  "use_fullscreen": true,
+  "use_fullscreen": false,
   "resizable": true
 }

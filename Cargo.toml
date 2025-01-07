@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.15.0" }
+# bevy = { version = "0.15.0", features = ["jpeg", "tga", "dds", "hdr", "bmp", "gif", "tiff"] }
+bevy = { version = "0.15.0", features = ["jpeg"] }
 bevy_dev_tools = "0.15.0"
 bevy_window = "0.15.0"
 bevy_diagnostic = "0.15.0"

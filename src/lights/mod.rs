@@ -1,7 +1,13 @@
-use bevy::prelude::*;
+use bevy::{
+  pbr::{ CascadeShadowConfig, CascadeShadowConfigBuilder, DirectionalLightShadowMap },
+  prelude::*,
+};
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MPointLightMarker;
+
+#[derive(Component, Debug, PartialEq, Eq)]
+pub struct MDirLightMarker;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MPointLightFromMarker;
@@ -12,11 +18,19 @@ pub struct MPointLightToMarker;
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MLightsPlugin;
 
+// prettier-ignore
 impl Plugin for MLightsPlugin {
   fn build(&self, app: &mut App) {
-    app.add_systems(Startup, startup);
-    app.add_systems(Update, update);
-    // app.insert_resource(AmbientLight {
+    app
+      .add_systems(Startup, startup)
+      .add_systems(Update, update);
+
+    app
+      .insert_resource(DirectionalLightShadowMap { 
+        size: 1024/2, // 2248 == default
+      });
+
+      // app.insert_resource(AmbientLight {
     //   color: Color::default(),
     //   brightness: 500.0,
     // });
@@ -24,16 +38,19 @@ impl Plugin for MLightsPlugin {
 }
 
 const POS: Vec3 = Vec3::new(0.0, 10.0, 0.0);
-// const POS_2: Vec3 = Vec3::new(10000.0, 5500.0, 10000.0);
-const POS_2: Vec3 = Vec3::new(10000.0, 8500.0, 10000.0);
+const DIR_LIGHT_POS_2: Vec3 = Vec3::new(10000.0, 5500.0, 10000.0);
+// const DIR_LIGHT_POS_2: Vec3 = Vec3::new(10000.0, 8500.0, 10000.0);
 
 // prettier-ignore
 fn startup(
+  dir_light_shadow_map: Res<DirectionalLightShadowMap>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
   
+  dbgln!("{:?}", dir_light_shadow_map);
+
 
   commands.insert_resource(AmbientLight {
     color: Color::default(),
@@ -71,10 +88,23 @@ fn startup(
       // shadow_normal_bias: 0.1,
       ..default()
     },
-    Transform::from_xyz(POS_2.x, POS_2.y, POS_2.z).looking_at(Vec3::ZERO, Vec3::ZERO),
-    MPointLightMarker,
+    Transform::from_xyz(
+      DIR_LIGHT_POS_2.x, 
+      DIR_LIGHT_POS_2.y, 
+      DIR_LIGHT_POS_2.z
+    ).looking_at(Vec3::ZERO, Vec3::ZERO),
+    CascadeShadowConfigBuilder {
+      // num_cascades: 1,
+      // maximum_distance: 20.0,
+      minimum_distance: 0.5,
+      maximum_distance: 20000000.0,
+      // need to test out
+      // first_cascade_far_bound: 0.5,
+      // overlap_proportion: 0.5,
+      ..default()
+    }.build(),
+    MDirLightMarker,
   ));
-
 
 
   // commands.spawn((
@@ -108,9 +138,11 @@ fn startup(
 
 // prettier-ignore
 fn update(
-    mut query_point_light: Query<&mut Transform, With<MPointLightMarker>>
+  mut query_dir_light: Query<&mut Transform, With<MDirLightMarker>>
+  // mut query_point_light: Query<&mut Transform, With<MPointLightMarker>>
 ) {
-  let mut transform = query_point_light.single_mut();
+  let mut transform = query_dir_light.single_mut();
+  // let mut transform = query_point_light.single_mut();
   // transform.rotate_local_y(0.01);
 
 //   match transform {
