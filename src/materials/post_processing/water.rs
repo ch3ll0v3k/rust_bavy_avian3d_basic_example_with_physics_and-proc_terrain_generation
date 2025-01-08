@@ -84,7 +84,7 @@ fn setup_postprocess(
       Camera3d::default(),
       // Transform::from_xyz(0.0, 6.0, 0.0), // .looking_at(POS, Vec3::Y),
       Transform::from_xyz(0.0, 1.0, 0.0), // .looking_at(POS, Vec3::Y),
-      // CameraMarker,
+      // PlayerCameraMarker,
       DepthPrepass,
       // NormalPrepass,
     ));

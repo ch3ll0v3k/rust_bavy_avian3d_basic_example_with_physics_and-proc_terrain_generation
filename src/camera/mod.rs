@@ -1,26 +1,53 @@
 // prettier-ignore
 use bevy::{ 
-  app::{ App, Plugin, Startup, Update }, core::Name, core_pipeline::prepass::{DepthPrepass, NormalPrepass}, prelude::{ Camera3d, Component, Deref, DerefMut, Resource, Transform }, utils::default
+  app::FixedUpdate, math::{Vec3, VectorSpace}, prelude::{PerspectiveProjection, Projection, TransformPoint, Without} 
 };
 
 // prettier-ignore
-use bevy_render::{
-  camera::PhysicalCameraParameters,
+use bevy::{
+  prelude::{ in_state, Camera, Camera3d, ClearColor, ClearColorConfig, Component, Deref, With },
 };
 
+// prettier-ignore
+use bevy::{ 
+  prelude::{ DerefMut, IntoSystemConfigs, KeyCode, Query, Res, Resource, Transform }, 
+};
+
+// prettier-ignore
+use bevy::{ 
+  input::common_conditions::input_just_pressed, 
+  utils::default
+};
+
+// prettier-ignore
+use bevy::{
+  app::{ App, Plugin, Startup, Update },
+  core::Name,
+  core_pipeline::prepass::{ DepthPrepass, NormalPrepass },
+};
+
+// prettier-ignore
+use bevy_render::camera::{PhysicalCameraParameters, RenderTarget};
+
 use crate::{
+  m_lib::colors,
   materials,
+  player::PlayerMarker,
   post_processing_pipiline::test_example::{
     CustomPostProcessSettings,
     TestExamplePostProcessPlugin,
   },
+  state::MGameState,
 };
 
 #[derive(Resource, Default, Deref, DerefMut)]
 struct Parameters(PhysicalCameraParameters);
 
 #[derive(Component, Debug, PartialEq, Eq)]
-pub struct CameraMarker;
+pub struct PlayerCameraMarker;
+
+#[derive(Component, Debug, PartialEq, Eq)]
+pub struct ViewCameraMarker;
 
 pub struct CameraPlugin;
 
@@ -51,36 +78,94 @@ impl Plugin for CameraPlugin {
 
     app
       .add_systems(Startup, startup)
-      .add_systems(Update, update);
+      .add_systems(FixedUpdate, update)
+      .add_systems(Update,
+        (
+          switch_camera,
+        )
+          // .run_if(in_state(MGameState::Running))
+          .run_if(input_just_pressed(KeyCode::KeyC))
+      );
+
+  }
+}
+
+fn switch_camera(mut query: Query<&mut Camera>) {
+  for mut camera in query.iter_mut() {
+    camera.is_active = !camera.is_active;
   }
 }
 
 // prettier-ignore
-pub fn get_camera() -> (
+pub fn get_player_camera() -> (
   Name, 
   Camera3d, 
+  Camera,
+  PerspectiveProjection,
   Transform, 
-  CameraMarker, 
-  DepthPrepass, 
-  NormalPrepass,
+  PlayerCameraMarker, 
+  // DepthPrepass, 
+  // NormalPrepass,
   CustomPostProcessSettings
 ) {
   (
     Name::new("p_player_camera_t"),
-    Camera3d::default(),
-    // Transform::from_xyz(0.0, 6.0, 0.0), // .looking_at(POS, Vec3::Y),
-    Transform::from_xyz(0.0, 1.0, -5.0), // .looking_at(POS, Vec3::Y),
-    CameraMarker,
-    DepthPrepass,
-    NormalPrepass,
+    Camera3d{
+      ..default()
+    },
+    Camera{
+      is_active: true,
+      clear_color: ClearColorConfig::default(),
+      order: 0,
+      ..default()
+    },
+    PerspectiveProjection {
+      near: 0.001,
+      ..default()
+    },
+    Transform::from_xyz(0.0, 2.0, 2.0), // .looking_at(POS, Vec3::Y),
+    PlayerCameraMarker,
+    // DepthPrepass,
+    // NormalPrepass,
     CustomPostProcessSettings {
-      // intensity: 0.05,
-      // set_r: 0.1,
-      // set_g: 0.2,
-      // set_b: 0.3,
       cam_y: 0.1,
       ..default()
     },
+  )
+}
+
+// prettier-ignore
+pub fn get_view_camera() -> (
+  Name, 
+  Camera3d, 
+  Camera,
+  PerspectiveProjection,
+  Transform, 
+  ViewCameraMarker, 
+  // DepthPrepass, 
+  // NormalPrepass,
+  // CustomPostProcessSettings
+) {
+  (
+    Name::new("p_view_camera_t"),
+    Camera3d{
+      ..default()
+    },
+    Camera{
+      
+      is_active: false,
+      clear_color: ClearColorConfig::default(),
+      order: 1,
+      ..default()
+    },
+    PerspectiveProjection {
+      near: 0.001,
+      ..default()
+    },
+    Transform::from_xyz(50.0, 100.0, 45.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ViewCameraMarker,
+    // DepthPrepass,
+    // NormalPrepass,
   )
 }
 
@@ -90,6 +175,37 @@ fn startup() {
 }
 
 // prettier-ignore
-fn update() {
+fn update(
+  mut query_view_camera: Query<&mut Transform, (With<ViewCameraMarker>, Without<PlayerMarker>, )>,
+  query_player: Query<&Transform, (With<PlayerMarker>, Without<ViewCameraMarker>, )>
+) {
+
+  let mut view_trans = query_view_camera.single_mut();
+  let p_trans = query_player.single();
+
+  // dbgln!("{}", p_trans.translation);
+
+  view_trans.translation.x = p_trans.translation.x + 24.0;
+  view_trans.translation.y = p_trans.translation.y + 14.0;
+  view_trans.translation.z = p_trans.translation.z + 24.0;
+
+  view_trans.look_at(p_trans.translation, Vec3::Y);
+  // view_trans.looking_at(p_trans.translation, Vec3::Y);
 
 }
+
+// fn debug_render_targets(q: Query<&PlayerMarker>) {
+//   for camera in &q {
+//     match &camera.target {
+//       RenderTarget::Window(wid) => {
+//         eprintln!("Camera renders to window with id: {:?}", wid);
+//       }
+//       RenderTarget::Image(handle) => {
+//         eprintln!("Camera renders to image asset with id: {:?}", handle);
+//       }
+//       RenderTarget::TextureView(_) => {
+//         eprintln!("This is a special camera that outputs to something outside of Bevy.");
+//       }
+//     }
+//   }
+// }

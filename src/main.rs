@@ -99,7 +99,7 @@ mod m_lib;
 mod materials;
 mod post_processing_pipiline;
 
-use camera::{ CameraMarker };
+use camera::{ PlayerCameraMarker };
 use player::{ PlayerMarker };
 use debug::{ get_defaul_physic_debug_params };
 use lights::{ MPointLightMarker, MDirLightMarker };

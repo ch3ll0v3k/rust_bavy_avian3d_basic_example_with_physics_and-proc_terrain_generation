@@ -92,10 +92,10 @@ impl Plugin for MTerrainPlugin {
       .insert_resource(InnerMapper::new());
       // .insert_resource(IMapTestShift{ x: 0.0, z: 0.0 });
 
-    app
-      .add_plugins((
-        MaterialPlugin::<ExtendedMaterial<StandardMaterial, WaterExtension>>::default()
-      ));
+    // app
+    //   .add_plugins((
+    //     MaterialPlugin::<ExtendedMaterial<StandardMaterial, WaterExtension>>::default()
+    //   ));
 
       app
       .add_systems(Startup, startup)
@@ -242,7 +242,7 @@ fn round_upto(num: f64, upto: i8) -> f64 {
 
 // prettier-ignore
 fn update_terrain_on_player_position(
-  mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, WaterExtension>>>,
+  // mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, WaterExtension>>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -343,22 +343,31 @@ fn update_terrain_on_player_position(
           )).id();
 
 
-        let walter_f: i32 = 0;
-
-
-        let water_diff_texture: Handle<Image> = cache_load_image(
-          image_hashmap,
-          &asset_server, 
-          EImageWaterBase::Walet1Base.as_str(),
-          true
+          
+          let ins: Option<IInnerMap> = inner_map_mut.hash_map.insert(
+            (abs_z as i16, abs_x as i16),
+            IInnerMap{
+              // entity: terrain_id,
+              entity: Entity::from( terrain_id ),
+            lod: dyn_scale
+          }
         );
+        
+        continue;
 
-        let water_normal_map_texture: Handle<Image> = cache_load_image(
-          image_hashmap,
-          &asset_server, 
-          EImageWaterBase::Walet1Normal.as_str(),
-          true
-        );
+                // let water_diff_texture: Handle<Image> = cache_load_image(
+        //   image_hashmap,
+        //   &asset_server, 
+        //   EImageWaterBase::Walet1Base.as_str(),
+        //   true
+        // );
+
+        // let water_normal_map_texture: Handle<Image> = cache_load_image(
+        //   image_hashmap,
+        //   &asset_server, 
+        //   EImageWaterBase::Walet1Normal.as_str(),
+        //   true
+        // );
 
         // shaders with DepthPrepass => very slow
         // {
@@ -382,16 +391,7 @@ fn update_terrain_on_player_position(
         //   });
         // }
 
-        let capacity: Option<IInnerMap> = inner_map_mut.hash_map.insert(
-          (abs_z as i16, abs_x as i16),
-          IInnerMap{
-            // entity: terrain_id,
-            entity: Entity::from( terrain_id ),
-            lod: dyn_scale
-          }
-        );
-
-        // continue;
+        let walter_f: i32 = 0;        
         // basic material
         let (water_material, water ) = get_water_pbr_and_mesh();
         let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);

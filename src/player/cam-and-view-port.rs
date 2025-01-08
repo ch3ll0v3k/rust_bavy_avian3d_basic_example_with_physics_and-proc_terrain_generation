@@ -64,7 +64,7 @@ fn handle_left_click(mut evr: EventReader<MouseButtonInput>) {
 
 fn handle_drag(
   mut evr: EventReader<MouseMotion>,
-  mut query_camera: Query<&mut Transform, With<CameraMarker>>
+  mut query_camera: Query<&mut Transform, With<PlayerCameraMarker>>
 ) {
   let mut transform = query_camera.single_mut();
   for ev in evr.read() {
@@ -76,7 +76,7 @@ fn handle_drag(
 
 fn update_scroll_position(
   mut mw_evt: EventReader<MouseWheel>,
-  mut query_camera: Query<&mut Transform, With<CameraMarker>>
+  mut query_camera: Query<&mut Transform, With<PlayerCameraMarker>>
 ) {
   let mut transform = query_camera.single_mut();
 

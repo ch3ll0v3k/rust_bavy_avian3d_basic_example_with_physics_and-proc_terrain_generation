@@ -11,7 +11,13 @@ use avian3d::{parry::{na::Scale3}, prelude::{
 }};
 
 // prettier-ignore
-use bevy::{animation::transition, asset::Handle, color::palettes::tailwind::*, math::{Affine2, Vec2}, pbr::OpaqueRendererMethod, prelude::AlphaMode, time::{Real, Time}};
+use bevy::{
+  animation::transition, asset::Handle, color::palettes::tailwind::*, 
+  math::{Affine2, Vec2}, 
+  pbr::OpaqueRendererMethod, 
+  prelude::AlphaMode, 
+  time::{Real, Time}
+};
 
 // prettier-ignore
 use bevy::app::{ App, 
@@ -77,7 +83,7 @@ use crate::{
 use crate::{
   app_config::{self, debug::DebugConfig, *}, 
   asset_loader::audio_cache::{ cache_load_audio, AudioCache }, 
-  camera::{get_camera, CameraMarker}, 
+  camera::{get_player_camera, get_view_camera, PlayerCameraMarker}, 
   entities::with_children::MEntityBigSphere, 
   lights::{ MDirLightMarker, MPointLightFromMarker, MPointLightMarker, MPointLightToMarker }, 
   m_lib::physics, materials::cam_pos_1::CamPosExtension, 
@@ -93,7 +99,7 @@ use sys_paths::audio::EAudio;
 pub struct FullScreenShaderQuad;
 
 // #[derive(Component, Debug, PartialEq, Eq)]
-// pub struct CameraMarker;
+// pub struct PlayerCameraMarker;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct PlayerMarker;
@@ -183,7 +189,7 @@ impl Plugin for PlayerPlugin {
 }
 
 // fn update_camera_height(
-//   camera_query: Query<&Transform, With<CameraMarker>>,
+//   camera_query: Query<&Transform, With<PlayerCameraMarker>>,
 //   mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, CamPosExtension>>>
 // ) {
 //   let x = water_materials.as_mut();
@@ -284,10 +290,28 @@ fn startup(
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, CamPosExtension>>>
+  mut materials: ResMut<Assets<StandardMaterial>>
+  // mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, CamPosExtension>>>
 ) {
   // let id = test(&mut commands);
+
+  // commands.spawn((
+  //   SceneRoot(
+  //     asset_server.load(
+  //       GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported-3-0-deg.glb")
+  //       // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.glb"),
+  //       // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported.glb"),
+  //     )
+  //   ),
+  //   // Transform::from_xyz(POS.x, POS.y + 5.0, POS.z), // .looking_at(POS, Vec3::Y),
+  //   // Transform::from_scale(Vec3::new(2.0, 2.0, 2.0)),
+  //   Transform {
+  //     // translation: Vec3::new(POS.x, POS.y, POS.z),
+  //     translation: Vec3::new(POS.x, 30.0, POS.z),
+  //     scale: Vec3::new(3.0, 3.0, 3.0),
+  //     ..Default::default()
+  //   },
+  // ));
 
   commands.spawn((
     SceneRoot(
@@ -297,34 +321,36 @@ fn startup(
         // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported.glb"),
       )
     ),
-    // Transform::from_xyz(POS.x, POS.y + 5.0, POS.z), // .looking_at(POS, Vec3::Y),
-    // Transform::from_scale(Vec3::new(2.0, 2.0, 2.0)),
     Transform {
       // translation: Vec3::new(POS.x, POS.y, POS.z),
+      // translation: Vec3::new(0.0, 0.0, 0.0),
       translation: Vec3::new(POS.x, 30.0, POS.z),
-      scale: Vec3::new(5.0, 5.0, 5.0),
+      scale: Vec3::new(1.0, 1.0, 1.0),
       ..Default::default()
     },
   ));
 
-  let water_base_material: StandardMaterial = StandardMaterial {
-    unlit: !false,
-    // double_sided: true,
-    cull_mode: Some(Face::Front),
-    base_color: Color::srgba_u8(255, 40, 40, 20),
-    // base_color: Color::srgba_u8(255, 255, 255, 255),
-    opaque_render_method: OpaqueRendererMethod::Auto,
-    alpha_mode: AlphaMode::Blend,
-    ..default()
-  };
+  // let water_base_material: StandardMaterial = StandardMaterial {
+  //   unlit: !false,
+  //   // double_sided: true,
+  //   cull_mode: Some(Face::Front),
+  //   base_color: Color::srgba_u8(255, 40, 40, 20),
+  //   // base_color: Color::srgba_u8(255, 255, 255, 255),
+  //   opaque_render_method: OpaqueRendererMethod::Auto,
+  //   // alpha_mode: AlphaMode::Blend,
+  //   ..default()
+  // };
+  // let water_material_handle = materials.add(water_base_material);
 
-  let water_material_handle = water_materials.add(ExtendedMaterial {
-    base: water_base_material,
-    extension: CamPosExtension {
-      height: 0.0,
-      time_t: 0.0,
-    },
-  });
+  // let water_material_handle = water_materials.add(ExtendedMaterial {
+  //   base: water_base_material,
+  //   extension: CamPosExtension {
+  //     height: 0.0,
+  //     time_t: 0.0,
+  //   },
+  // });
+
+  commands.spawn(get_view_camera());
 
   commands
     .spawn((
@@ -337,8 +363,8 @@ fn startup(
         combine_rule: CoefficientCombine::Min,
       },
       Transform::from_xyz(POS.x, POS.y, POS.z), // .looking_at(POS, Vec3::Y),
-      Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
-      MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
+      // Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
+      // MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
       Mass(100.0),
       LockedAxes::ROTATION_LOCKED,
       // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
@@ -346,17 +372,44 @@ fn startup(
       PlayerMarker,
       Name::new("p_player_t"),
     ))
+    // .with_children(|children| {
+    //   children.spawn((
+    //     SceneRoot(
+    //       asset_server.load(
+    //         GltfAssetLabel::Scene(0).from_asset(
+    //           "characters/erica/erika-base.reexported-3-0-deg.glb"
+    //         )
+    //         // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.glb"),
+    //         // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported.glb"),
+    //       )
+    //     ),
+    //     Transform {
+    //       // translation: Vec3::new(POS.x, POS.y, POS.z),
+    //       translation: Vec3::new(0.0, 0.0, 0.0),
+    //       scale: Vec3::new(1.0, 1.0, 1.0),
+    //       ..Default::default()
+    //     },
+    //   ));
+    // })
     .with_children(|children| {
-      children.spawn(get_camera()).with_children(|parent| {
+      // children.spawn(get_view_camera());
+      children.spawn(get_player_camera()).with_children(|parent| {
         parent.spawn((
-          Transform::from_xyz(0.0, 0.0, -1.0), // .looking_at(POS, Vec3::Y),
-          Mesh3d(meshes.add(Cuboid::new(3.0, 3.0, 0.1))),
-          MeshMaterial3d(water_material_handle),
-          // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
-          // AnyObject,
+          Transform::from_xyz(0.0, -1.0, 0.0), // .looking_at(POS, Vec3::Y),
+          Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 10.0))),
+          MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
           NotShadowCaster,
           NotShadowReceiver,
         ));
+        // parent.spawn((
+        //   Transform::from_xyz(0.0, 0.0, -1.0), // .looking_at(POS, Vec3::Y),
+        //   Mesh3d(meshes.add(Cuboid::new(3.0, 3.0, 0.1))),
+        //   MeshMaterial3d(water_material_handle),
+        //   // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
+        //   // AnyObject,
+        //   NotShadowCaster,
+        //   NotShadowReceiver,
+        // ));
       });
     });
 }
@@ -395,10 +448,8 @@ fn startup(
 fn cam_track_object(
   // query_big_sphere: Query<&Transform, (With<MEntityBigSphere>, Without<MPointLightMarker>)>,
   // mut query_point_light: Query<&mut Transform, (With<MPointLightMarker>, Without<MEntityBigSphere>)>,
-  // mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<MPointLightMarker>, Without<MEntityBigSphere>)>
+  // mut query_camera: Query<&mut Transform, (With<PlayerCameraMarker>, Without<MPointLightMarker>, Without<MEntityBigSphere>)>
 ) {
-
-  // return;
 
   // let trans_sphere = query_big_sphere.single();
   // let mut trans_light = query_point_light.single_mut();
@@ -479,7 +530,7 @@ fn cam_track_object_origin(
 // #[tracing::instrument]
 fn zoom_on_scroll(
   mut mw_evt: EventReader<MouseWheel>,
-  mut query_camera: Query<&mut Projection, With<CameraMarker>>
+  mut query_camera: Query<&mut Projection, With<PlayerCameraMarker>>
 ) {
   let Projection::Perspective(persp): &mut Projection = query_camera
     .single_mut()
@@ -646,15 +697,15 @@ fn control_cam(
   mut commands: Commands,
   mut mw_evt: EventReader<MouseWheel>,
   keys: Res<ButtonInput<KeyCode>>,
-  mut q_camera: Query<&Transform, (With<CameraMarker>, Without<PlayerMarker>)>,
-  // mut q_camera_parent: Query<&mut Transform, (With<PlayerMarker>, Without<CameraMarker>)>
+  mut q_camera: Query<&Transform, (With<PlayerCameraMarker>, Without<PlayerMarker>)>,
+  // mut q_camera_parent: Query<&mut Transform, (With<PlayerMarker>, Without<PlayerCameraMarker>)>
   // mut q_camera_parent_2: Query<
   //   &mut Transform,
-  //   (With<PlayerMarker>, Without<CameraMarker>)
+  //   (With<PlayerMarker>, Without<PlayerCameraMarker>)
   // >
   mut q_camera_parent: Query<
     (Entity, &mut RigidBody, &mut Transform),
-    (With<PlayerMarker>, Without<CameraMarker>)
+    (With<PlayerMarker>, Without<PlayerCameraMarker>)
   >
   // query: Query<(Entity, &RigidBody, &Transform), With<PlayerMarker>>
 ) {
@@ -994,8 +1045,8 @@ fn handle_left_click(
   mut materials: ResMut<Assets<StandardMaterial>>,
   mut ev_m_motion: EventReader<bevy::input::mouse::MouseMotion>,
   mut ev_b_input: EventReader<MouseButtonInput>,
-  mut player: Query<&mut Transform, (With<PlayerMarker>, Without<CameraMarker>)>,
-  mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<PlayerMarker>)>
+  mut player: Query<&mut Transform, (With<PlayerMarker>, Without<PlayerCameraMarker>)>,
+  mut query_camera: Query<&mut Transform, (With<PlayerCameraMarker>, Without<PlayerMarker>)>
 ) {
   for ev_b in ev_b_input.read() {
     if ev_b.button == MouseButton::Left {
@@ -1090,8 +1141,8 @@ fn handle_left_click(
 // prettier-ignore
 fn handle_drag(
   mut ev_m_motion: EventReader<bevy::input::mouse::MouseMotion>,
-  mut query_camera: Query<&mut Transform, (With<CameraMarker>, Without<PlayerMarker>)>,
-  mut player: Query<&mut Transform, (With<PlayerMarker>, Without<CameraMarker>)>
+  mut query_camera: Query<&mut Transform, (With<PlayerCameraMarker>, Without<PlayerMarker>)>,
+  mut player: Query<&mut Transform, (With<PlayerMarker>, Without<PlayerCameraMarker>)>
 ) {
   // if let Some(is_left_m_btn_down) = get_global_state() {
   //   if !is_left_m_btn_down { return; }
@@ -1131,7 +1182,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 
 // fn update_scroll_position(
 //   mut mw_evt: EventReader<MouseWheel>,
-//   mut query_camera: Query<&mut Transform, With<CameraMarker>>
+//   mut query_camera: Query<&mut Transform, With<PlayerCameraMarker>>
 // ) {
 //   let transform = query_camera.single_mut();
 
@@ -1153,7 +1204,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 //   }
 // }
 
-// fn zoom_perspective(mut query_camera: Query<&mut Projection, With<CameraMarker>>) {
+// fn zoom_perspective(mut query_camera: Query<&mut Projection, With<PlayerCameraMarker>>) {
 //   // assume perspective. do nothing if orthographic.
 //   let Projection::Perspective(persp) = query_camera.single_mut().into_inner() else {
 //     return;
@@ -1162,7 +1213,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 //   persp.fov *= 1.25; // zoom out
 // }
 
-// fn debug_cam_position(mut query_camera: Query<&mut Transform, With<CameraMarker>>) {
+// fn debug_cam_position(mut query_camera: Query<&mut Transform, With<PlayerCameraMarker>>) {
 //   let mut transform = query_camera.single_mut();
 
 //   transform.rotate_local_y(0.01);
@@ -1178,7 +1229,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 // }
 
 // static mut X: i32 = 0;
-// fn debug_transform(query_camera: Query<&Transform, With<CameraMarker>>) {
+// fn debug_transform(query_camera: Query<&Transform, With<PlayerCameraMarker>>) {
 //   unsafe {
 //     X += 1;
 //     if X % 100 == 0 {
@@ -1195,7 +1246,7 @@ fn keyboard_events(mut evr_kbd: EventReader<KeyboardInput>) {
 
 // prettier-ignore
 fn test_cam_update(
-  mut query_camera: Query<&mut Transform, (With<CameraMarker>)>
+  mut query_camera: Query<&mut Transform, (With<PlayerCameraMarker>)>
 ) {
 
   // let mut trans_cam = query_camera.single_mut();
