@@ -1,7 +1,14 @@
 use bevy::{
-  pbr::{ CascadeShadowConfig, CascadeShadowConfigBuilder, DirectionalLightShadowMap },
+  input::common_conditions::{ input_just_pressed, input_pressed },
+  pbr::{
+    CascadeShadowConfig,
+    CascadeShadowConfigBuilder,
+    DirectionalLightShadowMap,
+    VolumetricLight,
+  },
   prelude::*,
 };
+use light_consts::lux;
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MPointLightMarker;
@@ -23,14 +30,20 @@ impl Plugin for MLightsPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, startup)
-      .add_systems(Update, update);
+      .add_systems(Update, update)
+      .add_systems(PostUpdate, (
+        switch_light_illuminance, 
+      ).run_if(input_pressed(KeyCode::KeyP)));
+      // ).run_if(input_just_pressed(KeyCode::KeyP)));
 
     app
       .insert_resource(DirectionalLightShadowMap { 
         size: 1024/2, // 2248 == default
       });
 
-      // app.insert_resource(AmbientLight {
+
+
+    // app.insert_resource(AmbientLight {
     //   color: Color::default(),
     //   brightness: 500.0,
     // });
@@ -82,7 +95,7 @@ fn startup(
     DirectionalLight {
       // color: Color::srgb_u8(255, 255, 255),
       color: Color::default(),
-      illuminance: light_consts::lux::OVERCAST_DAY,
+      illuminance: 2750.0, // lux::FULL_DAYLIGHT,
       shadows_enabled: true,
       // shadow_depth_bias: 0.1,
       // shadow_normal_bias: 0.1,
@@ -103,10 +116,11 @@ fn startup(
       // overlap_proportion: 0.5,
       ..default()
     }.build(),
+    // VolumetricLight,
     MDirLightMarker,
   ));
-
-
+  
+  
   // commands.spawn((
   //   PointLight {
   //     color: Color::srgb_u8(255, 255, 255),
@@ -117,23 +131,52 @@ fn startup(
   //     // intensity: 1.0,
   //     ..default()
   //   },
-  //   Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
+  //   Transform::from_xyz(
+  //     DIR_LIGHT_POS_2.x, 
+  //     DIR_LIGHT_POS_2.y, 
+  //     DIR_LIGHT_POS_2.z
+  //   ).looking_at(Vec3::ZERO, Vec3::ZERO),
+  //   // Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
+  //   // VolumetricLight,
   //   MPointLightMarker,
   // ));
 
-  commands.spawn((
-    Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
-    Mesh3d(meshes.add(Sphere::new(0.5))),
-    MeshMaterial3d(materials.add(Color::srgb_u8(255, 0, 0))),
-    MPointLightFromMarker,
-  ));
+  // commands.spawn((
+  //   Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
+  //   Mesh3d(meshes.add(Sphere::new(0.5))),
+  //   MeshMaterial3d(materials.add(Color::srgb_u8(255, 0, 0))),
+  //   MPointLightFromMarker,
+  // ));
 
-  commands.spawn((
-    Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
-    Mesh3d(meshes.add(Sphere::new(0.5))),
-    MeshMaterial3d(materials.add(Color::srgb_u8(0, 255, 0))),
-    MPointLightToMarker,
-  ));
+  // commands.spawn((
+  //   Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
+  //   Mesh3d(meshes.add(Sphere::new(0.5))),
+  //   MeshMaterial3d(materials.add(Color::srgb_u8(0, 255, 0))),
+  //   MPointLightToMarker,
+  // ));
+
+}
+
+// prettier-ignore
+fn switch_light_illuminance(
+  mut query: Query<&mut DirectionalLight, With<MDirLightMarker>>, 
+  time: Res<Time>
+) {
+
+  let mut m_dir_light = query.single_mut();
+  m_dir_light.illuminance += (time.delta_secs_f64() as f32) * 100.0;
+
+  dbgln!("{:?}", m_dir_light.illuminance);
+
+  // for mut light in query.iter_mut() {
+  //   // Example: Switch to twilight after 5 seconds
+  //   // if time.delta_secs_f64() > 5.0 {
+  //   //   light.illuminance = lux::AMBIENT_DAYLIGHT;
+  //   // }
+  //   if time.delta_secs_f64() > 5.0 {
+  //     light.illuminance += time.delta_secs_f64() as f32;
+  //   }
+  // }
 }
 
 // prettier-ignore

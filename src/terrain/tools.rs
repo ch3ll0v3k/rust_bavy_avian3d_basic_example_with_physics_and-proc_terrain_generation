@@ -50,7 +50,7 @@ use crate::{
   sys_paths::image::pbr,
 };
 
-use super::terrain_constants::*;
+use super::{ terrain_constants::*, terrain_lod_map::BASE_LOD_SCALE };
 
 pub struct IInnerMap {
   pub entity: Entity,
@@ -76,7 +76,7 @@ pub fn get_terrain_bpr(
   image_hashmap: &mut ResMut<ImageCache>,
   dyn_scale: i16
 ) -> StandardMaterial{
-  let local_uv_scale = ( if dyn_scale == 2 { 8.0 } else {1.0} );
+  let local_uv_scale = ( if dyn_scale == BASE_LOD_SCALE { 8.0 } else {1.0} );
 
   let uv_transform: Vec2 = Vec2::new(
     TERRAIN_STATIC_ON_MATERIAL_UV_SCALE * local_uv_scale,  
@@ -172,9 +172,7 @@ pub fn get_water_pbr_and_mesh() -> (StandardMaterial, Mesh) {
 }
 
 pub fn calculate_final_subdivisions(dyn_scale: i16) -> u32 {
-  let final_subdivisions: u32 =
-    TERRAIN_CHUNK_SUBDIVISIONS / (dyn_scale as u32) - SUBDIVISION_SUB_FACTOR;
-  return final_subdivisions;
+  TERRAIN_CHUNK_SUBDIVISIONS / (dyn_scale as u32) - SUBDIVISION_SUB_FACTOR
 }
 
 // prettier-ignore
@@ -208,6 +206,8 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
       pos[0] += (TERRAIN_CHUNK_X * (x as f32)) as f32; // + ((x / 1.0) as f32);
       pos[1] = 0.0;
       pos[2] += (TERRAIN_CHUNK_X * (z as f32)) as f32; // + ((z / 1.0) as f32);
+
+      // continue;
 
       let mut base_pos_y =  xi * TERRAIN_HEIGHT;
 

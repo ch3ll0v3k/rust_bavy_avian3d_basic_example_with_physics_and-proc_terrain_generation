@@ -1,6 +1,17 @@
 // prettier-ignore
-use bevy::{ 
-  app::FixedUpdate, math::{Vec3, VectorSpace}, prelude::{PerspectiveProjection, Projection, TransformPoint, Without} 
+
+use bevy::{
+  prelude::*,
+  color::palettes::css::RED,
+  // core_pipeline::{bloom::Bloom, tonemapping::Tonemapping, Skybox},
+  math::vec3,
+  pbr::{FogVolume, VolumetricFog, VolumetricLight},
+};
+
+use bevy::{
+  app::FixedUpdate,
+  math::{ Vec3, VectorSpace },
+  prelude::{ PerspectiveProjection, Projection, TransformPoint, Without },
 };
 
 // prettier-ignore
@@ -101,8 +112,11 @@ pub fn get_player_camera() -> (
   Name, 
   Camera3d, 
   Camera,
+  DistanceFog,
   PerspectiveProjection,
   Transform, 
+  // Tonemapping,
+  // Bloom,  
   PlayerCameraMarker, 
   // DepthPrepass, 
   // NormalPrepass,
@@ -116,14 +130,27 @@ pub fn get_player_camera() -> (
     Camera{
       is_active: true,
       clear_color: ClearColorConfig::default(),
+      hdr: true,
       order: 1,
+      ..default()
+    },
+    DistanceFog {
+      color: Color::srgba(0.75, 0.75, 0.75, 0.75),
+      // falloff: FogFalloff::ExponentialSquared { density: 0.0002 },
+      // falloff: FogFalloff::Exponential { density: 0.00001 },
+      falloff: FogFalloff::Linear {
+        start: 2_000.0,
+        end: 10_000.0,
+      },
       ..default()
     },
     PerspectiveProjection {
       near: 0.001,
       ..default()
     },
-    Transform::from_xyz(0.0, 2.0, 2.0), // .looking_at(POS, Vec3::Y),
+    Transform::from_xyz(0.0, 100.0, 2.0), // .looking_at(POS, Vec3::Y),
+    // Tonemapping::TonyMcMapface,
+    // Bloom::default(),
     PlayerCameraMarker,
     // DepthPrepass,
     // NormalPrepass,

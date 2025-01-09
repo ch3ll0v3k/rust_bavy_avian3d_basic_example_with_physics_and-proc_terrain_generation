@@ -108,6 +108,11 @@ impl Plugin for MTerrainPlugin {
       ).run_if(
         on_timer(Duration::from_millis(100))
       ));
+      // .add_systems(PostUpdate, (
+      //   draw_cursor
+      // ).run_if(
+      //   on_timer(Duration::from_millis(100))
+      // ));
 
   }
 }
@@ -239,6 +244,52 @@ fn round_upto(num: f64, upto: i8) -> f64 {
   let pow = (10.0 as f64).powi(upto as i32);
   (num * pow).round() / pow
 }
+
+// fn draw_cursor(
+//   // camera_query: Single<(&Camera, &GlobalTransform)>,
+//   // ground: Single<&GlobalTransform, With<MTerrainMarker>>,
+//   camera_query: Query<(&Camera, &GlobalTransform)>,
+//   ground: Query<&GlobalTransform, With<MTerrainMarker>>,
+//   windows: Single<&Window>,
+//   mut gizmos: Gizmos
+// ) {
+//   let (camera, camera_transform) = camera_query.single();
+
+//   let Some(cursor_position) = windows.cursor_position() else {
+//     return;
+//   };
+
+//   // Calculate a ray pointing from the camera into the world based on the cursor's position.
+//   let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_position) else {
+//     return;
+//   };
+
+//   for g_trans in ground.iter() {
+//     // Calculate if and where the ray is hitting the ground plane.
+//     dbgln!("g_trans: {g_trans:?}");
+//     // Calculate if and where the ray is hitting the ground plane.
+//     let Some(distance) = ray.intersect_plane(
+//       g_trans.translation(),
+//       InfinitePlane3d::new(g_trans.up())
+//     ) else {
+//       dbgln!("Nooope ...");
+//       return;
+//     };
+//     dbgln!("distance: {distance:?}");
+
+//     let point = ray.get_point(distance);
+
+//     // Draw a circle just above the ground plane at that position.
+//     gizmos.circle(
+//       Isometry3d::new(
+//         point + g_trans.up() * 0.01,
+//         Quat::from_rotation_arc(Vec3::Z, g_trans.up().as_vec3())
+//       ),
+//       0.2,
+//       Color::WHITE
+//     );
+//   }
+// }
 
 // prettier-ignore
 fn update_terrain_on_player_position(

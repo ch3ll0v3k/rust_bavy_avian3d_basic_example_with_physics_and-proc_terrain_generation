@@ -3,18 +3,22 @@
 use wgpu::{ Face, PrimitiveTopology };
 
 // prettier-ignore
-use avian3d::{parry::{na::Scale3}, prelude::{
-  collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted }, 
-  AngularVelocity, CoefficientCombine, Collider, CollisionMargin, ExternalAngularImpulse, 
-  ExternalForce, ExternalImpulse, ExternalTorque, LinearVelocity, LockedAxes, Mass, 
-  MaxLinearSpeed, Restitution, RigidBody,
-}};
+use avian3d::{
+  parry::{na::Scale3}, 
+  prelude::{
+    collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted }, 
+    AngularVelocity, CoefficientCombine, Collider, CollisionMargin, ExternalAngularImpulse, 
+    ExternalForce, ExternalImpulse, ExternalTorque, LinearVelocity, LockedAxes, Mass, 
+    MaxLinearSpeed, Restitution, RigidBody,
+  }
+};
 
 // prettier-ignore
 use bevy::{
-  animation::transition, asset::Handle, color::palettes::tailwind::*, 
+  animation::transition, 
+  asset::Handle, color::palettes::tailwind::*, 
   math::{Affine2, Vec2}, 
-  pbr::OpaqueRendererMethod, 
+  // pbr::{FogVolume, OpaqueRendererMethod, VolumetricFog}, 
   prelude::{AlphaMode, Visibility}, 
   time::{Real, Time}
 };
@@ -357,7 +361,7 @@ fn startup(
     .spawn((
       RigidBody::Dynamic,
       CollisionMargin(COLLISION_MARGIN * 1.0),
-      Collider::capsule(2.0, 5.0),
+      Collider::capsule(2.0, 100.0),
       // Restitution::new(0.0),
       Restitution {
         coefficient: 0.0,
@@ -415,6 +419,20 @@ fn startup(
           // ));
         });
       });
+      // .insert(VolumetricFog {
+      //   // This value is explicitly set to 0 since we have no environment map light
+      //   ambient_intensity: 0.5,
+      //   ..default()
+      // });
+
+    // Add the fog volume.
+    // commands.spawn((
+    //   FogVolume::default(),
+    //   Transform::from_scale(Vec3::splat(20_000.0)),
+    // ));
+
+
+
 }
 
 // fn accelerate_bodies(mut query: Query<(&mut LinearVelocity, &mut AngularVelocity)>) {
