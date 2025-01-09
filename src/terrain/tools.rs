@@ -288,14 +288,14 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
     terrain.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
     terrain.compute_normals();
 
-    if TERRAIN_USE_LOWER_Y_ON_FAR_DISTANCE && dyn_scale != 2 {
+    if TERRAIN_USE_LOWER_Y_ON_FAR_DISTANCE && dyn_scale != BASE_LOD_SCALE {
       if let Some(VertexAttributeValues::Float32x3(positions)) = terrain.attribute_mut(Mesh::ATTRIBUTE_POSITION ){
         for pos in positions.iter_mut() {
           // pos[1] -= (((dyn_scale.abs() as f32) - 4.0) * 1.0) / 2.0;
           // pos[1] -= (((dyn_scale.abs() as f32) - 10.0) * 1.0) / 1.0;
           // pos[1] *= (((dyn_scale.abs() as f32 / 2.0))); // - 10.0) * 1.0) / 1.0;
           // pos[1] -= (((dyn_scale.abs() as f32 * 20.0))); // - 10.0) * 1.0) / 1.0;
-          pos[1] -= (dyn_scale as f32 / 16.0 * 100.0); // (((dyn_scale.abs() as f32 * 2.0))); // - 10.0) * 1.0) / 1.0;
+          pos[1] -= (dyn_scale as f32 / 16.0 * 50.0 * (dyn_scale - BASE_LOD_SCALE) as f32); // (((dyn_scale.abs() as f32 * 2.0))); // - 10.0) * 1.0) / 1.0;
         }
       }
     }

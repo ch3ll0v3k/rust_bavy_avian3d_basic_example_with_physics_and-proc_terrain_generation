@@ -10,6 +10,8 @@ use bevy::{
 };
 use light_consts::lux;
 
+use crate::AnyObject;
+
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MPointLightMarker;
 
@@ -62,8 +64,42 @@ fn startup(
   mut materials: ResMut<Assets<StandardMaterial>>
 ) {
   
-  dbgln!("{:?}", dir_light_shadow_map);
+  // dbgln!("{:?}", dir_light_shadow_map);
 
+  // const COUNT: usize = 10;
+  // let position_range = -200.0..200.0;
+  // let radius_range = 5.0..20.0;
+  // let pos_len = position_range.end - position_range.start;
+  // let radius_len = radius_range.end - radius_range.start;
+  // let mesh = meshes.add(Sphere::new(1.0).mesh().uv(120, 64));
+
+  // for i in 0..COUNT {
+  //   let percent = (i as f32) / (COUNT as f32);
+  //   let radius = radius_range.start + percent * radius_len;
+  //   // sphere light
+  //   commands
+  //     .spawn((
+  //       Mesh3d(mesh.clone()),
+  //       MeshMaterial3d(
+  //         materials.add(StandardMaterial {
+  //           base_color: Color::srgba(0.5, 0.5, 1.0, 0.25),
+  //           unlit: true,
+  //           alpha_mode: AlphaMode::Blend,
+  //           ..default()
+  //         }),
+  //       ),
+  //       Transform::from_xyz(position_range.start + percent * pos_len, 200.0, 0.0).with_scale(
+  //         Vec3::splat(radius)
+  //       ),
+  //       AnyObject
+  //     ))
+  //     .with_child(PointLight {
+  //       intensity: 10000.0,
+  //       radius,
+  //       color: Color::srgb(0.2, 0.2, 1.0),
+  //       ..default()
+  //     });
+  // }
 
   commands.insert_resource(AmbientLight {
     color: Color::default(),
@@ -90,6 +126,9 @@ fn startup(
   //   Transform::from_xyz(POS.x, POS.y, POS.z).looking_at(Vec3::ZERO, Vec3::ZERO),
   //   MPointLightMarker,
   // ));
+
+
+
 
   commands.spawn((
     DirectionalLight {

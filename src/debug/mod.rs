@@ -1,5 +1,7 @@
 // use std::time::Instant;
 
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_ui_debug_overlay::{ UiDebugOverlay, UiDebugOverlayPlugin };
 use instant::Instant;
 
 // prettier-ignore
@@ -24,7 +26,7 @@ use bevy::{
     Diagnostic, DiagnosticPath, DiagnosticsStore, EntityCountDiagnosticsPlugin, 
     FrameTimeDiagnosticsPlugin, RegisterDiagnostic, SystemInformationDiagnosticsPlugin,
   }, input::{ common_conditions::input_just_pressed, ButtonInput }, math::Vec3, pbr::{ wireframe::{ Wireframe, WireframeConfig, WireframePlugin }, MeshMaterial3d, StandardMaterial }, prelude::{ 
-    in_state, AppGizmoBuilder, Capsule3d, Commands, Component, Cuboid, Drag, Entity, GizmoConfig, IntoSystemConfigs, KeyCode, Mesh, Mesh3d, Query, Res, ResMut, Resource, Text, Transform, With, Without
+    in_state, AppGizmoBuilder, Capsule3d, Commands, Component, Cuboid, Drag, Entity, GizmoConfig, IntoSystemConfigs, KeyCode, Mesh, Mesh3d, Parent, Query, Res, ResMut, Resource, Text, Transform, Visibility, With, Without
   }, text::{ Font, TextColor, TextFont }, time::{ Fixed, Real, Time, Virtual }, ui::{ Node, PositionType, Val }, utils::default
 };
 
@@ -103,19 +105,20 @@ impl Plugin for DebugPlugin {
           FrameTimeDiagnosticsPlugin,
           EntityCountDiagnosticsPlugin,
           SystemInformationDiagnosticsPlugin,
-      ))
+          // UiDebugOverlayPlugin::start_enabled().with_line_width(2.0),
+          WorldInspectorPlugin::new(),
+        ))
       .register_diagnostic(Diagnostic::new(FPS_COUNTER_DIAG_PATH)/*.with_suffix("can-be-anything")*/)
       .add_systems(FixedUpdate, (
-        update
+        update,
+        // toggle_debug_overlay,
       ))
-
       .add_systems(PostUpdate, (
         toggle_wireframe, 
       ).run_if(input_just_pressed(KeyCode::KeyL)))
       // .add_systems(FixedUpdate, (
       //   toggle_wireframe, 
       // ).run_if(input_just_pressed(KeyCode::KeyL)))
-
       .add_systems(FixedUpdate, (
         update_fps,
         test_floating_items,
@@ -142,6 +145,34 @@ impl Plugin for DebugPlugin {
 
   }
 }
+
+// fn toggle_debug_overlay(
+//   input: Res<ButtonInput<KeyCode>>,
+//   mut debug_overlay: ResMut<UiDebugOverlay>,
+//   mut root_node_query: Query<&mut Visibility, (With<Node>, Without<Parent>)>
+// ) {
+//   if input.just_pressed(KeyCode::Space) {
+//     // The toggle method will enable the debug overlay if disabled and disable if enabled
+//     debug_overlay.toggle();
+//   }
+
+//   if input.just_pressed(KeyCode::KeyS) {
+//     // Toggle debug outlines for nodes with `ViewVisibility` set to false.
+//     debug_overlay.show_hidden = !debug_overlay.show_hidden;
+//   }
+
+//   if input.just_pressed(KeyCode::KeyC) {
+//     // Toggle outlines for clipped UI nodes.
+//     debug_overlay.show_clipped = !debug_overlay.show_clipped;
+//   }
+
+//   if input.just_pressed(KeyCode::KeyV) {
+//     for mut visibility in root_node_query.iter_mut() {
+//       // Toggle the UI root node's visibility
+//       visibility.toggle_inherited_hidden();
+//     }
+//   }
+// }
 
 // prettier-ignore
 fn startup(

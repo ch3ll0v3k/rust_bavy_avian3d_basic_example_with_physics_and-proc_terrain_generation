@@ -325,15 +325,17 @@ fn update_terrain_on_player_position(
   let g_z: i32 = ((pos.z + add_z) / TERRAIN_CHUNK_X) as i32;
   let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
 
-  const SIZE_SIZE_T: i32 = 6;
+  const SIZE_SIZE_T: i32 = 7; // ((TERRAIN_LOD_MAP_SIZE - 1)/2) as i32;
+  // dbgln!("SIZE_SIZE_T: {SIZE_SIZE_T}");
 
   for l_z in -SIZE_SIZE_T..=SIZE_SIZE_T {
     for l_x in -SIZE_SIZE_T..=SIZE_SIZE_T {
-      let lod_on_z: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 7 + l_z) as usize;
-      let lod_on_x: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 7 + l_x) as usize;
+      let lod_on_z: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 8 + l_z) as usize;
+      let lod_on_x: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 8 + l_x) as usize;      
+      // dbgln!("lod_on_z: {lod_on_z}, lod_on_x: {lod_on_x}");
+      let dyn_scale: i16 = lod[lod_on_z][lod_on_x] as i16;
       let abs_x: i32 = g_x + l_x;
       let abs_z: i32 = g_z + l_z;
-      let dyn_scale: i16 = lod[lod_on_z][lod_on_x] as i16;
 
       let mut spawn: bool = false;
       let mut remove_from_map: bool = false;
