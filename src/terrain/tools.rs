@@ -140,16 +140,29 @@ pub fn get_terrain_bpr(
 }
 
 pub fn get_water_pbr_and_mesh() -> (StandardMaterial, Mesh) {
-  let mut water: Mesh = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_X))
-    .with_generated_tangents()
-    .unwrap();
-  water.compute_normals();
+  // let mut water: Mesh = Mesh::from(Cuboid::new(TERRAIN_CHUNK_X, 0.1, TERRAIN_CHUNK_X))
+  //   .with_generated_tangents()
+  //   .unwrap();
+  // water.compute_normals();
+  // let mut water: Mesh = Mesh::from(
+  //   Cuboid::new(TERRAIN_CHUNK_X / 10.0, 0.1, TERRAIN_CHUNK_X / 10.0)
+  // );
+
+  let mut water = Mesh::from(
+    Plane3d::default()
+      .mesh()
+      .size(TERRAIN_CHUNK_X / 10.0, TERRAIN_CHUNK_X / 10.0)
+      .subdivisions(1)
+  );
+  // .with_generated_tangents()
+  // .unwrap();
 
   let water_material: StandardMaterial = StandardMaterial {
     unlit: !false,
-    // double_sided: true,
-    cull_mode: Some(Face::Front),
-    base_color: Color::srgba_u8(70, 70, 180, 5),
+    double_sided: false,
+    cull_mode: Some(Face::Back),
+    // base_color: Color::srgba_u8(70, 70, 120, 1),
+    base_color: Color::srgb_u8(70, 70, 120),
     // opaque_render_method: OpaqueRendererMethod::Auto,
     // alpha_mode: AlphaMode::Blend,
     ..default()

@@ -34,8 +34,8 @@ use crate::{
   materials,
   player::PlayerMarker,
   post_processing_pipiline::test_example::{
-    CustomPostProcessSettings,
-    TestExamplePostProcessPlugin,
+    // CustomPostProcessSettings,
+    // TestExamplePostProcessPlugin,
   },
   state::MGameState,
 };
@@ -71,10 +71,10 @@ impl Plugin for CameraPlugin {
           //   sensor_height: 0.01866,
       }));
 
-    if( USE_PIPELINE ){
-      app
-      .add_plugins(TestExamplePostProcessPlugin);
-    }
+    // if( USE_PIPELINE ){
+    //   app
+    //   .add_plugins(TestExamplePostProcessPlugin);
+    // }
 
     app
       .add_systems(Startup, startup)
@@ -106,7 +106,7 @@ pub fn get_player_camera() -> (
   PlayerCameraMarker, 
   // DepthPrepass, 
   // NormalPrepass,
-  CustomPostProcessSettings
+  // CustomPostProcessSettings
 ) {
   (
     Name::new("p_player_camera_t"),
@@ -116,7 +116,7 @@ pub fn get_player_camera() -> (
     Camera{
       is_active: true,
       clear_color: ClearColorConfig::default(),
-      order: 0,
+      order: 1,
       ..default()
     },
     PerspectiveProjection {
@@ -127,10 +127,10 @@ pub fn get_player_camera() -> (
     PlayerCameraMarker,
     // DepthPrepass,
     // NormalPrepass,
-    CustomPostProcessSettings {
-      cam_y: 0.1,
-      ..default()
-    },
+    // CustomPostProcessSettings {
+    //   cam_y: 0.1,
+    //   ..default()
+    // },
   )
 }
 
@@ -155,7 +155,7 @@ pub fn get_view_camera() -> (
       
       is_active: false,
       clear_color: ClearColorConfig::default(),
-      order: 1,
+      order: 0,
       ..default()
     },
     PerspectiveProjection {
@@ -176,21 +176,21 @@ fn startup() {
 
 // prettier-ignore
 fn update(
-  mut query_view_camera: Query<&mut Transform, (With<ViewCameraMarker>, Without<PlayerMarker>, )>,
-  query_player: Query<&Transform, (With<PlayerMarker>, Without<ViewCameraMarker>, )>
+  // mut query_view_camera: Query<&mut Transform, (With<ViewCameraMarker>, Without<PlayerMarker>, )>,
+  // query_player: Query<&Transform, (With<PlayerMarker>, Without<ViewCameraMarker>, )>
 ) {
 
-  let mut view_trans = query_view_camera.single_mut();
-  let p_trans = query_player.single();
+  // let mut view_trans = query_view_camera.single_mut();
+  // let p_trans = query_player.single();
 
-  // dbgln!("{}", p_trans.translation);
+  // // dbgln!("{}", p_trans.translation);
 
-  view_trans.translation.x = p_trans.translation.x + 24.0;
-  view_trans.translation.y = p_trans.translation.y + 14.0;
-  view_trans.translation.z = p_trans.translation.z + 24.0;
+  // view_trans.translation.x = p_trans.translation.x + 24.0;
+  // view_trans.translation.y = p_trans.translation.y + 14.0;
+  // view_trans.translation.z = p_trans.translation.z + 24.0;
 
-  view_trans.look_at(p_trans.translation, Vec3::Y);
-  // view_trans.looking_at(p_trans.translation, Vec3::Y);
+  // view_trans.look_at(p_trans.translation, Vec3::Y);
+  // // view_trans.looking_at(p_trans.translation, Vec3::Y);
 
 }
 

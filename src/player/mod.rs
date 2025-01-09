@@ -15,7 +15,7 @@ use bevy::{
   animation::transition, asset::Handle, color::palettes::tailwind::*, 
   math::{Affine2, Vec2}, 
   pbr::OpaqueRendererMethod, 
-  prelude::AlphaMode, 
+  prelude::{AlphaMode, Visibility}, 
   time::{Real, Time}
 };
 
@@ -87,7 +87,7 @@ use crate::{
   entities::with_children::MEntityBigSphere, 
   lights::{ MDirLightMarker, MPointLightFromMarker, MPointLightMarker, MPointLightToMarker }, 
   m_lib::physics, materials::cam_pos_1::CamPosExtension, 
-  post_processing_pipiline::test_example::CustomPostProcessSettings, 
+  // post_processing_pipiline::test_example::CustomPostProcessSettings, 
   state::MGameState, 
   sys_paths, AnyObject, 
   COLLISION_MARGIN
@@ -286,6 +286,7 @@ fn update_extended_material(
 
 }
 
+// prettier-ignore
 fn startup(
   asset_server: Res<AssetServer>,
   mut commands: Commands,
@@ -313,22 +314,22 @@ fn startup(
   //   },
   // ));
 
-  commands.spawn((
-    SceneRoot(
-      asset_server.load(
-        GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported-3-0-deg.glb")
-        // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.glb"),
-        // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported.glb"),
-      )
-    ),
-    Transform {
-      // translation: Vec3::new(POS.x, POS.y, POS.z),
-      // translation: Vec3::new(0.0, 0.0, 0.0),
-      translation: Vec3::new(POS.x, 30.0, POS.z),
-      scale: Vec3::new(1.0, 1.0, 1.0),
-      ..Default::default()
-    },
-  ));
+  // commands.spawn((
+  //   SceneRoot(
+  //     asset_server.load(
+  //       GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported-3-0-deg.glb")
+  //       // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.glb"),
+  //       // GltfAssetLabel::Scene(0).from_asset("characters/erica/erika-base.reexported.glb"),
+  //     )
+  //   ),
+  //   Transform {
+  //     // translation: Vec3::new(POS.x, POS.y, POS.z),
+  //     // translation: Vec3::new(0.0, 0.0, 0.0),
+  //     translation: Vec3::new(POS.x, 30.0, POS.z),
+  //     scale: Vec3::new(1.0, 1.0, 1.0),
+  //     ..Default::default()
+  //   },
+  // ));
 
   // let water_base_material: StandardMaterial = StandardMaterial {
   //   unlit: !false,
@@ -366,6 +367,7 @@ fn startup(
       // Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
       // MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
       Mass(100.0),
+      Visibility::default(),
       LockedAxes::ROTATION_LOCKED,
       // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
       // MaxLinearSpeed(5.0),
@@ -393,25 +395,26 @@ fn startup(
     // })
     .with_children(|children| {
       // children.spawn(get_view_camera());
-      children.spawn(get_player_camera()).with_children(|parent| {
-        parent.spawn((
-          Transform::from_xyz(0.0, -1.0, 0.0), // .looking_at(POS, Vec3::Y),
-          Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 10.0))),
-          MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
-          NotShadowCaster,
-          NotShadowReceiver,
-        ));
-        // parent.spawn((
-        //   Transform::from_xyz(0.0, 0.0, -1.0), // .looking_at(POS, Vec3::Y),
-        //   Mesh3d(meshes.add(Cuboid::new(3.0, 3.0, 0.1))),
-        //   MeshMaterial3d(water_material_handle),
-        //   // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
-        //   // AnyObject,
-        //   NotShadowCaster,
-        //   NotShadowReceiver,
-        // ));
+      children.spawn(get_player_camera())
+        .with_children(|parent| {
+          parent.spawn((
+            Transform::from_xyz(0.0, -1.0, 0.0), // .looking_at(POS, Vec3::Y),
+            Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 10.0))),
+            MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
+            NotShadowCaster,
+            NotShadowReceiver,
+          ));
+          // parent.spawn((
+          //   Transform::from_xyz(0.0, 0.0, -1.0), // .looking_at(POS, Vec3::Y),
+          //   Mesh3d(meshes.add(Cuboid::new(3.0, 3.0, 0.1))),
+          //   MeshMaterial3d(water_material_handle),
+          //   // MeshMaterial3d(materials.add(Color::srgba_u8(255, 40, 40, 30))),
+          //   // AnyObject,
+          //   NotShadowCaster,
+          //   NotShadowReceiver,
+          // ));
+        });
       });
-    });
 }
 
 // fn accelerate_bodies(mut query: Query<(&mut LinearVelocity, &mut AngularVelocity)>) {

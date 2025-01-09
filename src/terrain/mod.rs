@@ -342,8 +342,6 @@ fn update_terrain_on_player_position(
             // Wireframe::default(),
           )).id();
 
-
-          
           let ins: Option<IInnerMap> = inner_map_mut.hash_map.insert(
             (abs_z as i16, abs_x as i16),
             IInnerMap{
@@ -355,7 +353,7 @@ fn update_terrain_on_player_position(
         
         continue;
 
-                // let water_diff_texture: Handle<Image> = cache_load_image(
+        // let water_diff_texture: Handle<Image> = cache_load_image(
         //   image_hashmap,
         //   &asset_server, 
         //   EImageWaterBase::Walet1Base.as_str(),
@@ -391,22 +389,24 @@ fn update_terrain_on_player_position(
         //   });
         // }
 
-        let walter_f: i32 = 0;        
-        // basic material
-        let (water_material, water ) = get_water_pbr_and_mesh();
-        let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
         // if z >= -walter_f && z <= walter_f && x >= -walter_f && x <= walter_f {}
         if g_x == 0 && g_z == 0 {
+
+          let walter_f: i32 = 0;        
+          // basic material
+          let (water_material, water ) = get_water_pbr_and_mesh();
+          let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
           commands.spawn((
             // RigidBody::Static,
             // Collider::trimesh_from_mesh(&water).unwrap(),
             // Sensor,
             Transform::from_xyz(
-              (g_x * TERRAIN_CHUNK_X as i32) as f32, 
-              -3.0, // -13
-              (g_z * TERRAIN_CHUNK_X as i32) as f32
+              (g_x * TERRAIN_CHUNK_X as i32) as f32, // - 1000.0, 
+              // -3.0 + -0.1, // -13
+              -3.0 + -0.1, // -13
+              (g_z * TERRAIN_CHUNK_X as i32) as f32, // - 1000.0
               // .looking_at(Vec3::ZERO, Vec3::ZERO)
             ),
             Mesh3d(meshes.add(water.clone())),
