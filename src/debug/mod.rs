@@ -22,12 +22,25 @@ use avian3d::{
 
 // prettier-ignore
 use bevy::{
-  app::{ App, FixedUpdate, Plugin, PostUpdate, Startup, Update }, asset::{ AssetServer, Assets, Handle }, color::{ palettes::{ css::*, tailwind::* }, Color }, diagnostic::{ 
+  app::{ App, FixedUpdate, Plugin, PostUpdate, Startup, Update }, 
+  asset::{ AssetServer, Assets, Handle }, 
+  color::{ palettes::{ css::*, tailwind::* }, Color }, diagnostic::{ 
     Diagnostic, DiagnosticPath, DiagnosticsStore, EntityCountDiagnosticsPlugin, 
     FrameTimeDiagnosticsPlugin, RegisterDiagnostic, SystemInformationDiagnosticsPlugin,
-  }, input::{ common_conditions::input_just_pressed, ButtonInput }, math::Vec3, pbr::{ wireframe::{ Wireframe, WireframeConfig, WireframePlugin }, MeshMaterial3d, StandardMaterial }, prelude::{ 
-    in_state, AppGizmoBuilder, Capsule3d, Commands, Component, Cuboid, Drag, Entity, GizmoConfig, IntoSystemConfigs, KeyCode, Mesh, Mesh3d, Parent, Query, Res, ResMut, Resource, Text, Transform, Visibility, With, Without
-  }, text::{ Font, TextColor, TextFont }, time::{ Fixed, Real, Time, Virtual }, ui::{ Node, PositionType, Val }, utils::default
+  }, 
+  input::{ common_conditions::input_just_pressed, ButtonInput }, 
+  math::Vec3, 
+  pbr::{ wireframe::{ Wireframe, WireframeConfig, WireframePlugin }, 
+  MeshMaterial3d, StandardMaterial }, 
+  prelude::{ 
+    in_state, AppGizmoBuilder, Capsule3d, Commands, Component, Cuboid, Drag, Entity, 
+    GizmoConfig, IntoSystemConfigs, KeyCode, Mesh, Mesh3d, Parent, Query, Res, ResMut, 
+    Resource, Text, Transform, Visibility, With, Without
+  }, 
+  text::{ Font, TextColor, TextFont }, 
+  time::{ Fixed, Real, Time, Virtual }, 
+  ui::{ Node, PositionType, Val }, 
+  utils::default
 };
 
 use bevy_diagnostic::LogDiagnosticsPlugin;
@@ -68,7 +81,6 @@ struct FrameLimiter {
   avg_index: u32,
   avg: [f64; MEASURE_AVG_FPS_EACH as usize],
 }
-
 pub struct DebugPlugin;
 
 // prettier-ignore
@@ -106,7 +118,7 @@ impl Plugin for DebugPlugin {
           EntityCountDiagnosticsPlugin,
           SystemInformationDiagnosticsPlugin,
           // UiDebugOverlayPlugin::start_enabled().with_line_width(2.0),
-          WorldInspectorPlugin::new(),
+          // WorldInspectorPlugin::new(),
         ))
       .register_diagnostic(Diagnostic::new(FPS_COUNTER_DIAG_PATH)/*.with_suffix("can-be-anything")*/)
       .add_systems(FixedUpdate, (

@@ -4,12 +4,12 @@ use wgpu::{ Face, PrimitiveTopology };
 
 // prettier-ignore
 use avian3d::{
-  parry::{na::Scale3}, 
+  parry::na::Scale3, 
   prelude::{
     collision::contact_reporting::{ Collision, CollisionEnded, CollisionStarted }, 
     AngularVelocity, CoefficientCombine, Collider, CollisionMargin, ExternalAngularImpulse, 
     ExternalForce, ExternalImpulse, ExternalTorque, LinearVelocity, LockedAxes, Mass, 
-    MaxLinearSpeed, Restitution, RigidBody,
+    MaxLinearSpeed, Restitution, RigidBody, SweptCcd,
   }
 };
 
@@ -182,7 +182,7 @@ impl Plugin for PlayerPlugin {
       //   )
       // )
       .add_systems(Update,constrain_linear_xz_speed)
-      .insert_resource(CMaxLinearSpeedXZ(150.0))
+      .insert_resource(CMaxLinearSpeedXZ(1000.0))
       // .insert_resource(CMaxLinearSpeedXZ(30.0))
 
       .add_plugins((
@@ -357,20 +357,24 @@ fn startup(
 
   commands.spawn(get_view_camera());
 
+  const P_C_R: f32  = 10.0;
+  const P_C_L: f32  = 100.0;
+
   commands
     .spawn((
+      // RigidBody::Kinematic,
       RigidBody::Dynamic,
       CollisionMargin(COLLISION_MARGIN * 1.0),
-      Collider::capsule(2.0, 100.0),
+      Collider::capsule(P_C_R, P_C_L),
       // Restitution::new(0.0),
       Restitution {
         coefficient: 0.0,
         combine_rule: CoefficientCombine::Min,
       },
       Transform::from_xyz(POS.x, POS.y, POS.z), // .looking_at(POS, Vec3::Y),
-      // Mesh3d(meshes.add(Capsule3d::new(2.0, 5.0))),
-      // MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
-      Mass(100.0),
+      Mesh3d(meshes.add(Capsule3d::new(P_C_R, P_C_L))),
+      MeshMaterial3d(materials.add(Color::srgb_u8(127, 255, 0))),
+      Mass(1000.0),
       Visibility::default(),
       LockedAxes::ROTATION_LOCKED,
       // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
@@ -398,12 +402,11 @@ fn startup(
     //   ));
     // })
     .with_children(|children| {
-      // children.spawn(get_view_camera());
       children.spawn(get_player_camera())
         .with_children(|parent| {
           parent.spawn((
-            Transform::from_xyz(0.0, -1.0, 0.0), // .looking_at(POS, Vec3::Y),
-            Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 10.0))),
+            Transform::from_xyz(0.0, -3.0, 0.0), // .looking_at(POS, Vec3::Y),
+            Mesh3d(meshes.add(Cuboid::new(2.0, 2.0, 20.0))),
             MeshMaterial3d(materials.add(Color::srgb_u8(255, 40, 40))),
             NotShadowCaster,
             NotShadowReceiver,
@@ -423,6 +426,7 @@ fn startup(
       //   // This value is explicitly set to 0 since we have no environment map light
       //   ambient_intensity: 0.5,
       //   ..default()
+      // });
       // });
 
     // Add the fog volume.
@@ -712,6 +716,7 @@ fn constrain_linear_xz_speed(
   }
 }
 
+// XXX MOVE
 fn control_cam(
   g_state: Res<State<MGameState>>,
   mut q_lin_velocity: Query<&mut LinearVelocity, With<PlayerMarker>>,
@@ -773,7 +778,6 @@ fn control_cam(
       //   .insert(AngularVelocity(Vec3::ZERO));
 
       // dbgln!("transform.translation.y: y {:.4}, inverse: {:.4}", inverse, transform.translation.y);
-      // XXX
       // dbgln!(
       //   "transform: y {:.4}, diff: {:.4}, impulse: {:.4}, force: {:.4}",
       //   transform.translation.y,
@@ -781,8 +785,6 @@ fn control_cam(
       //   impulse,
       //   force
       // );
-
-      // XXX
 
       impulse3.y = physics::get_gravity() * impulse;
       // impulse3.y = physics::get_gravity() * force;
@@ -831,7 +833,7 @@ fn control_cam(
   //   .insert((RigidBody::Dynamic, force));
   //   // .insert(Force::new(force, transform.translation));
 
-  let mut l_max_speed: f32 = 10.0;
+  let mut l_max_speed: f32 = 100.0;
   let mut running_speed: f32 = 10.0; // 1.0;
   let mut jump_force: f32 = 0.0;
   let use_physics: bool = true;
@@ -910,17 +912,17 @@ fn control_cam(
     }
   }
 
-  let force: ExternalImpulse = physics::get_external_impulse(impulse3, false);
+  let force: ExternalImpulse = physics::get_external_impulse(impulse3 * 10.0, false);
   commands.entity(entity).insert((RigidBody::Dynamic, force));
 
-  for mut velocity in q_lin_velocity.iter_mut() {
-    let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
-    if xz_speed > l_max_speed {
-      let scale = l_max_speed / xz_speed;
-      velocity.x *= scale;
-      velocity.z *= scale;
-    }
-  }
+  // for mut velocity in q_lin_velocity.iter_mut() {
+  //   let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
+  //   if xz_speed > l_max_speed {
+  //     let scale = l_max_speed / xz_speed;
+  //     velocity.x *= scale;
+  //     velocity.z *= scale;
+  //   }
+  // }
 }
 
 // fn process_bullets(
@@ -1079,11 +1081,13 @@ fn handle_left_click(
       let up_child = Vec3::from(transform.up());
       let mut to = Vec3::new( fw_parent.x,  up_child.z * 1.5, fw_parent.z);
       // dbgln!("to-vec-y: {} => up_child.z {}", transform.translation.y, up_child.z);
+
+      let r = 3.0;
       
       let mut force = ExternalImpulse::default();
       force
         .apply_impulse_at_point(
-          to * 2500.0, 
+          to * 2500.0 * 2.0, 
           Vec3::ZERO, 
           Vec3::ZERO
         )
@@ -1094,21 +1098,20 @@ fn handle_left_click(
 
       let handle_bullet = (
         RigidBody::Dynamic,
-        Collider::sphere(0.25),
+        Collider::sphere(r/2.0),
         CollisionMargin(COLLISION_MARGIN * 1.0),
-        // SweptCcd::default(),
+        SweptCcd::default(),
         // old version
         // RigidBody {
         //   ccd: SweptCcd::default(),
         //   ..Default::default()
         // },
-
         Transform::from_xyz(
           vec3_parent.x + (norm_vec_3.x * off_xz), 
-          vec3_parent.y +2.0, 
+          vec3_parent.y +100.0, 
           vec3_parent.z + (norm_vec_3.z * off_xz)
         ), // .looking_at(Vec3::ZERO, Vec3::Y),
-        Mesh3d(meshes.add(Sphere::new(0.25))),
+        Mesh3d(meshes.add(Sphere::new(r/2.0))),
         MeshMaterial3d(materials.add(Color::srgb_u8(255, 0, 0))),
         // AngularVelocity(Vec3::new(2.5, 3.5, 1.5)),
         force,

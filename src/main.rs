@@ -185,6 +185,7 @@ fn main() {
       },
       GizmoConfig::default()
     )
+    .add_plugins(PhysicsDebugPlugin::default())
     .add_systems(Startup, setup)
     .add_systems(Update, (
       update

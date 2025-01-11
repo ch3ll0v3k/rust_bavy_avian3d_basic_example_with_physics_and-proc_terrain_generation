@@ -41,6 +41,33 @@ fn startup(
   let size = Vec3::new(1.0, 1.0, 1.0);
 
   commands.spawn((
+    Name::new("p_player_camera_t"),
+    Camera3d {
+      ..default()
+    },
+    Camera {
+      is_active: true,
+      clear_color: ClearColorConfig::default(),
+      hdr: true,
+      order: 1,
+      ..default()
+    },
+    DistanceFog {
+      color: Color::srgba(0.75, 0.75, 0.75, 0.75),
+      falloff: FogFalloff::Linear {
+        start: 2_000.0,
+        end: 10_000.0,
+      },
+      ..default()
+    },
+    PerspectiveProjection {
+      near: 0.001,
+      ..default()
+    },
+    Transform::from_xyz(10.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+  ));
+
+  commands.spawn((
     RigidBody::Dynamic,
     Collider::sphere(1.65),
     CollisionMargin(COLLISION_MARGIN),

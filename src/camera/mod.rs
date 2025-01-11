@@ -203,21 +203,21 @@ fn startup() {
 
 // prettier-ignore
 fn update(
-  // mut query_view_camera: Query<&mut Transform, (With<ViewCameraMarker>, Without<PlayerMarker>, )>,
-  // query_player: Query<&Transform, (With<PlayerMarker>, Without<ViewCameraMarker>, )>
+  mut query_view_camera: Query<&mut Transform, (With<ViewCameraMarker>, Without<PlayerMarker>, )>,
+  query_player: Query<&Transform, (With<PlayerMarker>, Without<ViewCameraMarker>, )>
 ) {
 
-  // let mut view_trans = query_view_camera.single_mut();
-  // let p_trans = query_player.single();
+  let mut view_trans = query_view_camera.single_mut();
+  let p_trans = query_player.single();
 
-  // // dbgln!("{}", p_trans.translation);
+  // dbgln!("{}", p_trans.translation);
 
-  // view_trans.translation.x = p_trans.translation.x + 24.0;
-  // view_trans.translation.y = p_trans.translation.y + 14.0;
-  // view_trans.translation.z = p_trans.translation.z + 24.0;
+  view_trans.translation.x = p_trans.translation.x + 200.0;
+  view_trans.translation.y = p_trans.translation.y + 100.0;
+  view_trans.translation.z = p_trans.translation.z + 200.0;
 
-  // view_trans.look_at(p_trans.translation, Vec3::Y);
-  // // view_trans.looking_at(p_trans.translation, Vec3::Y);
+  view_trans.look_at(p_trans.translation, Vec3::Y);
+  // view_trans.looking_at(p_trans.translation, Vec3::Y);
 
 }
 

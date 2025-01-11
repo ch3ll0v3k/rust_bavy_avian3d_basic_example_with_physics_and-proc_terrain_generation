@@ -11,5 +11,7 @@ https://www.youtube.com/watch?v=cwRcup_jz0s?si=p6-_FzYXlK-YNihI&t=10771
 [Megascans](https://quixel.com/megascans)
 [textureheaven](https://polyhaven.com/)
 [poliigon](https://www.poliigon.com/)
-
 [load gltfand more](https://bevyengine.org/examples/3d-rendering/load-gltf/)
+
+// Auto collider based on any part of GLB by part name::string
+//   => https://docs.rs/crate/avian3d/latest/source/examples/collider_constructors.rs
