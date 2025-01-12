@@ -118,8 +118,7 @@ impl Plugin for DebugPlugin {
           EntityCountDiagnosticsPlugin,
           SystemInformationDiagnosticsPlugin,
           // UiDebugOverlayPlugin::start_enabled().with_line_width(2.0),
-          // WorldInspectorPlugin::new(),
-        ))
+      ))
       .register_diagnostic(Diagnostic::new(FPS_COUNTER_DIAG_PATH)/*.with_suffix("can-be-anything")*/)
       .add_systems(FixedUpdate, (
         update,
@@ -128,30 +127,32 @@ impl Plugin for DebugPlugin {
       .add_systems(PostUpdate, (
         toggle_wireframe, 
       ).run_if(input_just_pressed(KeyCode::KeyL)))
-      // .add_systems(FixedUpdate, (
-      //   toggle_wireframe, 
-      // ).run_if(input_just_pressed(KeyCode::KeyL)))
       .add_systems(FixedUpdate, (
         update_fps,
         test_floating_items,
         show_player_y_pos,
-      ).run_if(in_state(MGameState::Running)))
+      )) // .run_if(in_state(MGameState::Running)))
       .add_systems(Update, (
-          calculate_real_fps_and_throttle,
-        ).run_if(in_state(MGameState::Running))
-      );
+        calculate_real_fps_and_throttle,
+      ).run_if(in_state(MGameState::Running)));
 
     if( debug_config.allowed_debug_physics ){
-
       app
-      .insert_gizmo_config(
-        PhysicsGizmos {
-          aabb_color: Some(Color::WHITE),
-          ..default()
-        },
-        GizmoConfig::default()
-      )
-      .add_plugins(PhysicsDebugPlugin::default());
+        .insert_gizmo_config(
+          PhysicsGizmos {
+            aabb_color: Some(Color::WHITE),
+            ..default()
+          },
+          GizmoConfig::default()
+        )
+        .add_plugins(PhysicsDebugPlugin::default());
+    }
+
+    if( debug_config.enable_world_inspector ){
+      app
+        .add_plugins(
+          WorldInspectorPlugin::new(),
+        );
     }
 
 

@@ -16,6 +16,7 @@ pub struct DebugConfig {
   pub allowed_debug_engine: bool, //  = true;
   pub allowed_debug_fps: bool, //  = true;
   pub is_wireframe_default_on: bool, //  = false;
+  pub enable_world_inspector: bool, //  = false;
   pub measure_avg_fps_each: u32, //  = 15;
   pub fixed_pfs: f64, //  = 60.0;
 }

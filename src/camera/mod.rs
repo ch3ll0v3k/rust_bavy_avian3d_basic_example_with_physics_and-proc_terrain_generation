@@ -1,11 +1,7 @@
 // prettier-ignore
 
 use bevy::{
-  prelude::*,
-  color::palettes::css::RED,
-  // core_pipeline::{bloom::Bloom, tonemapping::Tonemapping, Skybox},
-  math::vec3,
-  pbr::{FogVolume, VolumetricFog, VolumetricLight},
+  color::palettes::css::RED, core_pipeline::{bloom::Bloom, tonemapping::Tonemapping}, math::vec3, pbr::{FogVolume, VolumetricFog, VolumetricLight}, prelude::*
 };
 
 use bevy::{
@@ -112,11 +108,11 @@ pub fn get_player_camera() -> (
   Name, 
   Camera3d, 
   Camera,
-  DistanceFog,
+  // DistanceFog,
   PerspectiveProjection,
   Transform, 
-  // Tonemapping,
-  // Bloom,  
+  Tonemapping,
+  Bloom,  
   PlayerCameraMarker, 
   // DepthPrepass, 
   // NormalPrepass,
@@ -134,23 +130,23 @@ pub fn get_player_camera() -> (
       order: 1,
       ..default()
     },
-    DistanceFog {
-      color: Color::srgba(0.75, 0.75, 0.75, 0.75),
-      // falloff: FogFalloff::ExponentialSquared { density: 0.0002 },
-      // falloff: FogFalloff::Exponential { density: 0.00001 },
-      falloff: FogFalloff::Linear {
-        start: 2_000.0,
-        end: 10_000.0,
-      },
-      ..default()
-    },
+    // DistanceFog {
+    //   color: Color::srgba(0.75, 0.75, 0.75, 0.75),
+    //   // falloff: FogFalloff::ExponentialSquared { density: 0.0002 },
+    //   // falloff: FogFalloff::Exponential { density: 0.00001 },
+    //   falloff: FogFalloff::Linear {
+    //     start: 2_000.0,
+    //     end: 10_000.0,
+    //   },
+    //   ..default()
+    // },
     PerspectiveProjection {
-      near: 0.001,
+      near: 10.0,
       ..default()
     },
     Transform::from_xyz(0.0, 100.0, 2.0), // .looking_at(POS, Vec3::Y),
-    // Tonemapping::TonyMcMapface,
-    // Bloom::default(),
+    Tonemapping::TonyMcMapface,
+    Bloom::default(),
     PlayerCameraMarker,
     // DepthPrepass,
     // NormalPrepass,
@@ -212,9 +208,9 @@ fn update(
 
   // dbgln!("{}", p_trans.translation);
 
-  view_trans.translation.x = p_trans.translation.x + 200.0;
-  view_trans.translation.y = p_trans.translation.y + 100.0;
-  view_trans.translation.z = p_trans.translation.z + 200.0;
+  view_trans.translation.x = p_trans.translation.x + 300.0;
+  view_trans.translation.y = p_trans.translation.y + 300.0;
+  view_trans.translation.z = p_trans.translation.z + 300.0;
 
   view_trans.look_at(p_trans.translation, Vec3::Y);
   // view_trans.looking_at(p_trans.translation, Vec3::Y);

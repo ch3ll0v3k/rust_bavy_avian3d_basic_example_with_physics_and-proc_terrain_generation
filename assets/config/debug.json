@@ -3,6 +3,7 @@
   "allowed_debug_engine": true,
   "allowed_debug_fps": true,
   "is_wireframe_default_on": false,
+  "enable_world_inspector": true,
   "measure_avg_fps_each": 15,
   "fixed_pfs": 60.0
 }

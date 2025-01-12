@@ -74,3 +74,17 @@ impl EImageWaterBase {
     }
   }
 }
+
+pub enum EImageTreeBase {
+  One,
+  Two,
+}
+
+impl EImageTreeBase {
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      EImageTreeBase::One => "textures/tree/lupa.png",
+      EImageTreeBase::Two => "textures/tree/platanus-acerifolia-02.png",
+    }
+  }
+}

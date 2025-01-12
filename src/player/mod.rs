@@ -15,12 +15,7 @@ use avian3d::{
 
 // prettier-ignore
 use bevy::{
-  animation::transition, 
-  asset::Handle, color::palettes::tailwind::*, 
-  math::{Affine2, Vec2}, 
-  // pbr::{FogVolume, OpaqueRendererMethod, VolumetricFog}, 
-  prelude::{AlphaMode, Visibility}, 
-  time::{Real, Time}
+  animation::transition, asset::Handle, color::palettes::tailwind::*, image::Image, math::{Affine2, Quat, Vec2}, pbr::OpaqueRendererMethod, prelude::{AlphaMode, Meshable, Plane3d, Visibility}, time::{Real, Time}
 };
 
 // prettier-ignore
@@ -80,7 +75,7 @@ use crate::{
   debug::{ 
     get_defaul_physic_debug_params, is_allowed_debug_engine, 
     is_allowed_debug_fps, is_allowed_debug_physics 
-  }, 
+  }, sys_paths::image::EImageTreeBase, 
 };
 
 // prettier-ignore
@@ -145,9 +140,16 @@ impl Plugin for PlayerPlugin {
           detect_bullet_collision,
           // update_shader_quad_position,
           update_extended_material,
+          // handle_drag,
+          // control_cam, 
+          // zoom_on_scroll, 
         ).run_if(in_state(MGameState::Running))
       )
-      .add_systems(Update,(control_cam, zoom_on_scroll, handle_drag))
+      .add_systems(Update,(
+        zoom_on_scroll, 
+        control_cam, 
+        handle_drag
+      ))
       // .add_systems(Update,update)
       // .add_systems(Update,zoom_on_scroll)
       // .add_systems(Update,keyboard_events)
@@ -156,7 +158,7 @@ impl Plugin for PlayerPlugin {
       // .add_systems(Update,detect_bullet_collision)
       .add_systems(Update,
         (
-          handle_left_click
+          on_left_click
         )
           .run_if(in_state(MGameState::Running))
           .run_if(input_just_pressed(MouseButton::Left))
@@ -354,6 +356,7 @@ fn startup(
   //     time_t: 0.0,
   //   },
   // });
+
 
   commands.spawn(get_view_camera());
 
@@ -800,6 +803,12 @@ fn control_cam(
     commands.entity(entity).insert(physics::get_gravity_scale(1.0));
   }
 
+  let mut vel = q_lin_velocity.single_mut();
+
+  vel.x *= 0.9;
+  // vel.y *= 0.9;
+  vel.z *= 0.9;
+
   if
     !keys.pressed(KeyCode::KeyW) &&
     !keys.pressed(KeyCode::KeyS) &&
@@ -912,8 +921,12 @@ fn control_cam(
     }
   }
 
-  let force: ExternalImpulse = physics::get_external_impulse(impulse3 * 10.0, false);
-  commands.entity(entity).insert((RigidBody::Dynamic, force));
+  vel.x = impulse3.x;
+  vel.y = impulse3.y;
+  vel.z = impulse3.z;
+
+  // let force: ExternalImpulse = physics::get_external_impulse(impulse3 * 10.0, false);
+  // commands.entity(entity).insert((RigidBody::Dynamic, force));
 
   // for mut velocity in q_lin_velocity.iter_mut() {
   //   let xz_speed = (velocity.x.powi(2) + velocity.z.powi(2)).sqrt();
@@ -1060,7 +1073,7 @@ fn handle_bullet_out_of_allowed_area(
 }
 
 // prettier-ignore
-fn handle_left_click(
+fn on_left_click(
   mut res_mut_audio_cache: Option<ResMut</*res_mut_texture_cache::*/AudioCache>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
@@ -1071,6 +1084,9 @@ fn handle_left_click(
   mut player: Query<&mut Transform, (With<PlayerMarker>, Without<PlayerCameraMarker>)>,
   mut query_camera: Query<&mut Transform, (With<PlayerCameraMarker>, Without<PlayerMarker>)>
 ) {
+
+  return;
+
   for ev_b in ev_b_input.read() {
     if ev_b.button == MouseButton::Left {
 
@@ -1124,17 +1140,6 @@ fn handle_left_click(
         // if is_allowed_debug_engine() { Wireframe } else { Wireframe::default() }, 
       );
 
-      commands.spawn(handle_bullet);
-      // commands.entity(object).insert(handle_bullet);
-      // commands.entity(object).insert(Wireframe);
-
-      // // dbgln!("Right mouse button pressed");
-      // for ev_m in ev_m_motion.read() {
-      //   // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
-      //   transform.rotate_local_y(ev_m.delta.x / 1000.0);
-      //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
-      // }
-
       let audio_hashmap: &mut ResMut<AudioCache> = res_mut_audio_cache.as_mut().unwrap();
 
       let sound = cache_load_audio(
@@ -1144,19 +1149,34 @@ fn handle_left_click(
         false
       );
 
+
+      commands.spawn(handle_bullet)
+        .with_children(|parent|{
+          parent
+          .spawn((
+            // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
+            Name::new("p_bullet_sound_t"),
+            AudioPlayer(sound),
+            // AudioPlayer(track_list.first().unwrap().clone()),
+            PlaybackSettings {
+              mode: bevy::audio::PlaybackMode::Once,
+              volume: bevy::audio::Volume::default(),
+              ..default()
+            },
+            // FadeIn,
+          ));
+        });
+
+      // commands.entity(object).insert(handle_bullet);
+      // commands.entity(object).insert(Wireframe);
+
+      // // dbgln!("Right mouse button pressed");
+      // for ev_m in ev_m_motion.read() {
+      //   // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
+      //   transform.rotate_local_y(ev_m.delta.x / 1000.0);
+      //   transform.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
+      // }
       // let sound: Handle<AudioSource> = asset_server.load(sys_paths::sounds::EPaths::PaintballShoot.as_str());
-      
-      commands.spawn((
-        // AudioPlayer(soundtrack_player.track_list.first().unwrap().clone()),
-        AudioPlayer(sound),
-        // AudioPlayer(track_list.first().unwrap().clone()),
-        PlaybackSettings {
-          mode: bevy::audio::PlaybackMode::Once,
-          volume: bevy::audio::Volume::default(),
-          ..default()
-        },
-        // FadeIn,
-      ));
 
     }
   }
@@ -1172,16 +1192,12 @@ fn handle_drag(
   //   if !is_left_m_btn_down { return; }
   // }
 
-  // let mut transform = query_camera.single_mut();
+  // XXX DRAG
   let mut trans_cam_parent = player.single_mut();
   let mut trans_cam = query_camera.single_mut();
   for ev_m in ev_m_motion.read() {
-    // dbgln!("Mouse drag: X: {} px, Y: {} px", ev_m.delta.x, ev_m.delta.y);
     trans_cam_parent.rotate_local_y((ev_m.delta.x / 500.0) * 2.0 * -1.0);
-    // trans_cam_parent.rotate_local_x((ev_m.delta.y / 1000.0) * 1.0);
-    // trans_cam_parent.rotate_local_z((ev_m.delta.y / 1000.0) * 1.0);
     trans_cam.rotate_local_x((ev_m.delta.y / 1000.0) * -1.0);
-    // trans_cam.rotate_local_z((ev_m.delta.y / 1000.0) * 1.0);
   }
 
 }

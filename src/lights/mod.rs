@@ -146,12 +146,11 @@ fn startup(
       DIR_LIGHT_POS_2.z
     ).looking_at(Vec3::ZERO, Vec3::ZERO),
     CascadeShadowConfigBuilder {
-      // num_cascades: 1,
-      // maximum_distance: 20.0,
-      minimum_distance: 0.5,
-      maximum_distance: 20000000.0,
+      num_cascades: 5,
+      minimum_distance: 50.0,
+      maximum_distance: 200000.0,
       // need to test out
-      // first_cascade_far_bound: 0.5,
+      first_cascade_far_bound: 70.0,
       // overlap_proportion: 0.5,
       ..default()
     }.build(),

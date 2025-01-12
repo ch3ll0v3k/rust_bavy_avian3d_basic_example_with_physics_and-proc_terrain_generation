@@ -1,8 +1,8 @@
 const Z: i16 = 2; // 2;
 const A: i16 = 2; // 2;
-const B: i16 = 4; // 4;
-const C: i16 = 8; // 8;
-const D: i16 = 16; // 16;
+const B: i16 = 0; // 4;
+const C: i16 = 0; // 8;
+const D: i16 = 0; // 16;
 const E: i16 = 0; // 32;
 const F: i16 = 0; // 64;
 const G: i16 = 0; // 128;

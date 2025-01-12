@@ -176,8 +176,13 @@ pub fn calculate_final_subdivisions(dyn_scale: i16) -> u32 {
 }
 
 // prettier-ignore
-pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
+fn gen_tree_at(x: f32, z: f32) {}
+
+// prettier-ignore
+pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> (Mesh, Vec<[f32; 3]>) {
   
+  let tree_vec: Vec<[f32; 3]> = vec![];
+
   let noise: BasicMulti<Perlin> = BasicMulti::<Perlin>::default();
   let final_subdivisions: u32 = calculate_final_subdivisions(dyn_scale);
 
@@ -211,10 +216,26 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
 
       let mut base_pos_y =  xi * TERRAIN_HEIGHT;
 
-      {
-        // base topology: v1. base hills
-        // pos[1] = base_pos_y;
-      }
+      // continue;
+
+      // {
+      //   // base topology: v1. base hills
+      //   // pos[1] = base_pos_y;
+      // }
+
+      // {
+      //   // dense map test
+      //   let xi: f32 = noise.get([
+      //     (((g_x as f64) + (TERRAIN_CHUNK_X as f64) * x) as f64) / TERRAIN_CHUNK_SCALLER / 10.0, // 10.0 == very smooth baseterrain 
+      //     (((g_z as f64) + (TERRAIN_CHUNK_X as f64) * z) as f64) / TERRAIN_CHUNK_SCALLER / 10.0, // 10.0 == very smooth baseterrain 
+      //     0.0 as f64,
+      //   ]) as f32;
+      //   let pos_y =  xi * TERRAIN_HEIGHT;
+      //   pos[1] += pos_y * 3.0; // height
+      // }
+
+      // continue;
+
       {
         // base topology: v2. base hills
         let xi: f32 = noise.get([
@@ -269,7 +290,6 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
 
       {
         // base terrain height adjustment
-        // pos[1] *= 1.50;
         pos[1] *= 4.0;
         pos[1] += 20.0; // def: 1.0
       }
@@ -282,6 +302,12 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
       .iter()
       .map(|[_, g, _]| {
         let g: f32 = ((*g-sub) + TERRAIN_HEIGHT) / (TERRAIN_HEIGHT * 2.0); //  * 2.0 + 2.0; // * 26.0;
+
+        // if( g > 0.5 ){
+        //   return [0.0, 0.0, 1.0, 1.0];
+        // }
+        // return [1.0, 0.0, 0.0, 1.0];
+
         return terrain_cal_color_on_g(g);
       })
       .collect();
@@ -311,7 +337,7 @@ pub fn generate_chunk( x: f64, z: f64, dyn_scale: i16 ) -> Mesh {
   //   }
   // }
 
-  return terrain;
+  return (terrain, tree_vec);
 
 }
 

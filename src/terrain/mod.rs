@@ -2,53 +2,70 @@ use core::hash;
 use std::{ f32::consts::PI, time::Duration };
 
 // prettier-ignore
-use avian3d::prelude::{ 
-  AngularVelocity, Collider, CollisionMargin, PhysicsSet, RigidBody, Sensor
-};
+use avian3d::prelude::{ AngularVelocity, Collider, CollisionMargin, PhysicsSet, RigidBody, Sensor };
 
 // prettier-ignore
 use bevy::{
-  app::{ App, ScheduleRunnerPlugin, Startup, Update }, 
-  asset::{ AssetServer, Assets, Handle }, 
-  audio::{ AudioPlayer, AudioPlugin, AudioSource, PlaybackMode, PlaybackSettings, Volume }, 
-  color::{ 
-    palettes::{css::*, tailwind::*}, 
-    Color 
-  }, 
+  app::{ App, ScheduleRunnerPlugin, Startup, Update },
+  asset::{ AssetServer, Assets, Handle },
+  audio::{ AudioPlayer, AudioPlugin, AudioSource, PlaybackMode, PlaybackSettings, Volume },
+  color::{ palettes::{ css::*, tailwind::* }, Color },
   core_pipeline::{
     core_3d::graph::{ Core3d, Node3d },
     fullscreen_vertex_shader::fullscreen_shader_vertex_state,
-  }, ecs::query::{ QueryItem, QuerySingleError }, 
-  gizmos::AppGizmoBuilder, image::{ ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor }, 
-  math::{ Affine2, IVec2, Vec2, Vec3 }, 
-  pbr::{ wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial, OpaqueRendererMethod, StandardMaterial }, 
-  prelude::*, render::{
-    extract_component::{ 
-      ComponentUniforms, DynamicUniformIndex, ExtractComponent, ExtractComponentPlugin, UniformComponentPlugin 
-    }, 
-    mesh::VertexAttributeValues, render_graph::{ 
-      NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner 
-    }, 
-    render_resource::binding_types::{ 
-      sampler, texture_2d, uniform_buffer 
-    }, 
-    renderer::{ 
-      RenderContext, RenderDevice 
-    }, 
-    view::ViewTarget, 
-    RenderApp
-  }, 
-  time::{ 
-    common_conditions::on_timer, Fixed, Time 
-  }, utils::{ 
-    default, hashbrown::hash_map
-  }, window::WindowMode::*
+  },
+  ecs::query::{ QueryItem, QuerySingleError },
+  gizmos::AppGizmoBuilder,
+  image::{
+    ImageAddressMode,
+    ImageFilterMode,
+    ImageLoaderSettings,
+    ImageSampler,
+    ImageSamplerDescriptor,
+  },
+  math::{ Affine2, IVec2, Vec2, Vec3 },
+  pbr::{
+    wireframe::Wireframe,
+    CascadeShadowConfigBuilder,
+    ExtendedMaterial,
+    NotShadowCaster,
+    NotShadowReceiver,
+    OpaqueRendererMethod,
+    StandardMaterial,
+  },
+  prelude::*,
+  render::{
+    extract_component::{
+      ComponentUniforms,
+      DynamicUniformIndex,
+      ExtractComponent,
+      ExtractComponentPlugin,
+      UniformComponentPlugin,
+    },
+    mesh::VertexAttributeValues,
+    render_graph::{
+      NodeRunError,
+      RenderGraphApp,
+      RenderGraphContext,
+      RenderLabel,
+      ViewNode,
+      ViewNodeRunner,
+    },
+    render_resource::binding_types::{ sampler, texture_2d, uniform_buffer },
+    renderer::{ RenderContext, RenderDevice },
+    view::ViewTarget,
+    RenderApp,
+  },
+  time::{ common_conditions::on_timer, Fixed, Time },
+  utils::{ default, hashbrown::hash_map },
+  window::WindowMode::*,
 };
 
 mod terrain_lod_map;
 mod tools;
 mod terrain_constants;
 
+use rand::Rng;
 use terrain_lod_map::TERRAIN_LOD_MAP_SIZE;
 use wgpu::Face;
 use noise::{ BasicMulti, NoiseFn, Perlin };
@@ -59,25 +76,22 @@ use tools::*;
 
 // prettier-ignore
 use crate::{
-  asset_loader::image_cache::{ cache_load_image, ImageCache }, 
-  dbgln, 
-  debug::get_defaul_physic_debug_params, 
-  materials::{post_processing::water, water::WaterExtension}, 
-  player::PlayerMarker, 
-  sys_paths, 
-  terrain::terrain_lod_map::get_lod, 
-  AnyObject, 
-  PhysicsStaticObject, 
-  PhysicsStaticObjectTerrain, 
-  COLLISION_MARGIN
+  asset_loader::image_cache::{ cache_load_image, ImageCache },
+  dbgln,
+  debug::get_defaul_physic_debug_params,
+  materials::{ post_processing::water, water::WaterExtension },
+  player::PlayerMarker,
+  sys_paths::{ self, image::EImageTreeBase },
+  terrain::terrain_lod_map::get_lod,
+  AnyObject,
+  PhysicsStaticObject,
+  PhysicsStaticObjectTerrain,
+  COLLISION_MARGIN,
   // materials::water::{ UnderWaterExtention, WaterExtension },
 };
 
 // prettier-ignore
-use sys_paths::{
-  audio::EAudio,
-  image::{EImageWaterBase,EImageTerrainBase, pbr},
-};
+use sys_paths::{ audio::EAudio, image::{ EImageWaterBase, EImageTerrainBase, pbr } };
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub struct MTerrainMarker;
@@ -88,45 +102,43 @@ pub struct MTerrainPlugin;
 // prettier-ignore
 impl Plugin for MTerrainPlugin {
   fn build(&self, app: &mut App) {
-    app
-      .insert_resource(InnerMapper::new());
-      // .insert_resource(IMapTestShift{ x: 0.0, z: 0.0 });
+    app.insert_resource(InnerMapper::new());
+    // .insert_resource(IMapTestShift{ x: 0.0, z: 0.0 });
 
     // app
     //   .add_plugins((
     //     MaterialPlugin::<ExtendedMaterial<StandardMaterial, WaterExtension>>::default()
     //   ));
 
-      app
+    app
       .add_systems(Startup, startup)
       // .add_systems(Update, (
       //   update_terrain_on_player_position,
       //   // modify_mesh_at_runtime,
       // ))
-      .add_systems(PostUpdate, (
-        update_terrain_on_player_position
-      ).run_if(
-        on_timer(Duration::from_millis(100))
-      ));
-      // .add_systems(PostUpdate, (
-      //   draw_cursor
-      // ).run_if(
-      //   on_timer(Duration::from_millis(100))
-      // ));
-
+      .add_systems(
+        PostUpdate,
+        (update_terrain_on_player_position, update_far_tree_look_at).run_if(
+          on_timer(Duration::from_millis(100))
+        )
+      );
+    // .add_systems(PostUpdate, (
+    //   draw_cursor
+    // ).run_if(
+    //   on_timer(Duration::from_millis(100))
+    // ));
   }
 }
 
 // prettier-ignore
 fn startup(
-  mut res_mut_texture_cache: Option<ResMut</*res_mut_texture_cache::*/ImageCache>>,
+  mut res_mut_texture_cache: Option<ResMut</*res_mut_texture_cache::*/ ImageCache>>,
   mut inner_mapper_mut: Option<ResMut<InnerMapper>>,
   asset_server: Res<AssetServer>,
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
+  mut materials: ResMut<Assets<StandardMaterial>>
 ) {
-
   // return;
 
   // // XXX
@@ -139,16 +151,16 @@ fn startup(
   // let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
   // let lod: [[i16; TERRAIN_LOD_MAP_SIZE]; TERRAIN_LOD_MAP_SIZE] = get_lod();
-  
+
   // for z in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
   //   for x in -TERRAIN_SEGMENTS_TO_GEN..=TERRAIN_SEGMENTS_TO_GEN {
-      
+
   //     let on_z = ((TERRAIN_LOD_MAP_SIZE as i32 - 7) + z) as usize;
   //     let on_x = ((TERRAIN_LOD_MAP_SIZE as i32 - 7) + x) as usize;
 
   //     let dyn_scale = lod[ on_z ][ on_x ] as i16;
 
-  //     if dyn_scale <= 0 { continue; } 
+  //     if dyn_scale <= 0 { continue; }
   //     let terrain: Mesh = generate_chunk(x as f64, z as f64, dyn_scale);
 
   //     let terrain_id: Entity = commands.spawn((
@@ -184,10 +196,10 @@ fn startup(
 
   //     if( spawn ){
   //       let capacity: Option<IInnerMap> = inner_map.hash_map.insert(
-  //         (z as i16, x as i16), 
-  //         IInnerMap{ 
-  //             // entity: terrain_id, 
-  //             entity: Entity::from( terrain_id ), 
+  //         (z as i16, x as i16),
+  //         IInnerMap{
+  //             // entity: terrain_id,
+  //             entity: Entity::from( terrain_id ),
   //             lod: dyn_scale
   //           }
   //       );
@@ -200,11 +212,11 @@ fn startup(
   //     //   }else{
   //     //     // dbgln!("res_mut.hash_map.insert(&({z}, {x})) => lod: {dyn_scale}");
   //     //     let capacity = res_mut.hash_map.insert(
-  //     //       (z as i16, x as i16), 
-  //     //       IInnerMap{ 
-  //     //           // entity: terrain_id, 
-  //     //           entity: Entity::from( terrain_id ), 
-  //     //           // entity: Entity::from_raw(42s31231231), 
+  //     //       (z as i16, x as i16),
+  //     //       IInnerMap{
+  //     //           // entity: terrain_id,
+  //     //           entity: Entity::from( terrain_id ),
+  //     //           // entity: Entity::from_raw(42s31231231),
   //     //           lod: dyn_scale
   //     //         }
   //     //     );
@@ -220,7 +232,7 @@ fn startup(
   //         // Collider::trimesh_from_mesh(&water).unwrap(),
   //         // Sensor,
   //         Transform::from_xyz(
-  //           (x * TERRAIN_CHUNK_X as i32) as f32, 
+  //           (x * TERRAIN_CHUNK_X as i32) as f32,
   //            -3.0, // -13
   //           (z * TERRAIN_CHUNK_X as i32) as f32
   //           // .looking_at(Vec3::ZERO, Vec3::ZERO)
@@ -234,7 +246,7 @@ fn startup(
   //         Name::new("water_t"),
   //       ));
   //     }
-      
+
   //   }
   // }
 
@@ -291,6 +303,26 @@ fn round_upto(num: f64, upto: i8) -> f64 {
 //   }
 // }
 
+#[derive(Component, Debug)]
+pub struct MTreeMarker;
+
+// prettier-ignore
+fn update_far_tree_look_at(
+  q_player: Query<&Transform, (With<PlayerMarker>, Without<MTreeMarker>)>,
+  mut q_trees: Query<&mut Transform, (With<MTreeMarker>, Without<PlayerMarker>)>
+) {
+  let trans = q_player.single().translation;
+  for mut q_tree in q_trees.iter_mut() {
+    let x = trans.x;
+    let y = q_tree.translation.y;
+    let z = trans.z;
+    let vec3 = Vec3::new(x, y, z);
+
+    q_tree.look_at(vec3, Vec3::ZERO);
+    q_tree.rotate_local_z(PI / 1.0);
+  }
+}
+
 // prettier-ignore
 fn update_terrain_on_player_position(
   // mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, WaterExtension>>>,
@@ -308,8 +340,6 @@ fn update_terrain_on_player_position(
   //   (With<MTerrainMarker>, Without<PlayerMarker>)
   // >,
 ) {
-  // return;
-
   // dbgln!(" ---------- ---------- ---------- ---------- ---------- ");
   let mut inner_map_mut = &mut inner_mapper_mut.as_mut().unwrap();
   // let mut inner_map_read = &inner_mapper_read;
@@ -331,7 +361,7 @@ fn update_terrain_on_player_position(
   for l_z in -SIZE_SIZE_T..=SIZE_SIZE_T {
     for l_x in -SIZE_SIZE_T..=SIZE_SIZE_T {
       let lod_on_z: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 8 + l_z) as usize;
-      let lod_on_x: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 8 + l_x) as usize;      
+      let lod_on_x: usize = ((TERRAIN_LOD_MAP_SIZE as i32) - 8 + l_x) as usize;
       // dbgln!("lod_on_z: {lod_on_z}, lod_on_x: {lod_on_x}");
       let dyn_scale: i16 = lod[lod_on_z][lod_on_x] as i16;
       let abs_x: i32 = g_x + l_x;
@@ -374,8 +404,12 @@ fn update_terrain_on_player_position(
       if spawn {
         // dbgln!("  => SPAWN @(&({abs_z}, {abs_x})) => lod (dyn): {dyn_scale}");
 
-        let terrain: Mesh = generate_chunk(abs_x as f64, abs_z as f64, dyn_scale);
-        let terrain_material: StandardMaterial = get_terrain_bpr(&asset_server, image_hashmap, dyn_scale);
+        let (terrain, tree_vec) = generate_chunk(abs_x as f64, abs_z as f64, dyn_scale);
+        let terrain_material: StandardMaterial = get_terrain_bpr(
+          &asset_server,
+          image_hashmap,
+          dyn_scale
+        );
         let terrain_material_handle: Handle<StandardMaterial> = materials.add(terrain_material);
 
         let terrain_id: Entity = commands
@@ -393,29 +427,99 @@ fn update_terrain_on_player_position(
             AnyObject,
             Name::new("terrain_t"),
             // Wireframe::default(),
-          )).id();
+          ))
+          .with_children(|parent| {})
+          .id();
 
-          let ins: Option<IInnerMap> = inner_map_mut.hash_map.insert(
-            (abs_z as i16, abs_x as i16),
-            IInnerMap{
-              // entity: terrain_id,
-              entity: Entity::from( terrain_id ),
-            lod: dyn_scale
+        let ins: Option<IInnerMap> = inner_map_mut.hash_map.insert(
+          (abs_z as i16, abs_x as i16),
+          IInnerMap {
+            // entity: terrain_id,
+            entity: Entity::from(terrain_id),
+            lod: dyn_scale,
           }
         );
-        
+
+        let t_w = 600.0 * 3.0;
+        let t_h = 700.0 * 3.0;
+
+        // let mut rng = rand::thread_rng();
+        // let random_seed_y: f32 = rng.gen();
+        // let random_seed_z: f32 = rng.gen();
+
+        for vec in tree_vec {
+          let x = vec[0];
+          let y = vec[1];
+          let z = vec[2];
+
+          let tree_tex: Handle<Image> = asset_server.load(EImageTreeBase::Two.as_str());
+          let tree_mat: StandardMaterial = StandardMaterial {
+            base_color_texture: Some(tree_tex),
+            double_sided: false,
+            cull_mode: Some(Face::Front),
+            // cull_mode: Some(Face::Back),
+            unlit: !false,
+            // base_color: Color::srgba_u8(255, 40, 40, 20),
+            // base_color: Color::srgba_u8(255, 255, 255, 255),
+            opaque_render_method: OpaqueRendererMethod::Auto,
+            alpha_mode: AlphaMode::Blend,
+            // alpha_mode: AlphaMode::Mask(0.5),
+            ..default()
+          };
+          let tree_handle = materials.add(tree_mat);
+          let mut tree_mesh: Mesh;
+
+          if true {
+            tree_mesh = Mesh::from(Cuboid::new(t_w, t_h, 0.01));
+            // .with_generated_tangents()
+            // .unwrap();
+          } else {
+            tree_mesh = Mesh::from(Plane3d::default().mesh().size(t_w, t_h).subdivisions(0));
+          }
+
+          commands.spawn((
+            Name::new("tree_t"),
+            Mesh3d(meshes.add(tree_mesh.clone())),
+            MeshMaterial3d(tree_handle.clone()),
+            Transform {
+              translation: Vec3::new(x, y + (-50.0 + t_h / 2.0), z),
+              rotation: Quat::from_axis_angle(Vec3::Y, 3.1415),
+              ..default()
+            },
+            MTreeMarker,
+            NotShadowCaster,
+            NotShadowReceiver,
+            AnyObject,
+          ));
+          // .with_children(|parent|{
+          //   parent
+          //     .spawn((
+          //       Mesh3d(meshes.add(tree_mesh.clone())),
+          //       MeshMaterial3d(tree_handle.clone()),
+          //       Transform {
+          //         translation: Vec3::new(0.0, 0.0, 0.0),
+          //         rotation: Quat::from_axis_angle(Vec3::Y, 3.1415 / 2.0),
+          //         ..default()
+          //       },
+          //       NotShadowCaster,
+          //       NotShadowReceiver,
+          //       AnyObject,
+          //     ));
+          // });
+        }
+
         continue;
 
         // let water_diff_texture: Handle<Image> = cache_load_image(
         //   image_hashmap,
-        //   &asset_server, 
+        //   &asset_server,
         //   EImageWaterBase::Walet1Base.as_str(),
         //   true
         // );
 
         // let water_normal_map_texture: Handle<Image> = cache_load_image(
         //   image_hashmap,
-        //   &asset_server, 
+        //   &asset_server,
         //   EImageWaterBase::Walet1Normal.as_str(),
         //   true
         // );
@@ -436,19 +540,17 @@ fn update_terrain_on_player_position(
         //   };
         //   let water_material_handle: Handle<ExtendedMaterial<StandardMaterial, WaterExtension>> = water_materials.add(ExtendedMaterial {
         //     base: water_material,
-        //     extension: WaterExtension { 
+        //     extension: WaterExtension {
         //       quantize_steps: 30
         //     },
         //   });
         // }
 
-
         // if z >= -walter_f && z <= walter_f && x >= -walter_f && x <= walter_f {}
         if g_x == 0 && g_z == 0 {
-
-          let walter_f: i32 = 0;        
+          let walter_f: i32 = 0;
           // basic material
-          let (water_material, water ) = get_water_pbr_and_mesh();
+          let (water_material, water) = get_water_pbr_and_mesh();
           let water_material_handle: Handle<StandardMaterial> = materials.add(water_material);
 
           commands.spawn((
@@ -456,10 +558,10 @@ fn update_terrain_on_player_position(
             // Collider::trimesh_from_mesh(&water).unwrap(),
             // Sensor,
             Transform::from_xyz(
-              (g_x * TERRAIN_CHUNK_X as i32) as f32, // - 1000.0, 
+              (g_x * (TERRAIN_CHUNK_X as i32)) as f32, // - 1000.0,
               // -3.0 + -0.1, // -13
               -3.0 + -0.1, // -13
-              (g_z * TERRAIN_CHUNK_X as i32) as f32, // - 1000.0
+              (g_z * (TERRAIN_CHUNK_X as i32)) as f32 // - 1000.0
               // .looking_at(Vec3::ZERO, Vec3::ZERO)
             ),
             Mesh3d(meshes.add(water.clone())),
@@ -471,7 +573,6 @@ fn update_terrain_on_player_position(
             Name::new("water_t"),
           ));
         }
-
       }
     }
   }
